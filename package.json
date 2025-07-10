@@ -17,6 +17,11 @@
         "command": "tpp-extension.graphView",
         "title": "Function Graph View",
         "category": "View"
+      },
+      {
+        "command": "tpp-extension.structuredView",
+        "title": "Structured editor View",
+        "category": "View"
       }
     ]
   },
