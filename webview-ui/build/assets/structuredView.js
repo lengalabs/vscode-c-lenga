@@ -1,0 +1,1 @@
+import{b as s,j as t,c}from"./client.js";function i(){const[n,o]=s.useState("");return window.addEventListener("message",r=>{const e=r.data;typeof e.contents=="string"&&o(e.contents)}),t.jsx("div",{children:n})}c.createRoot(document.getElementById("root")).render(t.jsx(s.StrictMode,{children:t.jsx(i,{})}));

@@ -71,8 +71,8 @@ export class GraphView {
 		);
 
 		/* Armo el html con sus scripts y css para ser utilizados en la webview */
-		const cssPath = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "webview-ui", "build", "assets", "index.css"));
-		const jsPath = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "webview-ui", "build", "assets", "index.js"));
+		const cssPath = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "webview-ui", "build", "assets", "graphView.css"));
+		const jsPath = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "webview-ui", "build", "assets", "graphView.js"));
 		const nonce = getNonce();
 
 		panel.webview.html = `
