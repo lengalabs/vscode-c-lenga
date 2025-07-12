@@ -1,18 +1,20 @@
 import { useState } from 'react'
+import { Line } from './components/line'
+import { AnyNode } from './node'
 
 export default function App() {
-  const [text, setText] = useState('')
+  const [nodes, setNodes] = useState<AnyNode[]>([])
 
   window.addEventListener('message', (event: MessageEvent) => {
-      const message = event.data
-      if (typeof message.contents === 'string') {
-        setText(message.contents)
-      }
-    })
+    const message = event.data
+    setNodes(message.contents)
+  })
 
   return (
     <div>
-      {text}
+      {nodes.map((node, index) => (
+        <Line key={index} node={node} indent={ 0 }/>
+      ))}
     </div>
   )
 }
