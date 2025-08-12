@@ -10,7 +10,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         graphView: resolve(__dirname, 'src/graphView.html'),
-        structuredView: resolve(__dirname, 'src/structuredView.html')
+        structuredView: resolve(__dirname, 'src/structuredView.html'),
+        spikeView: resolve(__dirname, 'src/spikeView.html')
       },
       output: {
         entryFileNames: `assets/[name].js`,
