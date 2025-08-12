@@ -8,7 +8,6 @@ import { getNonce } from './utils';
 export class GraphView {
 	/* Registro de la vista como servicio (Comando) en la extensión */
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		vscode.window.showInformationMessage("registering graphView command");
 		const disposable = vscode.commands.registerCommand('tpp-extension.graphView', async () => {			
 			try {
 				const [dirName, astPath, metadataPath] = await this._getWorkingDir();

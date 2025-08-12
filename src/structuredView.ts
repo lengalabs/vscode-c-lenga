@@ -7,7 +7,6 @@ import { getNonce } from './utils';
 export class StructuredView {
     /* Registro de la vista como servicio (Comando) en la extensión */
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
-        vscode.window.showInformationMessage("registering structuredView command");
         const disposable = vscode.commands.registerCommand('tpp-extension.structuredView', async () => {			
             try {
                 const [fileName, filePath] = await this._getWorkingDir();
