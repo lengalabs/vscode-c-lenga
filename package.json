@@ -28,6 +28,16 @@
     ],
     "commands": [
       {
+        "command": "tpp-extension.setStructuredView",
+        "title": "Sets the editors view to a structured format",
+        "category": "SetView"
+      },
+      {
+        "command": "tpp-extension.setSpikeView",
+        "title": "Sets the editors view to a spike format",
+        "category": "SetView"
+      },
+      {
         "command": "tpp-extension.graphView",
         "title": "Function Graph View",
         "category": "View"
@@ -37,12 +47,27 @@
         "title": "Structured editor View",
         "category": "View"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "tpp-extension.setStructuredView",
+          "when": "activeCustomEditorId == tpp-extension.saturn",
+          "group": "navigation"
+        },
+        {
+          "command": "tpp-extension.setSpikeView",
+          "when": "activeCustomEditorId == tpp-extension.saturn",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "install:all": "npm install && cd webview-ui && npm install",
     "start:webview": "cd webview-ui && npm run start",
     "build:webview": "cd webview-ui && npm run build",
+    "build:protos": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./rpc/generated --grpc_out=grpc_js:./rpc/generated -I ./rpc/protos ./rpc/protos/*.proto",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
@@ -51,6 +76,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/google-protobuf": "^3.15.12",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.101.0",
