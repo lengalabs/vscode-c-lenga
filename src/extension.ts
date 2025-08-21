@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { startServer } from './server';
 import { Client } from './client';
-import { SaturnEditorProvider } from './views';
+import { SaturnEditorProvider, View } from './views';
 //import { GraphView } from './graphView';
 import { StructuredView } from './structuredView';
  
@@ -16,6 +16,10 @@ export function activate(context: vscode.ExtensionContext) {
 	var client = new Client();
 
 	initServerWorkspace(client);
+
+	// context.subscriptions.push(vscode.commands.registerCommand('tpp-extension.setStructuredView', () => {
+	// 	vscode.window.showInformationMessage('view change!');
+	// }));
 
 	context.subscriptions.push(SaturnEditorProvider.register(context, client));
 

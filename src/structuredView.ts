@@ -93,7 +93,7 @@ export class StructuredView {
 
             webview.postMessage({
                 type: 'update',
-                contents: JSON.parse(file.getText()),
+                contents: file.getText(),
             });
         }
         
