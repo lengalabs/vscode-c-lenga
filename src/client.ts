@@ -1,47 +1,42 @@
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
-
-var PROTO_PATH = __dirname + '/../protos/saturn.proto';
+import { credentials, ServiceError } from '@grpc/grpc-js';
+// @ts-ignore
+import { OpenRequest, Node, InitRequest, Void, EditRequest } from "../rpc/generated/saturn_pb";
+// @ts-ignore
+import { SaturnClient } from "../rpc/generated/saturn_grpc_pb";
 
 export class Client {
     private stub: any;
 
     constructor() {
-        var packageDefinition = protoLoader.loadSync(
-            PROTO_PATH,
-            {keepCase: true,
-             longs: String,
-             enums: String,
-             defaults: true,
-             oneofs: true
-            });
-        var grpcPackage = grpc.loadPackageDefinition(packageDefinition) as any;
-        this.stub = new grpcPackage.saturn.Saturn('localhost:49200', grpc.credentials.createInsecure());
+        this.stub = new SaturnClient("localhost:49200", credentials.createInsecure());
     }
 
     initialize(workspace: string, configUri: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            var request = {
-                workspace: workspace,
-                configUri: configUri,
-            };
+            var request = new InitRequest();
+            request.setWorkspace(workspace);
+            request.setConfiguri(configUri);
 
-            this.stub.Initialize(request, (err: grpc.ServiceError) => {
-                resolve();
+            this.stub.initialize(request, (err: ServiceError | null, response: Void) => {
+                if (err) {
+                    reject(new Error(`${err.message}`));
+                } else {
+                    resolve();
+                }
             });
         });
     }
 
     openFile(path: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            var request = {
-                path: path
-            };
-            this.stub.OpenFile(request, (err: grpc.ServiceError, node: {type: string, content: string}) => {
+            var request = new OpenRequest();
+            request.setPath(path);
+
+            this.stub.openFile(request, (err: ServiceError | null, node: Node) => {
                 if (err) {
-                    resolve(`${err}`);
+                    reject(new Error(`${err.message}`));
                 } else {
-                    resolve(node.content);
+                    resolve(node.getContent());
                 }
             });
         });
@@ -49,16 +44,15 @@ export class Client {
 
     edit(path: string, editData: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            var request = {
-                path: path,
-                editData: editData
-            };
+            var request = new EditRequest();
+            request.setPath(path);
+            request.setEditdata(editData);
 
-            this.stub.Edit(request, (err: grpc.ServiceError, node: {type: string, content: string}) => {
+            this.stub.edit(request, (err: ServiceError, node: Node) => {
                 if (err) {
-                    resolve(`${err}`);
+                    reject(new Error(`${err}`));
                 } else {
-                    resolve(node.content);
+                    resolve(node.getContent());
                 }
             });
         });

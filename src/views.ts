@@ -3,12 +3,12 @@ import { getNonce } from './utils';
 import { Client } from './client';
 
 export enum View {
-    Structured = 'structured',
+	Spike = 'spikeView',
+    Structured = 'structuredView',
 }
 
 export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
     private static readonly viewType = 'tpp-extension.saturn';
-    private view = View.Structured;
 
 	public static register(context: vscode.ExtensionContext, client: Client): vscode.Disposable {
 		const provider = new SaturnEditorProvider(context, client);
@@ -26,37 +26,61 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
+		let state: string = "";
+		const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
+		
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
-		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, this.view);
+		const lastView = this.context.workspaceState.get<View>(keyForFile(document.uri), View.Spike);
+		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, lastView);
 
-		function updateWebview(content: string) {
-			vscode.window.showInformationMessage(`[extension] ${content}`);
+		function updateWebview(contents: string) {
+			vscode.window.showInformationMessage(contents);
 			webviewPanel.webview.postMessage({
 				type: 'update',
-				content: content,
+				contents: contents,
 			});
 		}
+		
+		const d1 = vscode.commands.registerCommand("tpp-extension.setStructuredView", (uri: vscode.Uri) => {
+			this.context.workspaceState.update(keyForFile(uri), View.Structured);
+			webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
+		});
+
+		const d2 = vscode.commands.registerCommand("tpp-extension.setSpikeView", (uri: vscode.Uri) => {
+			this.context.workspaceState.update(keyForFile(uri), View.Spike);
+			webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Spike);
+		});
 
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			switch (e.type) {
+				case 'ready':
+					updateWebview(state);
+					break;
 				case 'edit':
 					this.saturnClient.edit(document.uri.path, e.data).then(result => {
-                        updateWebview(result);
+						state = result;
+                        updateWebview(state);
                     });
 					return;
 			}
 		});
 
+		webviewPanel.onDidDispose(() => {
+			d1.dispose();
+			d2.dispose();
+		});
+
         this.saturnClient.openFile(document.uri.fsPath).then(result => {
-            updateWebview(result);
-        });
+			state = result;
+			updateWebview(state);
+		});
 	}
 
 	private getHtmlForWebview(webview: vscode.Webview, viewName: string): string {
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'webview-ui', 'build', 'assets', 'spikeView.js'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'webview-ui', 'build', 'assets', 'structuredView.css'));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'webview-ui', 'build', 'assets', viewName + '.js'));
+		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'webview-ui', 'build', 'assets', viewName + '.css'));
 		const nonce = getNonce();
 
 		return `
