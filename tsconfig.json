@@ -7,8 +7,8 @@
 			"ES2022"
 		],
 		"sourceMap": true,
-		"rootDir": "src",
 		"strict": true,
 	},
+	"include": ["src", "rpc/generated"],
 	"exclude": ["node_modules", "webview-ui"]
 }

@@ -59,10 +59,14 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 					updateWebview(state);
 					break;
 				case 'edit':
-					this.saturnClient.edit(document.uri.path, e.data).then(result => {
-						state = result;
-                        updateWebview(state);
-                    });
+					this.saturnClient.edit(document.uri.path, e.data)
+						.then( result => {
+							state = result;
+							updateWebview(state);
+						})
+						.catch( err => {
+							vscode.window.showErrorMessage(err);
+						});
 					return;
 			}
 		});
@@ -72,10 +76,15 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 			d2.dispose();
 		});
 
-        this.saturnClient.openFile(document.uri.fsPath).then(result => {
-			state = result;
-			updateWebview(state);
-		});
+        this.saturnClient.openFile(document.uri.fsPath)
+			.then(result => {
+				state = result;
+				updateWebview(state);
+			})
+			.catch(err => {
+				vscode.window.showErrorMessage(err);
+			});
+
 	}
 
 	private getHtmlForWebview(webview: vscode.Webview, viewName: string): string {
