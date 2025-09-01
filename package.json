@@ -13,7 +13,7 @@
     "workspaceContains:nodes.toml",
     "workspaceContains:*/nodes.toml"
   ],
-  "main": "./out/extension.js",
+  "main": "./out/src/extension.js",
   "contributes": {
     "customEditors": [
       {
@@ -67,7 +67,7 @@
     "install:all": "npm install && cd webview-ui && npm install",
     "start:webview": "cd webview-ui && npm run start",
     "build:webview": "cd webview-ui && npm run build",
-    "build:protos": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./rpc/generated --grpc_out=grpc_js:./rpc/generated -I ./rpc/protos ./rpc/protos/*.proto",
+    "build:protos": "protoc -I=./rpc/protos --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./rpc/generated --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node ./rpc/protos/saturn.proto",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
@@ -84,6 +84,7 @@
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
+    "@bufbuild/protobuf": "2.6.3",
     "eslint": "^9.25.1",
     "grpc_tools_node_protoc_ts": "^5.3.3",
     "grpc-tools": "^1.13.0",
@@ -92,6 +93,9 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
-    "google-protobuf": "^3.21.4"
+    "google-protobuf": "^3.21.4",
+    "protobufjs": "^7.5.4",
+    "ts-proto": "^2.7.7",
+    "ts-protoc-gen": "^0.15.0"
   }
 }
