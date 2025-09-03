@@ -67,7 +67,7 @@
     "install:all": "npm install && cd webview-ui && npm install",
     "start:webview": "cd webview-ui && npm run start",
     "build:webview": "cd webview-ui && npm run build",
-    "build:protos": "protoc -I=./rpc/protos --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./rpc/generated --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node ./rpc/protos/saturn.proto",
+    "build:protos": "protoc -I=./rpc/protos --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./rpc/generated --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node,oneof=unions ./rpc/protos/*.proto",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",

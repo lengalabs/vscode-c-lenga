@@ -18,28 +18,15 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
+import { Node } from "./nodes";
 
 export const protobufPackage = "saturn";
 
+export interface Void {
+}
+
 export interface OpenRequest {
   path: string;
-}
-
-export interface Node {
-  NodeType: string;
-  content: string;
-  Tags: { [key: string]: Node };
-  Children: { [key: string]: Node };
-}
-
-export interface Node_TagsEntry {
-  key: string;
-  value?: Node | undefined;
-}
-
-export interface Node_ChildrenEntry {
-  key: string;
-  value?: Node | undefined;
 }
 
 export interface InitRequest {
@@ -47,13 +34,53 @@ export interface InitRequest {
   configUri: string;
 }
 
-export interface Void {
-}
-
 export interface EditRequest {
   path: string;
   editData: string;
 }
+
+function createBaseVoid(): Void {
+  return {};
+}
+
+export const Void: MessageFns<Void> = {
+  encode(_: Void, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Void {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVoid();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): Void {
+    return {};
+  },
+
+  toJSON(_: Void): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Void>, I>>(base?: I): Void {
+    return Void.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Void>, I>>(_: I): Void {
+    const message = createBaseVoid();
+    return message;
+  },
+};
 
 function createBaseOpenRequest(): OpenRequest {
   return { path: "" };
@@ -109,304 +136,6 @@ export const OpenRequest: MessageFns<OpenRequest> = {
   fromPartial<I extends Exact<DeepPartial<OpenRequest>, I>>(object: I): OpenRequest {
     const message = createBaseOpenRequest();
     message.path = object.path ?? "";
-    return message;
-  },
-};
-
-function createBaseNode(): Node {
-  return { NodeType: "", content: "", Tags: {}, Children: {} };
-}
-
-export const Node: MessageFns<Node> = {
-  encode(message: Node, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.NodeType !== "") {
-      writer.uint32(10).string(message.NodeType);
-    }
-    if (message.content !== "") {
-      writer.uint32(18).string(message.content);
-    }
-    Object.entries(message.Tags).forEach(([key, value]) => {
-      Node_TagsEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
-    });
-    Object.entries(message.Children).forEach(([key, value]) => {
-      Node_ChildrenEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
-    });
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): Node {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNode();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.NodeType = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.content = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          const entry3 = Node_TagsEntry.decode(reader, reader.uint32());
-          if (entry3.value !== undefined) {
-            message.Tags[entry3.key] = entry3.value;
-          }
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          const entry4 = Node_ChildrenEntry.decode(reader, reader.uint32());
-          if (entry4.value !== undefined) {
-            message.Children[entry4.key] = entry4.value;
-          }
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Node {
-    return {
-      NodeType: isSet(object.NodeType) ? globalThis.String(object.NodeType) : "",
-      content: isSet(object.content) ? globalThis.String(object.content) : "",
-      Tags: isObject(object.Tags)
-        ? Object.entries(object.Tags).reduce<{ [key: string]: Node }>((acc, [key, value]) => {
-          acc[key] = Node.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
-      Children: isObject(object.Children)
-        ? Object.entries(object.Children).reduce<{ [key: string]: Node }>((acc, [key, value]) => {
-          acc[key] = Node.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
-    };
-  },
-
-  toJSON(message: Node): unknown {
-    const obj: any = {};
-    if (message.NodeType !== "") {
-      obj.NodeType = message.NodeType;
-    }
-    if (message.content !== "") {
-      obj.content = message.content;
-    }
-    if (message.Tags) {
-      const entries = Object.entries(message.Tags);
-      if (entries.length > 0) {
-        obj.Tags = {};
-        entries.forEach(([k, v]) => {
-          obj.Tags[k] = Node.toJSON(v);
-        });
-      }
-    }
-    if (message.Children) {
-      const entries = Object.entries(message.Children);
-      if (entries.length > 0) {
-        obj.Children = {};
-        entries.forEach(([k, v]) => {
-          obj.Children[k] = Node.toJSON(v);
-        });
-      }
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Node>, I>>(base?: I): Node {
-    return Node.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Node>, I>>(object: I): Node {
-    const message = createBaseNode();
-    message.NodeType = object.NodeType ?? "";
-    message.content = object.content ?? "";
-    message.Tags = Object.entries(object.Tags ?? {}).reduce<{ [key: string]: Node }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Node.fromPartial(value);
-      }
-      return acc;
-    }, {});
-    message.Children = Object.entries(object.Children ?? {}).reduce<{ [key: string]: Node }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Node.fromPartial(value);
-      }
-      return acc;
-    }, {});
-    return message;
-  },
-};
-
-function createBaseNode_TagsEntry(): Node_TagsEntry {
-  return { key: "", value: undefined };
-}
-
-export const Node_TagsEntry: MessageFns<Node_TagsEntry> = {
-  encode(message: Node_TagsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Node.encode(message.value, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): Node_TagsEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNode_TagsEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Node.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Node_TagsEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? Node.fromJSON(object.value) : undefined,
-    };
-  },
-
-  toJSON(message: Node_TagsEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = Node.toJSON(message.value);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Node_TagsEntry>, I>>(base?: I): Node_TagsEntry {
-    return Node_TagsEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Node_TagsEntry>, I>>(object: I): Node_TagsEntry {
-    const message = createBaseNode_TagsEntry();
-    message.key = object.key ?? "";
-    message.value = (object.value !== undefined && object.value !== null) ? Node.fromPartial(object.value) : undefined;
-    return message;
-  },
-};
-
-function createBaseNode_ChildrenEntry(): Node_ChildrenEntry {
-  return { key: "", value: undefined };
-}
-
-export const Node_ChildrenEntry: MessageFns<Node_ChildrenEntry> = {
-  encode(message: Node_ChildrenEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Node.encode(message.value, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): Node_ChildrenEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNode_ChildrenEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Node.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Node_ChildrenEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? Node.fromJSON(object.value) : undefined,
-    };
-  },
-
-  toJSON(message: Node_ChildrenEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = Node.toJSON(message.value);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Node_ChildrenEntry>, I>>(base?: I): Node_ChildrenEntry {
-    return Node_ChildrenEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Node_ChildrenEntry>, I>>(object: I): Node_ChildrenEntry {
-    const message = createBaseNode_ChildrenEntry();
-    message.key = object.key ?? "";
-    message.value = (object.value !== undefined && object.value !== null) ? Node.fromPartial(object.value) : undefined;
     return message;
   },
 };
@@ -483,49 +212,6 @@ export const InitRequest: MessageFns<InitRequest> = {
     const message = createBaseInitRequest();
     message.workspace = object.workspace ?? "";
     message.configUri = object.configUri ?? "";
-    return message;
-  },
-};
-
-function createBaseVoid(): Void {
-  return {};
-}
-
-export const Void: MessageFns<Void> = {
-  encode(_: Void, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): Void {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVoid();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(_: any): Void {
-    return {};
-  },
-
-  toJSON(_: Void): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Void>, I>>(base?: I): Void {
-    return Void.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Void>, I>>(_: I): Void {
-    const message = createBaseVoid();
     return message;
   },
 };
@@ -693,16 +379,13 @@ type Builtin = Date | Function | Uint8Array | string | number | boolean | undefi
 export type DeepPartial<T> = T extends Builtin ? T
   : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
   : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends { $case: string } ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & { $case: T["$case"] }
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
-
-function isObject(value: any): boolean {
-  return typeof value === "object" && value !== null;
-}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

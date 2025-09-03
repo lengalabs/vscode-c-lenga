@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getNonce } from './utils';
 import { Client } from './client';
+import { Node } from '../rpc/generated/nodes';
 
 export enum View {
 	Spike = 'spikeView',
@@ -26,7 +27,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
-		let state: string = "";
+		let state: Node;
 		const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
 		
 		webviewPanel.webview.options = {
@@ -35,8 +36,8 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 		const lastView = this.context.workspaceState.get<View>(keyForFile(document.uri), View.Spike);
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, lastView);
 
-		function updateWebview(contents: string) {
-			vscode.window.showInformationMessage(contents);
+		function updateWebview(contents: Node) {
+			console.log(JSON.stringify(contents, null, 2));
 			webviewPanel.webview.postMessage({
 				type: 'update',
 				contents: contents,

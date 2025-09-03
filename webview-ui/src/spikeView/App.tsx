@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { vscode } from '../vscode'
+import * as nodes from '../../../rpc/generated/nodes';
 
 export default function App() {
-  const [content, setContent] = useState<string>('')
+  const [content, setContent] = useState<nodes.Node>()
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -26,7 +27,7 @@ export default function App() {
   return (
     <div>
       <button onClick={onEditClick}>Edit</button>
-      <div>{content}</div>
+      <pre>{JSON.stringify(content, null, 2)}</pre>
     </div>
   )
 }
