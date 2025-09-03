@@ -1,30 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Line } from './components/line'
-import { AnyNode } from './node'
 import { vscode } from '../vscode'
+import * as nodes from '../../../rpc/generated/nodes';
 
 export default function App() {
-  const [nodes, setNodes] = useState<AnyNode[]>([])
+  const [ast, setAst] = useState<nodes.Node>({node: undefined})
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
-      console.log("typeof contents:", typeof message.contents);
-      console.log("contents value:", message.contents);
-
-      try {
-        const parsed = typeof message.contents === 'string' ? JSON.parse(message.contents): message.contents
-        setNodes(Array.isArray(parsed)? parsed: [])
-      } catch (e) {
-        console.error("Failed to parse message.contents:", e);
-        setNodes([])
-      }
+      setAst(message.contents)
     }
 
     window.addEventListener('message', handleMessage)
 
     vscode.postMessage({type: 'ready'});
-
 
     return () => {
       window.removeEventListener('message', handleMessage)
@@ -34,9 +24,7 @@ export default function App() {
 
   return (
     <div>
-      {nodes.map((node, index) => (
-        <Line key={index} node={node} indent={0}/>
-      ))}
+        <Line key={0} node={ast} indent={0}/>
     </div>
   )
 }

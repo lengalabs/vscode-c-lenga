@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package saturn;
+
+message Node {
+    oneof node {
+        IncludeNode include = 1;
+        FunctionDeclarationNode func_decl= 2;
+        ArgumentNode argument = 3;
+        VariableNode variable = 4;
+        LiteralNode literal = 5;
+        ReturnNode return = 6;
+        FunctionCallNode func_call = 7;
+        CompoundStatementNode comp_stmt = 8;
+    }
+}
+
+message CompoundStatementNode {
+    repeated Node elements = 1;
+}
+
+message IncludeNode {
+    string id = 1;
+    string directive = 2;
+}
+
+message FunctionDeclarationNode {
+    string id = 1;
+    string name = 2;
+    string return_type = 3;
+    repeated ArgumentNode arguments = 4;
+    CompoundStatementNode body = 5;
+}
+
+message ArgumentNode {
+    string id = 1;
+    string name = 2;
+    string data_type = 3;
+}
+
+message VariableNode {
+    string id = 1;
+    string name = 2;
+    string data_type = 3;
+    Node initializer = 4; // Deberia ser un expressionNode
+}
+
+message LiteralNode {
+    string value = 1;
+}
+
+message ReturnNode {
+    string id = 1;
+    Node expression = 2; // Deberia ser un expressionNode
+}
+
+message FunctionCallNode {
+    string id = 1;
+    string name = 2;
+    repeated string parameters = 3;
+}
+

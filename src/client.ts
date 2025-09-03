@@ -1,5 +1,6 @@
 import { credentials, ServiceError } from '@grpc/grpc-js';
-import { SaturnClient, OpenRequest, Node, InitRequest, Void, EditRequest } from "../rpc/generated/saturn";
+import { SaturnClient, OpenRequest, InitRequest, Void, EditRequest } from "../rpc/generated/saturn";
+import * as nodes from "../rpc/generated/nodes";
 
 export class Client {
     private stub: any;
@@ -25,34 +26,34 @@ export class Client {
         });
     }
 
-    openFile(path: string): Promise<string> {
+    openFile(path: string): Promise<nodes.Node> {
         var request: OpenRequest = {
             path: path,
         };
 
         return new Promise((resolve, reject) => {
-            this.stub.openFile(request, (err: ServiceError | null, node: Node) => {
+            this.stub.openFile(request, (err: ServiceError | null, node: nodes.Node) => {
                 if (err) {
                     reject(new Error(`${err.message}`));
                 } else {
-                    resolve(node.content);
+                    resolve(node);
                 }
             });
         });
     }
 
-    edit(path: string, editData: string): Promise<string> {
+    edit(path: string, editData: string): Promise<nodes.Node> {
         var request: EditRequest = {
             path: path,
             editData: editData,
         };
         
         return new Promise((resolve, reject) => {
-            this.stub.edit(request, (err: ServiceError, node: Node) => {
+            this.stub.edit(request, (err: ServiceError, node: nodes.Node) => {
                 if (err) {
                     reject(new Error(`${err}`));
                 } else {
-                    resolve(node.content);
+                    resolve(node);
                 }
             });
         });
