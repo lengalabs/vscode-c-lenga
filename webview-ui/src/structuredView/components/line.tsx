@@ -1,9 +1,9 @@
-//import React from "react"
-import { AnyNode, IncludeNode, FunctionNode, VariableNode, LiteralNode, ReturnNode, FunctionCallNode } from "../node"
+import React from 'react';
+import * as nodes from '../../../../rpc/generated/nodes';
 
 interface LineProp {
     indent: number
-    node: AnyNode
+    node: nodes.Node
 }
 
 export function Line({ indent, node }: LineProp) {
@@ -12,37 +12,39 @@ export function Line({ indent, node }: LineProp) {
     )
 }
 
-function mapLine(node: AnyNode, indent: number): React.ReactNode {
-    switch (node.type) {
+function mapLine(node: nodes.Node, indent: number): React.ReactNode {
+    switch (node.node?.$case) {
         case "include":
-            return(createInclude(node))
-        case "function":
-            return(createFunction(node, indent))
+            return(createInclude(node.node.include))
+        case "funcDecl":
+            return(createFunction(node.node.funcDecl, indent))
         case "variable":
-            return(createVariable(node))
+            return(createVariable(node.node.variable))
         case "literal":
-            return(createLiteral(node))
+            return(createLiteral(node.node.literal))
         case "return":
-            return(createReturn(node))
-        case "function_call":
-            return(createFunctionCall(node))
+            return(createReturn(node.node.return))
+        case "funcCall":
+            return(createFunctionCall(node.node.funcCall))
+        case "compStmt":
+            return(createCompoundStatement(node.node.compStmt, indent))
         default: 
             return("WIP")
     }
 }
 
-function createInclude(include: IncludeNode): React.ReactNode {
+function createInclude(include: nodes.IncludeNode): React.ReactNode {
     return(
-        <>#include {include.value}</>
+        <>#include {include.directive}</>
     )
 }
 
-function createFunction(funct: FunctionNode, indent: number): React.ReactNode {
+function createFunction(funct: nodes.FunctionDeclarationNode, indent: number): React.ReactNode {
     return(
         <div>
-            <div>{funct.return_type} {funct.name} ({funct.args.map(arg => `${arg.data_type} ${arg.name}`).join(', ')}) {"{"}</div>
+            <div>{funct.returnType} {funct.name} ({funct.arguments.map(arg => `${arg.dataType} ${arg.name}`).join(', ')}) {"{"}</div>
             <>
-                {funct.body.map((node, index) => (
+                {funct.body?.elements.map((node, index) => (
                     <Line key={index} node={node} indent={ indent + 1 }/>
                 ))}
             </>
@@ -51,26 +53,34 @@ function createFunction(funct: FunctionNode, indent: number): React.ReactNode {
     )
 }
 
-function createVariable(variable: VariableNode): React.ReactNode {
+function createVariable(variable: nodes.VariableNode): React.ReactNode {
     return(
-        <>{variable.data_type} {variable.name} = {mapLine(variable.value, 0)};</>
+        <>{variable.dataType} {variable.name} = {variable.initializer ? mapLine(variable.initializer, 0) : ""};</>
     )
 }
 
-function createLiteral(literal: LiteralNode): React.ReactNode {
+function createLiteral(literal: nodes.LiteralNode): React.ReactNode {
     return(
         <>{literal.value}</>
     )
 }
 
-function createReturn(ret: ReturnNode): React.ReactNode {
+function createReturn(ret: nodes.ReturnNode): React.ReactNode {
     return(
-        <>return {mapLine(ret.value, 0)};</>
+        <>return {ret.expression ? mapLine(ret.expression, 0) : ""};</>
     )
 }
 
-function createFunctionCall(functionCall: FunctionCallNode): React.ReactNode {
+function createFunctionCall(functionCall: nodes.FunctionCallNode): React.ReactNode {
     return(
         <>{functionCall.name}({functionCall.parameters.join(', ')});</>
+    )
+}
+
+function createCompoundStatement(compStmt: nodes.CompoundStatementNode, indent: number): React.ReactNode {
+    return(
+        compStmt.elements.map((node, index) => (
+            <Line key={index} node={node} indent={ indent }/>
+        ))
     )
 }
