@@ -4,59 +4,105 @@ package saturn;
 
 message Node {
     oneof node {
-        IncludeNode include = 1;
-        FunctionDeclarationNode func_decl= 2;
-        ArgumentNode argument = 3;
-        VariableNode variable = 4;
-        LiteralNode literal = 5;
-        ReturnNode return = 6;
-        FunctionCallNode func_call = 7;
-        CompoundStatementNode comp_stmt = 8;
+        UnknownNode unknown_node = 1;
+        DeclNode decl_node = 2;
+        StmtNode stmt_node = 3;
+        ExprNode expr_node = 4;
     }
 }
 
-message CompoundStatementNode {
-    repeated Node elements = 1;
+message UnknownNode {
+    string id = 1;
+    string contents = 2;
 }
 
-message IncludeNode {
+message DeclNode {
+    oneof declaration {
+        IncludeDecl include_decl = 1;
+        FuncDecl func_decl = 2;
+        VarDecl var_decl = 3;
+        ParamDecl param_decl = 4;
+    }
+}
+
+message StmtNode {
+    oneof statement {
+        CompStmt comp_stmt = 1;
+        ReturnStmt return_stmt = 2;
+    }
+}
+
+message ExprNode {
+    oneof expression {
+        CallExpr call_expr = 1;
+        DeclRefExpr decl_ref_expr = 2;
+        AssignmentExpr assignment_expr = 3;
+        LiteralExpr literal_expr = 4;
+        IdentifierExpr identifier_expr = 5;
+    }
+}
+
+message IncludeDecl {
     string id = 1;
     string directive = 2;
 }
 
-message FunctionDeclarationNode {
+message FuncDecl {
     string id = 1;
     string name = 2;
     string return_type = 3;
-    repeated ArgumentNode arguments = 4;
-    CompoundStatementNode body = 5;
+    repeated ParamDecl params = 4;
+    CompStmt body = 5;
 }
 
-message ArgumentNode {
+message ParamDecl {
     string id = 1;
     string name = 2;
     string data_type = 3;
 }
 
-message VariableNode {
+message VarDecl {
     string id = 1;
     string name = 2;
     string data_type = 3;
-    Node initializer = 4; // Deberia ser un expressionNode
+    ExprNode initializer = 4;
 }
 
-message LiteralNode {
-    string value = 1;
-}
-
-message ReturnNode {
+message ReturnStmt {
     string id = 1;
-    Node expression = 2; // Deberia ser un expressionNode
+    ExprNode expression = 2; 
 }
 
-message FunctionCallNode {
+message CompStmt {
     string id = 1;
-    string name = 2;
-    repeated string parameters = 3;
+    repeated Node statements = 2;
 }
 
+message CallExpr {
+    string id = 1;
+    ExprNode calle = 2;
+    repeated ExprNode args = 3;
+}
+
+message DeclRefExpr {
+    string id = 1;
+    string decl_ref_id = 2;
+}
+
+message AssignmentExpr {
+    string id = 1;
+    ExprNode left = 2;
+    ExprNode right = 3;
+    string op = 4;
+}
+
+message LiteralExpr {
+    string id = 1;
+    string data_type = 2;
+    string value = 3;
+}
+
+message IdentifierExpr {
+    string id = 1;
+    string identifier = 2;
+}
