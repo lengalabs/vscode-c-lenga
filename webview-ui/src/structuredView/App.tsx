@@ -21,10 +21,16 @@ export default function App() {
     }    
   }, [])
 
+  const handleEdit = (edit: nodes.Node) => {
+    //const parsedContents = nodes.Node.toJSON(edit);
+    const message = {type: 'nodeEdit', contents: edit}
+    console.log("sending message: ", message);
+    vscode.postMessage(message)
+  }
 
   return (
     <div>
-        <Line key={0} node={ast} indent={0}/>
+        <Line key={0} node={ast} indent={0} onEdit={handleEdit}/>
     </div>
   )
 }

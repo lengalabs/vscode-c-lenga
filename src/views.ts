@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getNonce } from './utils';
 import { Client } from './client';
-import { Node } from '../rpc/generated/nodes';
+import * as nodes from './nodes/cNodes';
 
 export enum View {
 	Spike = 'spikeView',
@@ -27,7 +27,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
-		let state: Node;
+		let state: nodes.Node[];
 		const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
 		
 		webviewPanel.webview.options = {
@@ -36,7 +36,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 		const lastView = this.context.workspaceState.get<View>(keyForFile(document.uri), View.Spike);
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, lastView);
 
-		function updateWebview(contents: Node) {
+		function updateWebview(contents: nodes.Node[]) {
 			console.log(JSON.stringify(contents, null, 2));
 			webviewPanel.webview.postMessage({
 				type: 'update',
@@ -69,6 +69,10 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 							vscode.window.showErrorMessage(err);
 						});
 					return;
+				case 'nodeEdit':
+					vscode.window.showInformationMessage("edit!!");
+					updateWebview(e.contents);
+					return; 
 			}
 		});
 
@@ -80,6 +84,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
         this.saturnClient.openFile(document.uri.fsPath)
 			.then(result => {
 				state = result;
+				console.log(JSON.stringify(state, null, 2));
 				updateWebview(state);
 			})
 			.catch(err => {

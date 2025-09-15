@@ -1,12 +1,15 @@
 import { credentials, ServiceError } from '@grpc/grpc-js';
-import { SaturnClient, OpenRequest, InitRequest, Void, EditRequest } from "../rpc/generated/saturn";
-import * as nodes from "../rpc/generated/nodes";
+import { SaturnClient, OpenRequest, InitRequest, Void, EditRequest, Ast } from "../rpc/generated/saturn";
+import { CConverter } from './nodes/CConverter';
+import * as cNodes from "./nodes/cNodes";
 
 export class Client {
     private stub: any;
+    private converter: CConverter;
 
     constructor() {
         this.stub = new SaturnClient("localhost:49200", credentials.createInsecure());
+        this.converter = new CConverter();
     }
 
     initialize(workspace: string, configUri: string): Promise<void> {
@@ -26,34 +29,36 @@ export class Client {
         });
     }
 
-    openFile(path: string): Promise<nodes.Node> {
+    openFile(path: string): Promise<Array<cNodes.Node>> {
         var request: OpenRequest = {
             path: path,
         };
 
         return new Promise((resolve, reject) => {
-            this.stub.openFile(request, (err: ServiceError | null, node: nodes.Node) => {
+            this.stub.openFile(request, (err: ServiceError | null, ast: Ast) => {
                 if (err) {
                     reject(new Error(`${err.message}`));
                 } else {
-                    resolve(node);
+                    const nodes = this.converter.fromProto(ast);
+                    resolve(nodes);
                 }
             });
         });
     }
 
-    edit(path: string, editData: string): Promise<nodes.Node> {
+    edit(path: string, editData: string): Promise<Array<cNodes.Node>> {
         var request: EditRequest = {
             path: path,
             editData: editData,
         };
         
         return new Promise((resolve, reject) => {
-            this.stub.edit(request, (err: ServiceError, node: nodes.Node) => {
+            this.stub.edit(request, (err: ServiceError, ast: Ast) => {
                 if (err) {
                     reject(new Error(`${err}`));
                 } else {
-                    resolve(node);
+                    const nodes = this.converter.fromProto(ast);
+                    resolve(nodes);
                 }
             });
         });
