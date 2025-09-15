@@ -39,6 +39,10 @@ export interface EditRequest {
   editData: string;
 }
 
+export interface Ast {
+  nodes: Node[];
+}
+
 function createBaseVoid(): Void {
   return {};
 }
@@ -292,6 +296,64 @@ export const EditRequest: MessageFns<EditRequest> = {
   },
 };
 
+function createBaseAst(): Ast {
+  return { nodes: [] };
+}
+
+export const Ast: MessageFns<Ast> = {
+  encode(message: Ast, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.nodes) {
+      Node.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Ast {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAst();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.nodes.push(Node.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Ast {
+    return { nodes: globalThis.Array.isArray(object?.nodes) ? object.nodes.map((e: any) => Node.fromJSON(e)) : [] };
+  },
+
+  toJSON(message: Ast): unknown {
+    const obj: any = {};
+    if (message.nodes?.length) {
+      obj.nodes = message.nodes.map((e) => Node.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Ast>, I>>(base?: I): Ast {
+    return Ast.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Ast>, I>>(object: I): Ast {
+    const message = createBaseAst();
+    message.nodes = object.nodes?.map((e) => Node.fromPartial(e)) || [];
+    return message;
+  },
+};
+
 export type SaturnService = typeof SaturnService;
 export const SaturnService = {
   initialize: {
@@ -309,8 +371,8 @@ export const SaturnService = {
     responseStream: false,
     requestSerialize: (value: OpenRequest): Buffer => Buffer.from(OpenRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): OpenRequest => OpenRequest.decode(value),
-    responseSerialize: (value: Node): Buffer => Buffer.from(Node.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Node => Node.decode(value),
+    responseSerialize: (value: Ast): Buffer => Buffer.from(Ast.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Ast => Ast.decode(value),
   },
   edit: {
     path: "/saturn.Saturn/Edit",
@@ -325,7 +387,7 @@ export const SaturnService = {
 
 export interface SaturnServer extends UntypedServiceImplementation {
   initialize: handleUnaryCall<InitRequest, Void>;
-  openFile: handleUnaryCall<OpenRequest, Node>;
+  openFile: handleUnaryCall<OpenRequest, Ast>;
   edit: handleUnaryCall<EditRequest, Node>;
 }
 
@@ -342,17 +404,17 @@ export interface SaturnClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Void) => void,
   ): ClientUnaryCall;
-  openFile(request: OpenRequest, callback: (error: ServiceError | null, response: Node) => void): ClientUnaryCall;
+  openFile(request: OpenRequest, callback: (error: ServiceError | null, response: Ast) => void): ClientUnaryCall;
   openFile(
     request: OpenRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: Node) => void,
+    callback: (error: ServiceError | null, response: Ast) => void,
   ): ClientUnaryCall;
   openFile(
     request: OpenRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Node) => void,
+    callback: (error: ServiceError | null, response: Ast) => void,
   ): ClientUnaryCall;
   edit(request: EditRequest, callback: (error: ServiceError | null, response: Node) => void): ClientUnaryCall;
   edit(

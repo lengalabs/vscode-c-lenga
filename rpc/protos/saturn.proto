@@ -6,7 +6,7 @@ import "nodes.proto";
 
 service Saturn {
     rpc Initialize(InitRequest) returns (Void);
-    rpc OpenFile(OpenRequest) returns (Node);
+    rpc OpenFile(OpenRequest) returns (Ast);
     rpc Edit(EditRequest) returns (Node);
 }
 
@@ -24,4 +24,8 @@ message InitRequest {
 message EditRequest {
     string path = 1;
     string editData = 2;
+}
+
+message Ast {
+    repeated Node nodes = 1;
 }
