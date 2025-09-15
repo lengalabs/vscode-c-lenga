@@ -1,5 +1,5 @@
 import React from 'react';
-import * as nodes from '../../../../rpc/generated/nodes';
+import * as nodes from '../../../../src/nodes/cNodes';
 
 interface LineProp {
     indent: number;
@@ -14,27 +14,27 @@ export function Line({ indent, node, onEdit }: LineProp) {
 }
 
 function mapLine(node: nodes.Node, indent: number, onEdit: (n: nodes.Node) => void): React.ReactNode {
-    switch (node.node?.$case) {
-        case "include":
-            return(createInclude(node.node.include, onEdit))
-        case "funcDecl":
-            return(createFunction(node.node.funcDecl, indent, onEdit))
-        case "variable":
-            return(createVariable(node.node.variable, onEdit))
-        case "literal":
-            return(createLiteral(node.node.literal))
-        case "return":
-            return(createReturn(node.node.return, onEdit))
-        case "funcCall":
-            return(createFunctionCall(node.node.funcCall))
-        case "compStmt":
-            return(createCompoundStatement(node.node.compStmt, indent, onEdit))
-        default: 
+    switch (node.type) {
+        case "IncludeDecl":
+            return(createInclude(node as nodes.IncludeDecl, onEdit))
+        case "FuncDecl":
+            return(createFunction(node as nodes.FuncDecl, indent, onEdit))
+        case "VarDecl":
+            return(createVariable(node as nodes.VarDecl, onEdit))
+        case "LiteralExpr":
+            return(createLiteral(node as nodes.LiteralExpr))
+        case "ReturnStmt":
+            return(createReturn(node as nodes.ReturnStmt, onEdit))
+        case "CallExpr":
+            return(createFunctionCall(node as nodes.CallExpr))
+        case "CompStmt":
+            return(createCompoundStatement(node as nodes.CompStmt, indent, onEdit))
+        default:
             return("WIP")
     }
 }
 
-function createInclude(include: nodes.IncludeNode, onEdit: (n: nodes.Node) => void): React.ReactNode {
+function createInclude(include: nodes.IncludeDecl, onEdit: (n: nodes.Node) => void): React.ReactNode {
     return(
         <>
         #include {" "}
@@ -42,56 +42,53 @@ function createInclude(include: nodes.IncludeNode, onEdit: (n: nodes.Node) => vo
             defaultValue={include.directive}
             onBlur={(e) => {
                 include.directive = e.target.value;
-                const updated: nodes.Node = {node: {$case: "include", include: include}};
                 console.log("blur");
-                onEdit(updated);
+                onEdit(include);
             }}
         />
         </>
     )
 }
 
-function createFunction(funct: nodes.FunctionDeclarationNode, indent: number, onEdit: (n: nodes.Node) => void): React.ReactNode {
+function createFunction(funct: nodes.FuncDecl, indent: number, onEdit: (n: nodes.Node) => void): React.ReactNode {
     return(
         <div>
-            <div>{funct.returnType} {funct.name} ({funct.arguments.map(arg => `${arg.dataType} ${arg.name}`).join(', ')}) {"{"}</div>
+            <div>{funct.return_type} {funct.name} ({funct.params.map(arg => `${arg.data_type} ${arg.name}`).join(', ')}) {"{"}</div>
             <>
-                {funct.body?.elements.map((node, index) => (
-                    <Line key={index} node={node} indent={indent + 1} onEdit={onEdit}/>
-                ))}
+                {funct.body ? createCompoundStatement(funct.body, indent + 1, onEdit) : ""}
             </>
             <div>{"}"}</div>
         </div>
     )
 }
 
-function createVariable(variable: nodes.VariableNode, onEdit: (n: nodes.Node) => void): React.ReactNode {
+function createVariable(variable: nodes.VarDecl, onEdit: (n: nodes.Node) => void): React.ReactNode {
     return(
-        <>{variable.dataType} {variable.name} = {variable.initializer ? mapLine(variable.initializer, 0, onEdit) : ""};</>
+        <>{variable.data_type} {variable.name} = {variable.initializer ? mapLine(variable.initializer, 0, onEdit) : ""};</>
     )
 }
 
-function createLiteral(literal: nodes.LiteralNode): React.ReactNode {
+function createLiteral(literal: nodes.LiteralExpr): React.ReactNode {
     return(
         <>{literal.value}</>
     )
 }
 
-function createReturn(ret: nodes.ReturnNode, onEdit: (n: nodes.Node) => void): React.ReactNode {
+function createReturn(ret: nodes.ReturnStmt, onEdit: (n: nodes.Node) => void): React.ReactNode {
     return(
         <>return {ret.expression ? mapLine(ret.expression, 0, onEdit) : ""};</>
     )
 }
 
-function createFunctionCall(functionCall: nodes.FunctionCallNode): React.ReactNode {
+function createFunctionCall(functionCall: nodes.CallExpr): React.ReactNode {
     return(
-        <>{functionCall.name}({functionCall.parameters.join(', ')});</>
+        <>{functionCall.calle}({functionCall.args.join(', ')});</>
     )
 }
 
-function createCompoundStatement(compStmt: nodes.CompoundStatementNode, indent: number, onEdit: (n: nodes.Node) => void): React.ReactNode {
+function createCompoundStatement(compStmt: nodes.CompStmt, indent: number, onEdit: (n: nodes.Node) => void): React.ReactNode {
     return(
-        compStmt.elements.map((node, index) => (
+        compStmt.statements.map((node, index) => (
             <Line key={index} node={node} indent={indent} onEdit={onEdit}/>
         ))
     )
