@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Line } from './components/line'
 import { vscode } from '../vscode'
-import * as nodes from '../../../rpc/generated/nodes';
+import * as nodes from '../../../src/nodes/cNodes';
 
 export default function App() {
-  const [ast, setAst] = useState<nodes.Node>({node: undefined})
+  const [ast, setAst] = useState<Array<nodes.Node>>([])
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -22,7 +22,6 @@ export default function App() {
   }, [])
 
   const handleEdit = (edit: nodes.Node) => {
-    //const parsedContents = nodes.Node.toJSON(edit);
     const message = {type: 'nodeEdit', contents: edit}
     console.log("sending message: ", message);
     vscode.postMessage(message)
@@ -30,7 +29,7 @@ export default function App() {
 
   return (
     <div>
-        <Line key={0} node={ast} indent={0} onEdit={handleEdit}/>
+      {ast.map((node, index) => <Line key={index} node={node} indent={0} onEdit={handleEdit}/>)}
     </div>
   )
 }
