@@ -71,7 +71,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 					return;
 				case 'nodeEdit':
 					vscode.window.showInformationMessage("edit!!");
-					updateWebview(e.contents);
+					updateWebview([e.contents]);
 					return; 
 			}
 		});
