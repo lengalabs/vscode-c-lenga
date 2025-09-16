@@ -29,7 +29,9 @@ export default function App() {
 
   return (
     <div>
-      {ast.map((node, index) => <Line key={index} node={node} indent={0} onEdit={handleEdit}/>)}
+      {ast.map(node => (
+        <Line key={node.id} node={node} indent={0} onEdit={handleEdit} />
+      ))}
     </div>
   )
 }
