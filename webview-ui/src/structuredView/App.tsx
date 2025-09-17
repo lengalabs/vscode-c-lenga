@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Line } from './components/line'
+import { NodeRender } from './components/line'
+import { LineProvider } from './components/lineContext'
 import { vscode } from '../vscode'
 import * as nodes from '../../../src/nodes/cNodes';
 
 export default function App() {
-  const [ast, setAst] = useState<Array<nodes.Node>>([])
+  const [ast, setAst] = useState<nodes.Node[]>([])
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [insertTargetId, setInsertTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -21,17 +24,20 @@ export default function App() {
     }    
   }, [])
 
-  const handleEdit = (edit: nodes.Node) => {
+  const onEdit = (edit: nodes.Node) => {
     const message = {type: 'nodeEdit', contents: edit}
+    setAst((prev) => [...prev]); //Placeholder
     console.log("sending message: ", message);
-    vscode.postMessage(message)
+    //vscode.postMessage(message)
   }
 
   return (
-    <div>
-      {ast.map(node => (
-        <Line key={node.id} node={node} indent={0} onEdit={handleEdit} />
-      ))}
-    </div>
+    <LineProvider ast={ast} onEdit={onEdit} selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} insertTargetId={insertTargetId} setInsertTargetId={setInsertTargetId}>
+      <div>
+        {ast.map(node => (
+          <NodeRender key={node.id} node={node} indent={0} />
+        ))}
+      </div>
+    </LineProvider>
   )
 }
