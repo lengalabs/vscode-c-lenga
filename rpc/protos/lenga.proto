@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package saturn;
+package lenga;
 
 import "nodes.proto";
 
-service Saturn {
+service Lenga {
     rpc Initialize(InitRequest) returns (Void);
     rpc OpenFile(OpenRequest) returns (Ast);
     rpc Edit(EditRequest) returns (Node);
