@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package saturn;
+package lenga;
 
 message Node {
     oneof node {
