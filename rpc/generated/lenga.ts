@@ -18,29 +18,22 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
-import { Node } from "./nodes";
 
 export const protobufPackage = "lenga";
 
 export interface Void {
 }
 
-export interface OpenRequest {
-  path: string;
+export interface SuportedLanguages {
+  languages: string[];
 }
 
-export interface InitRequest {
-  workspace: string;
-  configUri: string;
+export interface LanguageRequest {
+  language: string;
 }
 
-export interface EditRequest {
-  path: string;
-  editData: string;
-}
-
-export interface Ast {
-  nodes: Node[];
+export interface LanguageSupport {
+  supported: boolean;
 }
 
 function createBaseVoid(): Void {
@@ -86,22 +79,22 @@ export const Void: MessageFns<Void> = {
   },
 };
 
-function createBaseOpenRequest(): OpenRequest {
-  return { path: "" };
+function createBaseSuportedLanguages(): SuportedLanguages {
+  return { languages: [] };
 }
 
-export const OpenRequest: MessageFns<OpenRequest> = {
-  encode(message: OpenRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+export const SuportedLanguages: MessageFns<SuportedLanguages> = {
+  encode(message: SuportedLanguages, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.languages) {
+      writer.uint32(10).string(v!);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): OpenRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): SuportedLanguages {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseOpenRequest();
+    const message = createBaseSuportedLanguages();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -110,7 +103,7 @@ export const OpenRequest: MessageFns<OpenRequest> = {
             break;
           }
 
-          message.path = reader.string();
+          message.languages.push(reader.string());
           continue;
         }
       }
@@ -122,123 +115,48 @@ export const OpenRequest: MessageFns<OpenRequest> = {
     return message;
   },
 
-  fromJSON(object: any): OpenRequest {
-    return { path: isSet(object.path) ? globalThis.String(object.path) : "" };
-  },
-
-  toJSON(message: OpenRequest): unknown {
-    const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<OpenRequest>, I>>(base?: I): OpenRequest {
-    return OpenRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<OpenRequest>, I>>(object: I): OpenRequest {
-    const message = createBaseOpenRequest();
-    message.path = object.path ?? "";
-    return message;
-  },
-};
-
-function createBaseInitRequest(): InitRequest {
-  return { workspace: "", configUri: "" };
-}
-
-export const InitRequest: MessageFns<InitRequest> = {
-  encode(message: InitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.workspace !== "") {
-      writer.uint32(10).string(message.workspace);
-    }
-    if (message.configUri !== "") {
-      writer.uint32(18).string(message.configUri);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): InitRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInitRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.workspace = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.configUri = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): InitRequest {
+  fromJSON(object: any): SuportedLanguages {
     return {
-      workspace: isSet(object.workspace) ? globalThis.String(object.workspace) : "",
-      configUri: isSet(object.configUri) ? globalThis.String(object.configUri) : "",
+      languages: globalThis.Array.isArray(object?.languages)
+        ? object.languages.map((e: any) => globalThis.String(e))
+        : [],
     };
   },
 
-  toJSON(message: InitRequest): unknown {
+  toJSON(message: SuportedLanguages): unknown {
     const obj: any = {};
-    if (message.workspace !== "") {
-      obj.workspace = message.workspace;
-    }
-    if (message.configUri !== "") {
-      obj.configUri = message.configUri;
+    if (message.languages?.length) {
+      obj.languages = message.languages;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<InitRequest>, I>>(base?: I): InitRequest {
-    return InitRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<SuportedLanguages>, I>>(base?: I): SuportedLanguages {
+    return SuportedLanguages.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<InitRequest>, I>>(object: I): InitRequest {
-    const message = createBaseInitRequest();
-    message.workspace = object.workspace ?? "";
-    message.configUri = object.configUri ?? "";
+  fromPartial<I extends Exact<DeepPartial<SuportedLanguages>, I>>(object: I): SuportedLanguages {
+    const message = createBaseSuportedLanguages();
+    message.languages = object.languages?.map((e) => e) || [];
     return message;
   },
 };
 
-function createBaseEditRequest(): EditRequest {
-  return { path: "", editData: "" };
+function createBaseLanguageRequest(): LanguageRequest {
+  return { language: "" };
 }
 
-export const EditRequest: MessageFns<EditRequest> = {
-  encode(message: EditRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
-    }
-    if (message.editData !== "") {
-      writer.uint32(18).string(message.editData);
+export const LanguageRequest: MessageFns<LanguageRequest> = {
+  encode(message: LanguageRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.language !== "") {
+      writer.uint32(10).string(message.language);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): EditRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): LanguageRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEditRequest();
+    const message = createBaseLanguageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -247,15 +165,7 @@ export const EditRequest: MessageFns<EditRequest> = {
             break;
           }
 
-          message.path = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.editData = reader.string();
+          message.language = reader.string();
           continue;
         }
       }
@@ -267,60 +177,53 @@ export const EditRequest: MessageFns<EditRequest> = {
     return message;
   },
 
-  fromJSON(object: any): EditRequest {
-    return {
-      path: isSet(object.path) ? globalThis.String(object.path) : "",
-      editData: isSet(object.editData) ? globalThis.String(object.editData) : "",
-    };
+  fromJSON(object: any): LanguageRequest {
+    return { language: isSet(object.language) ? globalThis.String(object.language) : "" };
   },
 
-  toJSON(message: EditRequest): unknown {
+  toJSON(message: LanguageRequest): unknown {
     const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
-    }
-    if (message.editData !== "") {
-      obj.editData = message.editData;
+    if (message.language !== "") {
+      obj.language = message.language;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<EditRequest>, I>>(base?: I): EditRequest {
-    return EditRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<LanguageRequest>, I>>(base?: I): LanguageRequest {
+    return LanguageRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<EditRequest>, I>>(object: I): EditRequest {
-    const message = createBaseEditRequest();
-    message.path = object.path ?? "";
-    message.editData = object.editData ?? "";
+  fromPartial<I extends Exact<DeepPartial<LanguageRequest>, I>>(object: I): LanguageRequest {
+    const message = createBaseLanguageRequest();
+    message.language = object.language ?? "";
     return message;
   },
 };
 
-function createBaseAst(): Ast {
-  return { nodes: [] };
+function createBaseLanguageSupport(): LanguageSupport {
+  return { supported: false };
 }
 
-export const Ast: MessageFns<Ast> = {
-  encode(message: Ast, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.nodes) {
-      Node.encode(v!, writer.uint32(10).fork()).join();
+export const LanguageSupport: MessageFns<LanguageSupport> = {
+  encode(message: LanguageSupport, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.supported !== false) {
+      writer.uint32(8).bool(message.supported);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Ast {
+  decode(input: BinaryReader | Uint8Array, length?: number): LanguageSupport {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAst();
+    const message = createBaseLanguageSupport();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 10) {
+          if (tag !== 8) {
             break;
           }
 
-          message.nodes.push(Node.decode(reader, reader.uint32()));
+          message.supported = reader.bool();
           continue;
         }
       }
@@ -332,101 +235,92 @@ export const Ast: MessageFns<Ast> = {
     return message;
   },
 
-  fromJSON(object: any): Ast {
-    return { nodes: globalThis.Array.isArray(object?.nodes) ? object.nodes.map((e: any) => Node.fromJSON(e)) : [] };
+  fromJSON(object: any): LanguageSupport {
+    return { supported: isSet(object.supported) ? globalThis.Boolean(object.supported) : false };
   },
 
-  toJSON(message: Ast): unknown {
+  toJSON(message: LanguageSupport): unknown {
     const obj: any = {};
-    if (message.nodes?.length) {
-      obj.nodes = message.nodes.map((e) => Node.toJSON(e));
+    if (message.supported !== false) {
+      obj.supported = message.supported;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Ast>, I>>(base?: I): Ast {
-    return Ast.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<LanguageSupport>, I>>(base?: I): LanguageSupport {
+    return LanguageSupport.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Ast>, I>>(object: I): Ast {
-    const message = createBaseAst();
-    message.nodes = object.nodes?.map((e) => Node.fromPartial(e)) || [];
+  fromPartial<I extends Exact<DeepPartial<LanguageSupport>, I>>(object: I): LanguageSupport {
+    const message = createBaseLanguageSupport();
+    message.supported = object.supported ?? false;
     return message;
   },
 };
 
+/** Discovery service */
 export type LengaService = typeof LengaService;
 export const LengaService = {
-  initialize: {
-    path: "/lenga.Lenga/Initialize",
+  /** List all languages the server currently supports */
+  listLanguages: {
+    path: "/lenga.Lenga/ListLanguages",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: InitRequest): Buffer => Buffer.from(InitRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): InitRequest => InitRequest.decode(value),
-    responseSerialize: (value: Void): Buffer => Buffer.from(Void.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Void => Void.decode(value),
+    requestSerialize: (value: Void): Buffer => Buffer.from(Void.encode(value).finish()),
+    requestDeserialize: (value: Buffer): Void => Void.decode(value),
+    responseSerialize: (value: SuportedLanguages): Buffer => Buffer.from(SuportedLanguages.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SuportedLanguages => SuportedLanguages.decode(value),
   },
-  openFile: {
-    path: "/lenga.Lenga/OpenFile",
+  /** Request if a specific language is supported */
+  checkLanguage: {
+    path: "/lenga.Lenga/CheckLanguage",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: OpenRequest): Buffer => Buffer.from(OpenRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): OpenRequest => OpenRequest.decode(value),
-    responseSerialize: (value: Ast): Buffer => Buffer.from(Ast.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Ast => Ast.decode(value),
-  },
-  edit: {
-    path: "/lenga.Lenga/Edit",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: EditRequest): Buffer => Buffer.from(EditRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): EditRequest => EditRequest.decode(value),
-    responseSerialize: (value: Node): Buffer => Buffer.from(Node.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Node => Node.decode(value),
+    requestSerialize: (value: LanguageRequest): Buffer => Buffer.from(LanguageRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): LanguageRequest => LanguageRequest.decode(value),
+    responseSerialize: (value: LanguageSupport): Buffer => Buffer.from(LanguageSupport.encode(value).finish()),
+    responseDeserialize: (value: Buffer): LanguageSupport => LanguageSupport.decode(value),
   },
 } as const;
 
 export interface LengaServer extends UntypedServiceImplementation {
-  initialize: handleUnaryCall<InitRequest, Void>;
-  openFile: handleUnaryCall<OpenRequest, Ast>;
-  edit: handleUnaryCall<EditRequest, Node>;
+  /** List all languages the server currently supports */
+  listLanguages: handleUnaryCall<Void, SuportedLanguages>;
+  /** Request if a specific language is supported */
+  checkLanguage: handleUnaryCall<LanguageRequest, LanguageSupport>;
 }
 
 export interface LengaClient extends Client {
-  initialize(request: InitRequest, callback: (error: ServiceError | null, response: Void) => void): ClientUnaryCall;
-  initialize(
-    request: InitRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Void) => void,
+  /** List all languages the server currently supports */
+  listLanguages(
+    request: Void,
+    callback: (error: ServiceError | null, response: SuportedLanguages) => void,
   ): ClientUnaryCall;
-  initialize(
-    request: InitRequest,
+  listLanguages(
+    request: Void,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: SuportedLanguages) => void,
+  ): ClientUnaryCall;
+  listLanguages(
+    request: Void,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Void) => void,
+    callback: (error: ServiceError | null, response: SuportedLanguages) => void,
   ): ClientUnaryCall;
-  openFile(request: OpenRequest, callback: (error: ServiceError | null, response: Ast) => void): ClientUnaryCall;
-  openFile(
-    request: OpenRequest,
+  /** Request if a specific language is supported */
+  checkLanguage(
+    request: LanguageRequest,
+    callback: (error: ServiceError | null, response: LanguageSupport) => void,
+  ): ClientUnaryCall;
+  checkLanguage(
+    request: LanguageRequest,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: Ast) => void,
+    callback: (error: ServiceError | null, response: LanguageSupport) => void,
   ): ClientUnaryCall;
-  openFile(
-    request: OpenRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Ast) => void,
-  ): ClientUnaryCall;
-  edit(request: EditRequest, callback: (error: ServiceError | null, response: Node) => void): ClientUnaryCall;
-  edit(
-    request: EditRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: Node) => void,
-  ): ClientUnaryCall;
-  edit(
-    request: EditRequest,
+  checkLanguage(
+    request: LanguageRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: Node) => void,
+    callback: (error: ServiceError | null, response: LanguageSupport) => void,
   ): ClientUnaryCall;
 }
 

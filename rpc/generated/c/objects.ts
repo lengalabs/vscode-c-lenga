@@ -2,20 +2,39 @@
 // versions:
 //   protoc-gen-ts_proto  v2.7.7
 //   protoc               v3.19.6
-// source: nodes.proto
+// source: c/objects.proto
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
-export const protobufPackage = "lenga";
+export const protobufPackage = "c.lenga";
 
-export interface Node {
-  node?:
-    | { $case: "unknownNode"; unknownNode: UnknownNode }
-    | { $case: "declNode"; declNode: DeclNode }
-    | { $case: "stmtNode"; stmtNode: StmtNode }
-    | { $case: "exprNode"; exprNode: ExprNode }
-    | undefined;
+export interface LanguageObject {
+  languageObject?: { $case: "sourceFile"; sourceFile: SourceFile } | //
+  /**
+   * AssignmentExpression assignment_expression = 2;
+   * BinaryExpression binary_expression = 3;
+   * CallExpression call_expression = 4;
+   * Comment comment = 5;
+   * Declaration declaration = 6;
+   * ElseClause else_clause = 7;
+   * ExpressionStatement expression_statement = 8;
+   * FunctionDeclaration function_declaration = 9;
+   * FunctionDefinition function_definition = 10;
+   * FunctionParameter function_parameter = 11;
+   * IfStatement if_statement = 12;
+   * NumberLiteral number_literal = 13;
+   * PreprocInclude preproc_include = 14;
+   * Reference reference = 15;
+   * ReturnStatement return_statement = 16;
+   * StringLiteral string_literal = 17;
+   * CompoundStatement compound_statement = 18;
+   */
+  { $case: "unknownNode"; unknownNode: UnknownNode } | undefined;
+}
+
+export interface SourceFile {
+  code: LanguageObject[];
 }
 
 export interface UnknownNode {
@@ -79,7 +98,7 @@ export interface ReturnStmt {
 
 export interface CompStmt {
   id: string;
-  statements: Node[];
+  statements: LanguageObject[];
 }
 
 export interface CallExpr {
@@ -111,33 +130,27 @@ export interface IdentifierExpr {
   identifier: string;
 }
 
-function createBaseNode(): Node {
-  return { node: undefined };
+function createBaseLanguageObject(): LanguageObject {
+  return { languageObject: undefined };
 }
 
-export const Node: MessageFns<Node> = {
-  encode(message: Node, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    switch (message.node?.$case) {
+export const LanguageObject: MessageFns<LanguageObject> = {
+  encode(message: LanguageObject, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    switch (message.languageObject?.$case) {
+      case "sourceFile":
+        SourceFile.encode(message.languageObject.sourceFile, writer.uint32(10).fork()).join();
+        break;
       case "unknownNode":
-        UnknownNode.encode(message.node.unknownNode, writer.uint32(10).fork()).join();
-        break;
-      case "declNode":
-        DeclNode.encode(message.node.declNode, writer.uint32(18).fork()).join();
-        break;
-      case "stmtNode":
-        StmtNode.encode(message.node.stmtNode, writer.uint32(26).fork()).join();
-        break;
-      case "exprNode":
-        ExprNode.encode(message.node.exprNode, writer.uint32(34).fork()).join();
+        UnknownNode.encode(message.languageObject.unknownNode, writer.uint32(3234).fork()).join();
         break;
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Node {
+  decode(input: BinaryReader | Uint8Array, length?: number): LanguageObject {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNode();
+    const message = createBaseLanguageObject();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -146,31 +159,15 @@ export const Node: MessageFns<Node> = {
             break;
           }
 
-          message.node = { $case: "unknownNode", unknownNode: UnknownNode.decode(reader, reader.uint32()) };
+          message.languageObject = { $case: "sourceFile", sourceFile: SourceFile.decode(reader, reader.uint32()) };
           continue;
         }
-        case 2: {
-          if (tag !== 18) {
+        case 404: {
+          if (tag !== 3234) {
             break;
           }
 
-          message.node = { $case: "declNode", declNode: DeclNode.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.node = { $case: "stmtNode", stmtNode: StmtNode.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.node = { $case: "exprNode", exprNode: ExprNode.decode(reader, reader.uint32()) };
+          message.languageObject = { $case: "unknownNode", unknownNode: UnknownNode.decode(reader, reader.uint32()) };
           continue;
         }
       }
@@ -182,65 +179,111 @@ export const Node: MessageFns<Node> = {
     return message;
   },
 
-  fromJSON(object: any): Node {
+  fromJSON(object: any): LanguageObject {
     return {
-      node: isSet(object.unknownNode)
+      languageObject: isSet(object.sourceFile)
+        ? { $case: "sourceFile", sourceFile: SourceFile.fromJSON(object.sourceFile) }
+        : isSet(object.unknownNode)
         ? { $case: "unknownNode", unknownNode: UnknownNode.fromJSON(object.unknownNode) }
-        : isSet(object.declNode)
-        ? { $case: "declNode", declNode: DeclNode.fromJSON(object.declNode) }
-        : isSet(object.stmtNode)
-        ? { $case: "stmtNode", stmtNode: StmtNode.fromJSON(object.stmtNode) }
-        : isSet(object.exprNode)
-        ? { $case: "exprNode", exprNode: ExprNode.fromJSON(object.exprNode) }
         : undefined,
     };
   },
 
-  toJSON(message: Node): unknown {
+  toJSON(message: LanguageObject): unknown {
     const obj: any = {};
-    if (message.node?.$case === "unknownNode") {
-      obj.unknownNode = UnknownNode.toJSON(message.node.unknownNode);
-    } else if (message.node?.$case === "declNode") {
-      obj.declNode = DeclNode.toJSON(message.node.declNode);
-    } else if (message.node?.$case === "stmtNode") {
-      obj.stmtNode = StmtNode.toJSON(message.node.stmtNode);
-    } else if (message.node?.$case === "exprNode") {
-      obj.exprNode = ExprNode.toJSON(message.node.exprNode);
+    if (message.languageObject?.$case === "sourceFile") {
+      obj.sourceFile = SourceFile.toJSON(message.languageObject.sourceFile);
+    } else if (message.languageObject?.$case === "unknownNode") {
+      obj.unknownNode = UnknownNode.toJSON(message.languageObject.unknownNode);
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Node>, I>>(base?: I): Node {
-    return Node.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<LanguageObject>, I>>(base?: I): LanguageObject {
+    return LanguageObject.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Node>, I>>(object: I): Node {
-    const message = createBaseNode();
-    switch (object.node?.$case) {
+  fromPartial<I extends Exact<DeepPartial<LanguageObject>, I>>(object: I): LanguageObject {
+    const message = createBaseLanguageObject();
+    switch (object.languageObject?.$case) {
+      case "sourceFile": {
+        if (object.languageObject?.sourceFile !== undefined && object.languageObject?.sourceFile !== null) {
+          message.languageObject = {
+            $case: "sourceFile",
+            sourceFile: SourceFile.fromPartial(object.languageObject.sourceFile),
+          };
+        }
+        break;
+      }
       case "unknownNode": {
-        if (object.node?.unknownNode !== undefined && object.node?.unknownNode !== null) {
-          message.node = { $case: "unknownNode", unknownNode: UnknownNode.fromPartial(object.node.unknownNode) };
-        }
-        break;
-      }
-      case "declNode": {
-        if (object.node?.declNode !== undefined && object.node?.declNode !== null) {
-          message.node = { $case: "declNode", declNode: DeclNode.fromPartial(object.node.declNode) };
-        }
-        break;
-      }
-      case "stmtNode": {
-        if (object.node?.stmtNode !== undefined && object.node?.stmtNode !== null) {
-          message.node = { $case: "stmtNode", stmtNode: StmtNode.fromPartial(object.node.stmtNode) };
-        }
-        break;
-      }
-      case "exprNode": {
-        if (object.node?.exprNode !== undefined && object.node?.exprNode !== null) {
-          message.node = { $case: "exprNode", exprNode: ExprNode.fromPartial(object.node.exprNode) };
+        if (object.languageObject?.unknownNode !== undefined && object.languageObject?.unknownNode !== null) {
+          message.languageObject = {
+            $case: "unknownNode",
+            unknownNode: UnknownNode.fromPartial(object.languageObject.unknownNode),
+          };
         }
         break;
       }
     }
+    return message;
+  },
+};
+
+function createBaseSourceFile(): SourceFile {
+  return { code: [] };
+}
+
+export const SourceFile: MessageFns<SourceFile> = {
+  encode(message: SourceFile, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.code) {
+      LanguageObject.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SourceFile {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSourceFile();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.code.push(LanguageObject.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SourceFile {
+    return {
+      code: globalThis.Array.isArray(object?.code) ? object.code.map((e: any) => LanguageObject.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: SourceFile): unknown {
+    const obj: any = {};
+    if (message.code?.length) {
+      obj.code = message.code.map((e) => LanguageObject.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SourceFile>, I>>(base?: I): SourceFile {
+    return SourceFile.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SourceFile>, I>>(object: I): SourceFile {
+    const message = createBaseSourceFile();
+    message.code = object.code?.map((e) => LanguageObject.fromPartial(e)) || [];
     return message;
   },
 };
@@ -1213,7 +1256,7 @@ export const CompStmt: MessageFns<CompStmt> = {
       writer.uint32(10).string(message.id);
     }
     for (const v of message.statements) {
-      Node.encode(v!, writer.uint32(18).fork()).join();
+      LanguageObject.encode(v!, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -1238,7 +1281,7 @@ export const CompStmt: MessageFns<CompStmt> = {
             break;
           }
 
-          message.statements.push(Node.decode(reader, reader.uint32()));
+          message.statements.push(LanguageObject.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -1254,7 +1297,7 @@ export const CompStmt: MessageFns<CompStmt> = {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       statements: globalThis.Array.isArray(object?.statements)
-        ? object.statements.map((e: any) => Node.fromJSON(e))
+        ? object.statements.map((e: any) => LanguageObject.fromJSON(e))
         : [],
     };
   },
@@ -1265,7 +1308,7 @@ export const CompStmt: MessageFns<CompStmt> = {
       obj.id = message.id;
     }
     if (message.statements?.length) {
-      obj.statements = message.statements.map((e) => Node.toJSON(e));
+      obj.statements = message.statements.map((e) => LanguageObject.toJSON(e));
     }
     return obj;
   },
@@ -1276,7 +1319,7 @@ export const CompStmt: MessageFns<CompStmt> = {
   fromPartial<I extends Exact<DeepPartial<CompStmt>, I>>(object: I): CompStmt {
     const message = createBaseCompStmt();
     message.id = object.id ?? "";
-    message.statements = object.statements?.map((e) => Node.fromPartial(e)) || [];
+    message.statements = object.statements?.map((e) => LanguageObject.fromPartial(e)) || [];
     return message;
   },
 };

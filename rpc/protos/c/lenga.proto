@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package c.lenga;
+
+import public "c/objects.proto";
+
+service CLenga {
+    rpc Initialize(InitRequest) returns (SessionId);
+    rpc OpenFile(OpenRequest) returns (SourceFile);
+    rpc Edit(EditRequest) returns (LanguageObject);
+}
+
+message Void {}
+
+message InitRequest {
+    string workspace = 1;
+    string configUri = 2;
+    SessionId sessionId = 3;
+}
+
+message SessionId {
+    string id = 1;
+}
+
+message OpenRequest {
+    string path = 1;
+}
+
+message EditRequest {
+    string path = 1;
+    string editData = 2;
+}
