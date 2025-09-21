@@ -5,12 +5,12 @@ set -euo pipefail
 # ================================
 # Configuration
 # ================================
-GITHUB_USER="lengalab"                 # GitHub username or org
-GITHUB_REPO="lenga"                     # Repository name
-BRANCH_OR_COMMIT="feat/proto-definitions" # # Can be branch or pinned commit hash
-REMOTE_DIRECTORY="lenga-server/proto"          # Directory in the repo you want
-PROTOS_DIR="rpc/protos"          # Relative to git repository root
-GENERATED_DIR="rpc/generated"          # Relative to git repository root
+GITHUB_USER="lengalab"                      # GitHub username or org
+GITHUB_REPO="lenga"                         # Repository name
+BRANCH_OR_COMMIT="feat/proto-definitions"   # Can be branch or pinned commit hash
+REMOTE_DIRECTORY="lenga-server/proto"       # Directory in the repo you want
+PROTOS_DIR="rpc/protos"                     # Relative to git repository root
+GENERATED_DIR="rpc/generated"               # Relative to git repository root
 
 # ================================
 # Safety checks for variables
@@ -50,9 +50,10 @@ fi
 mkdir -p "$PROTOS_DIR"
 
 # ================================
-# Fetch file list from GitHub API
+# Fetch repo tree from GitHub API
 # ================================
-RESPONSE=$(curl -s "https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/contents/$REMOTE_DIRECTORY?ref=$BRANCH_OR_COMMIT")
+TREE_URL="https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/git/trees/$BRANCH_OR_COMMIT?recursive=1"
+RESPONSE=$(curl -s "$TREE_URL")
 
 # Handle API errors
 if echo "$RESPONSE" | jq -e 'has("message")' >/dev/null; then
@@ -60,12 +61,8 @@ if echo "$RESPONSE" | jq -e 'has("message")' >/dev/null; then
     exit 1
 fi
 
-# Determine if it's a directory or a single file
-if echo "$RESPONSE" | jq 'type' | grep -q '"array"'; then
-    FILES=$(echo "$RESPONSE" | jq -r '.[] | select(.type=="file") | .path')
-else
-    FILES=$(echo "$RESPONSE" | jq -r '.path')
-fi
+# Extract all files under REMOTE_DIRECTORY
+FILES=$(echo "$RESPONSE" | jq -r --arg DIR "$REMOTE_DIRECTORY/" '.tree[] | select(.type=="blob" and (.path | startswith($DIR))) | .path')
 
 # ================================
 # Download files
@@ -78,8 +75,11 @@ for FILE in $FILES; do
     curl -s -L "https://raw.githubusercontent.com/$GITHUB_USER/$GITHUB_REPO/$BRANCH_OR_COMMIT/$FILE" -o "$LOCAL_PATH"
 done
 
-echo "Directory '$REMOTE_DIRECTORY' downloaded to '$PROTOS_DIR'."
+echo "Directory '$REMOTE_DIRECTORY' downloaded recursively to '$PROTOS_DIR'."
 
+# ================================
+# Clean & regenerate bindings
+# ================================
 GENERATED_DIR="$GIT_ROOT/$GENERATED_DIR"
 
 if [ -d "$GENERATED_DIR" ]; then
@@ -90,6 +90,14 @@ mkdir -p "$GENERATED_DIR"
 
 echo "Generating bindings"
 
-protoc -I=$PROTOS_DIR --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=$GENERATED_DIR --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node,oneof=unions $PROTOS_DIR/*.proto
+# Change ** wildcard behaviour to search directories recursivelly
+shopt -s globstar
+
+# Generate TS bindings from protobuf definitions
+protoc -I="$PROTOS_DIR" \
+  --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
+  --ts_proto_out="$GENERATED_DIR" \
+  --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node,oneof=unions \
+  "$PROTOS_DIR"/**/*.proto
 
 echo "Done! Bindings can be found at '$GENERATED_DIR'"

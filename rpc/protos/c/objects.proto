@@ -1,14 +1,33 @@
 syntax = "proto3";
 
-package lenga;
+package c.lenga;
 
-message Node {
-    oneof node {
-        UnknownNode unknown_node = 1;
-        DeclNode decl_node = 2;
-        StmtNode stmt_node = 3;
-        ExprNode expr_node = 4;
+message LanguageObject {
+    oneof language_object {
+    SourceFile source_file = 1;
+    // AssignmentExpression assignment_expression = 2;
+    // BinaryExpression binary_expression = 3;
+    // CallExpression call_expression = 4;
+    // Comment comment = 5;
+    // Declaration declaration = 6;
+    // ElseClause else_clause = 7;
+    // ExpressionStatement expression_statement = 8;
+    // FunctionDeclaration function_declaration = 9;
+    // FunctionDefinition function_definition = 10;
+    // FunctionParameter function_parameter = 11;
+    // IfStatement if_statement = 12;
+    // NumberLiteral number_literal = 13;
+    // PreprocInclude preproc_include = 14;
+    // Reference reference = 15;
+    // ReturnStatement return_statement = 16;
+    // StringLiteral string_literal = 17;
+    // CompoundStatement compound_statement = 18;
+    UnknownNode unknown_node = 404;
     }
+}
+
+message SourceFile {
+    repeated LanguageObject code = 1;
 }
 
 message UnknownNode {
@@ -75,7 +94,7 @@ message ReturnStmt {
 
 message CompStmt {
     string id = 1;
-    repeated Node statements = 2;
+    repeated LanguageObject statements = 2;
 }
 
 message CallExpr {
