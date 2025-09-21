@@ -1,0 +1,45 @@
+name: Check Protobuf Bindings
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  check_bindings:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure BRANCH_OR_COMMIT is main
+        run: |
+          SCRIPT_FILE="rpc/generate.sh"
+          if ! grep -q '^BRANCH_OR_COMMIT="main"$' "$SCRIPT_FILE"; then
+            echo "Error: BRANCH_OR_COMMIT is not set to 'main' in $SCRIPT_FILE"
+            exit 1
+          fi
+          echo "BRANCH_OR_COMMIT is correctly set to 'main'."
+
+      - name: Record current state of generated bindings
+        run: |
+          GENERATED_DIR="rpc/generated"
+          git add -N "$GENERATED_DIR" || true  # stage untracked files for diff check
+          git diff --exit-code "$GENERATED_DIR" || true
+          git diff --quiet "$GENERATED_DIR" || touch /tmp/bindings_changed
+
+      - name: Run binding generator
+        run: |
+          bash rpc/generate.sh  # runs the full protoc generation
+
+      - name: Assert no changes in generated bindings
+        run: |
+          GENERATED_DIR="rpc/generated"
+          if [[ -n $(git status --porcelain "$GENERATED_DIR") ]]; then
+            echo "Error: Generated bindings are out-of-date. Please regenerate and commit them."
+            git status --porcelain "$GENERATED_DIR"
+            exit 1
+          fi
+          echo "Bindings are up-to-date."
