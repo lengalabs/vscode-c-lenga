@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package saturn;
+
+import "nodes.proto";
+
+service Saturn {
+    rpc Initialize(InitRequest) returns (Void);
+    rpc OpenFile(OpenRequest) returns (Ast);
+    rpc Edit(EditRequest) returns (Node);
+}
+
+message Void {}
+
+message OpenRequest {
+    string path = 1;
+}
+
+message InitRequest {
+    string workspace = 1;
+    string configUri = 2;
+}
+
+message EditRequest {
+    string path = 1;
+    string editData = 2;
+}
+
+message Ast {
+    repeated Node nodes = 1;
+}
