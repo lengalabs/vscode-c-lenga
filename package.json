@@ -1,6 +1,6 @@
 {
-  "name": "tpp-extension",
-  "displayName": "tpp-extension",
+  "name": "lengalab",
+  "displayName": "lengalab",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -17,33 +17,33 @@
   "contributes": {
     "customEditors": [
       {
-        "viewType": "tpp-extension.saturn",
-        "displayName": "Saturn Editor",
+        "viewType": "lengalab.c",
+        "displayName": "C Lenga Editor",
         "selector": [
           {
-            "filenamePattern": "*.nodes"
+            "filenamePattern": "*.lenga"
           }
         ]
       }
     ],
     "commands": [
       {
-        "command": "tpp-extension.setStructuredView",
+        "command": "lengalab.setStructuredView",
         "title": "Sets the editors view to a structured format",
         "category": "SetView"
       },
       {
-        "command": "tpp-extension.setSpikeView",
+        "command": "lengalab.setSpikeView",
         "title": "Sets the editors view to a spike format",
         "category": "SetView"
       },
       {
-        "command": "tpp-extension.graphView",
+        "command": "lengalab.graphView",
         "title": "Function Graph View",
         "category": "View"
       },
       {
-        "command": "tpp-extension.structuredView",
+        "command": "lengalab.structuredView",
         "title": "Structured editor View",
         "category": "View"
       }
@@ -51,13 +51,13 @@
     "menus": {
       "editor/title": [
         {
-          "command": "tpp-extension.setStructuredView",
-          "when": "activeCustomEditorId == tpp-extension.saturn",
+          "command": "lengalab.setStructuredView",
+          "when": "activeCustomEditorId == lengalab.lenga",
           "group": "navigation"
         },
         {
-          "command": "tpp-extension.setSpikeView",
-          "when": "activeCustomEditorId == tpp-extension.saturn",
+          "command": "lengalab.setSpikeView",
+          "when": "activeCustomEditorId == lengalab.lenga",
           "group": "navigation"
         }
       ]

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package lenga;
+
+// Discovery service
+service Lenga {
+    // List all languages the server currently supports
+    rpc ListLanguages(Void) returns (SuportedLanguages);
+    
+    // Request if a specific language is supported
+    rpc CheckLanguage(LanguageRequest) returns (LanguageSupport);
+}
+
+message Void {}
+
+message SuportedLanguages {
+    repeated string languages = 1;
+}
+
+message LanguageRequest {
+    string language = 1;
+}
+
+message LanguageSupport {
+    bool supported = 1;
+}
