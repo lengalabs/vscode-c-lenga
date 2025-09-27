@@ -16,6 +16,7 @@ export type CExpressionNode =
     | Reference
     | AssignmentExpr
     | NumberLiteral
+    | StringLiteral
 
 // Base Nodes
 

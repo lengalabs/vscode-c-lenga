@@ -54,17 +54,18 @@ export function Line({ indent, node, children }: LineProps) {
         // create new node based on selection
         let newNode: nodes.Node;
         if (type === "Declaration") {
-            newNode = {
+            const newLocal: nodes.StringLiteral = {
                 id: crypto.randomUUID(),
+                type: "StringLiteral",
+                value: "",
+            };
+            const newDeclaration: nodes.Declaration = {
                 type: "Declaration",
                 data_type: "",
                 name: "",
-                initializer: {
-                    id: crypto.randomUUID(),
-                    type: "LiteralExpr",
-                    value: "",
-                } as nodes.LiteralExpr,
-            } as nodes.Declaration;
+                initializer: newLocal as nodes.CExpressionNode,
+            };
+            newNode = newDeclaration;
         } else {
             newNode = {
                 id: crypto.randomUUID(),
@@ -121,8 +122,10 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
     switch (node.type) {
         case "PreprocInclude":
             return (<IncludeDeclRender includeDecl={node as nodes.PreprocInclude} indent={indent} />)
-        case "FuncDecl":
-            return (<FuncDeclRender funcDecl={node as nodes.FuncDecl} indent={indent} />)
+        case "FunctionDeclaration":
+            throw new Error("Not implemented")
+        case "FunctionDefinition":
+            return (<FuncDefRender funcDef={node as nodes.FunctionDefinition} indent={indent} />)
         case "Declaration":
             return (<VarDeclRender varDecl={node as nodes.Declaration} indent={indent} />)
         case "FunctionParameter":
@@ -137,10 +140,10 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
             return (<DeclRefExprRender declRefExpr={node as nodes.Reference} />)
         case "AssignmentExpr":
             return (<AssignmentExprRender assignmentExpr={node as nodes.AssignmentExpr} />)
-        case "LiteralExpr":
-            return (<LiteralExprRender literalExpr={node as nodes.LiteralExpr} />)
-        case "IdentifierExpr":
-            return (<IdentifierExprRender identifierExpr={node as nodes.IdentifierExpr} />)
+        case "NumberLiteral":
+            return (<NumberLiteralExprRender literalExpr={node as nodes.NumberLiteral} />)
+        case "StringLiteral":
+            return (<StringLiteralExprRender literalExpr={node as nodes.StringLiteral} />)
         default:
             return ("WIP")
     }
@@ -161,18 +164,18 @@ function IncludeDeclRender({ includeDecl, indent }: { includeDecl: nodes.Preproc
     )
 }
 
-function FuncDeclRender({ funcDecl, indent }: { funcDecl: nodes.FuncDecl, indent: number }): React.ReactNode {
+function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition, indent: number }): React.ReactNode {
     const { nodeMap } = useLineContext();
-    nodeMap.set(funcDecl.id, funcDecl);
+    nodeMap.set(funcDef.id, funcDef);
 
     return (
         <>
-            <Line indent={indent} node={funcDecl}>
+            <Line indent={indent} node={funcDef}>
                 <>
-                    {EditableField(funcDecl, "return_type")}
-                    {EditableField(funcDecl, "name")}
+                    {EditableField(funcDef, "return_type")}
+                    {EditableField(funcDef, "name")}
                     {"("}
-                    {funcDecl.params.map((param, i) => (
+                    {funcDef.params.map((param, i) => (
                         <React.Fragment key={param.id}>
                             {i > 0 && ", "}
                             <ParamDeclRender paramDecl={param} />
@@ -183,9 +186,9 @@ function FuncDeclRender({ funcDecl, indent }: { funcDecl: nodes.FuncDecl, indent
                 </>
             </Line>
 
-            {funcDecl.body && (<CompStmtRender compStmt={funcDecl.body} indent={indent + 1} />)}
+            {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent + 1} />)}
 
-            <Line indent={indent} node={funcDecl}>
+            <Line indent={indent} node={funcDef}>
                 {"}"}
             </Line>
         </>
@@ -249,7 +252,7 @@ function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStat
 function CallExprRender({ callExpr }: { callExpr: nodes.CallExpression }): React.ReactNode {
     return (
         <>
-            <NodeRender node={callExpr.calle} indent={0} />
+            <IdentifierRender name={callExpr.identifier} indent={0} />
             {"("}
             {callExpr.args.map((arg, i) => (
                 <React.Fragment key={arg.id}>
@@ -282,14 +285,20 @@ function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.Assign
     )
 }
 
-function LiteralExprRender({ literalExpr }: { literalExpr: nodes.LiteralExpr }): React.ReactNode {
+function NumberLiteralExprRender({ literalExpr }: { literalExpr: nodes.NumberLiteral }): React.ReactNode {
     return (
         <>{EditableField(literalExpr, "value")}</>
     )
 }
 
-function IdentifierExprRender({ identifierExpr }: { identifierExpr: nodes.IdentifierExpr }): React.ReactNode {
+function StringLiteralExprRender({ literalExpr }: { literalExpr: nodes.StringLiteral }): React.ReactNode {
     return (
-        <>{EditableField(identifierExpr, "identifier")}</>
+        <>{EditableField(literalExpr, "value")}</>
+    )
+}
+
+function IdentifierRender({ name }: { name: string }): React.ReactNode {
+    return (
+        <>{EditableField({ name }, "name")}</>
     )
 }
