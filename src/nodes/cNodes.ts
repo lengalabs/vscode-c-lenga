@@ -1,21 +1,21 @@
 // Node types
 
 export type CDeclarationNode =
-    | IncludeDecl
-    | FuncDecl
-    | VarDecl
-    | ParamDecl
+    | PreprocInclude
+    | FunctionDeclaration
+    | FunctionDefinition
+    | Declaration
+    | FunctionParameter
 
 export type CStatementNode =
-    | CompStmt
-    | ReturnStmt
+    | CompoundStatement
+    | ReturnStatement
 
 export type CExpressionNode =
-    | CallExpr
-    | DeclRefExpr
+    | CallExpression
+    | Reference
     | AssignmentExpr
-    | LiteralExpr
-    | IdentifierExpr
+    | NumberLiteral
 
 // Base Nodes
 
@@ -31,29 +31,36 @@ export type UnknownNode = Node & {
 
 // Miscellaneous Nodes
 
-export type IncludeDecl = Node & {
-    type: "IncludeDecl"
+export type PreprocInclude = Node & {
+    type: "PreprocInclude"
     directive: string
 }
 
 // Declaration Nodes
 
-export type ParamDecl = Node & {
-    type: "ParamDecl"
+export type FunctionParameter = Node & {
+    type: "FunctionParameter"
     name: string
     data_type: string
 }
 
-export type FuncDecl = Node & {
-    type: "FuncDecl"
+export type FunctionDeclaration = Node & {
+    type: "FunctionDeclaration"
     name: string
     return_type: string
-    params: Array<ParamDecl>
-    body?: CompStmt
+    params: Array<FunctionParameter>
 }
 
-export type VarDecl = Node & {
-    type: "VarDecl"
+export type FunctionDefinition = Node & {
+    type: "FunctionDefinition"
+    name: string
+    return_type: string
+    params: Array<FunctionParameter>
+    body: CompoundStatement
+}
+
+export type Declaration = Node & {
+    type: "Declaration"
     name: string
     data_type: string
     initializer?: CExpressionNode
@@ -61,48 +68,44 @@ export type VarDecl = Node & {
 
 // Statement Nodes
 
-export type ReturnStmt = Node & {
-    type: "ReturnStmt"
+export type ReturnStatement = Node & {
+    type: "ReturnStatement"
     expression?: CExpressionNode
 }
 
-export type CompStmt = Node & {
-    type: "CompStmt"
+export type CompoundStatement = Node & {
+    type: "CompoundStatement"
     statements: Array<Node>
 }
 
 // Expression Nodes
 
-export type AssignmentOp = 
-    | "="
-
-export type CallExpr = Node & {
-    type: "CallExpr"
-    calle: CExpressionNode
+export type CallExpression = Node & {
+    type: "CallExpression"
+    identifier: string
+    idDeclaration: string
     args: Array<CExpressionNode>
 }
 
-export type DeclRefExpr = Node & {
-    type: "DeclRefExpr"
+export type Reference = Node & {
+    type: "Reference"
     DeclRefId: string
 }
 
 export type AssignmentExpr = Node & {
     type: "AssignmentExpr"
-    left: DeclRefExpr | IdentifierExpr
-    right: CExpressionNode
-    op: AssignmentOp
+    id: string
+    value: CExpressionNode
 }
 
-export type LiteralExpr = Node & {
-    type: "LiteralExpr"
-    data_type: string
+export type NumberLiteral = Node & {
+    type: "NumberLiteral"
     value: string
 }
 
-export type IdentifierExpr = Node & {
-    type: "IdentifierExpr"
-    identifier: string
+export type StringLiteral = Node & {
+    type: "StringLiteral"
+    value: string
 }
 
 /* List of basic nodes
@@ -110,16 +113,16 @@ export type IdentifierExpr = Node & {
 1. X Translation Unit (Remplazarlo por el nodo de include ?)
 2. Declaraciones
     1. X FuncDecl
-    2. X ParamDecl (Esto solo iria dentro de un FuncDecl. No se si tiene sentido tenerlo por separado)
-    3. X VarDecl
+    2. X FunctionParameter (Esto solo iria dentro de un FuncDecl. No se si tiene sentido tenerlo por separado)
+    3. X Declaration
     4. TypeDecl
     5. StructDecl / UnionDecl / EnumDecl
     6. FieldDecl (Esto solo va dentro de un Struct/Union/Enum, asi que no se si tiene sentido que vaya por separado)
     7. EnumConstantDecl (????)
 3. Statements
-    1. X CompStmt (Es un listado de statements, creo que se podría usar la interfaz directamente)
+    1. X CompoundStatement (Es un listado de statements, creo que se podría usar la interfaz directamente)
     2. ExprStmt (Es un wrapper de una expression, no se si tiene mucho sentido siendo que en typescript podemos poner la interfaz directamente)
-    3. X ReturnStmt
+    3. X ReturnStatement
     4. IfStmt
     5. SwitchStmt
     6. CaseStmt/DefStmt
@@ -133,8 +136,8 @@ export type IdentifierExpr = Node & {
     2. UnaryOp
     3. CondOp (Tenia entendido que esto no existia en C)
     4. X AssignmentOp
-    5. X CallExpr
-    6. X DeclRefExpr
+    5. X CallExpression
+    6. X Reference
     7. MemberExpr (Investigar)
     8. ArraySubscriptExpr (Index a un array)
     9. CastExpr

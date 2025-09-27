@@ -51,23 +51,23 @@ export function buildMaps(ast: nodes.Node[]): {
         if (funcDecl.body) traverse(funcDecl.body, node, "body", 0);
         break;
       }
-      case "CompStmt": {
-        const compStmt = node as nodes.CompStmt;
+      case "CompoundStatement": {
+        const compStmt = node as nodes.CompoundStatement;
         compStmt.statements.forEach((stmt, i) => traverse(stmt, node, "statements", i));
         break;
       }
-      case "VarDecl": {
-        const varDecl = node as nodes.VarDecl;
+      case "Declaration": {
+        const varDecl = node as nodes.Declaration;
         if (varDecl.initializer) traverse(varDecl.initializer, varDecl, "initializer", 0);
         break;
       }
-      case "ReturnStmt": {
-        const returnStmt = node as nodes.ReturnStmt;
+      case "ReturnStatement": {
+        const returnStmt = node as nodes.ReturnStatement;
         if (returnStmt.expression) traverse(returnStmt.expression, returnStmt, "expression", 0);
         break;
       }
-      case "CallExpr": {
-        const callExpr = node as nodes.CallExpr;
+      case "CallExpression": {
+        const callExpr = node as nodes.CallExpression;
         traverse(callExpr.calle, callExpr, "calle", 0);
         callExpr.args.forEach((arg, i) => traverse(arg, callExpr, "args", i));
         break;

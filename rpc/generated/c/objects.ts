@@ -10,30 +10,31 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 export const protobufPackage = "c.lenga";
 
 export interface LanguageObject {
-  languageObject?: { $case: "sourceFile"; sourceFile: SourceFile } | //
-  /**
-   * AssignmentExpression assignment_expression = 2;
-   * BinaryExpression binary_expression = 3;
-   * CallExpression call_expression = 4;
-   * Comment comment = 5;
-   * Declaration declaration = 6;
-   * ElseClause else_clause = 7;
-   * ExpressionStatement expression_statement = 8;
-   * FunctionDeclaration function_declaration = 9;
-   * FunctionDefinition function_definition = 10;
-   * FunctionParameter function_parameter = 11;
-   * IfStatement if_statement = 12;
-   * NumberLiteral number_literal = 13;
-   * PreprocInclude preproc_include = 14;
-   * Reference reference = 15;
-   * ReturnStatement return_statement = 16;
-   * StringLiteral string_literal = 17;
-   * CompoundStatement compound_statement = 18;
-   */
-  { $case: "unknownNode"; unknownNode: UnknownNode } | undefined;
+  languageObject?:
+  | { $case: "sourceFile"; sourceFile: SourceFile }
+  | { $case: "assignmentExpression"; assignmentExpression: AssignmentExpression }
+  | { $case: "binaryExpression"; binaryExpression: BinaryExpression }
+  | { $case: "callExpression"; callExpression: CallExpression }
+  | { $case: "comment"; comment: Comment }
+  | { $case: "declaration"; declaration: Declaration }
+  | { $case: "elseClause"; elseClause: ElseClause }
+  | { $case: "expressionStatement"; expressionStatement: ExpressionStatement }
+  | { $case: "functionDeclaration"; functionDeclaration: FunctionDeclaration }
+  | { $case: "functionDefinition"; functionDefinition: FunctionDefinition }
+  | { $case: "functionParameter"; functionParameter: FunctionParameter }
+  | { $case: "ifStatement"; ifStatement: IfStatement }
+  | { $case: "numberLiteral"; numberLiteral: NumberLiteral }
+  | { $case: "preprocInclude"; preprocInclude: PreprocInclude }
+  | { $case: "reference"; reference: Reference }
+  | { $case: "returnStatement"; returnStatement: ReturnStatement }
+  | { $case: "stringLiteral"; stringLiteral: StringLiteral }
+  | { $case: "compoundStatement"; compoundStatement: CompoundStatement }
+  | { $case: "unknownNode"; unknownNode: UnknownNode }
+  | undefined;
 }
 
 export interface SourceFile {
+  id: string;
   code: LanguageObject[];
 }
 
@@ -42,92 +43,111 @@ export interface UnknownNode {
   contents: string;
 }
 
-export interface DeclNode {
-  declaration?:
-    | { $case: "includeDecl"; includeDecl: IncludeDecl }
-    | { $case: "funcDecl"; funcDecl: FuncDecl }
-    | { $case: "varDecl"; varDecl: VarDecl }
-    | { $case: "paramDecl"; paramDecl: ParamDecl }
-    | undefined;
-}
-
-export interface StmtNode {
-  statement?: { $case: "compStmt"; compStmt: CompStmt } | { $case: "returnStmt"; returnStmt: ReturnStmt } | undefined;
-}
-
-export interface ExprNode {
-  expression?:
-    | { $case: "callExpr"; callExpr: CallExpr }
-    | { $case: "declRefExpr"; declRefExpr: DeclRefExpr }
-    | { $case: "assignmentExpr"; assignmentExpr: AssignmentExpr }
-    | { $case: "literalExpr"; literalExpr: LiteralExpr }
-    | { $case: "identifierExpr"; identifierExpr: IdentifierExpr }
-    | undefined;
-}
-
-export interface IncludeDecl {
+export interface AssignmentExpression {
   id: string;
-  directive: string;
+  identifier: string;
+  value?: LanguageObject | undefined;
 }
 
-export interface FuncDecl {
+export interface BinaryExpression {
   id: string;
-  name: string;
+  left?: LanguageObject | undefined;
+  operator: string;
+  right?: LanguageObject | undefined;
+}
+
+export interface CallExpression {
+  id: string;
+  idDeclaration: string;
+  identifier: string;
+  argumentList: LanguageObject[];
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+}
+
+export interface CompoundStatement {
+  id: string;
+  codeBlock: LanguageObject[];
+}
+
+export interface Declaration {
+  id: string;
+  /** Assuming CType is serialized as string */
+  primitiveType: string;
+  identifier: string;
+  value?: LanguageObject | undefined;
+}
+
+export interface ElseClause {
+  id: string;
+  condition?: LanguageObject | undefined;
+  compoundStatement?: CompoundStatement | undefined;
+}
+
+export interface ExpressionStatement {
+  id: string;
+  identifier: string;
+  argumentList: LanguageObject[];
+}
+
+export interface FunctionDeclaration {
+  id: string;
+  /** CType serialized as string */
   returnType: string;
-  params: ParamDecl[];
-  body?: CompStmt | undefined;
+  identifier: string;
+  parameterList: FunctionParameter[];
 }
 
-export interface ParamDecl {
+export interface FunctionDefinition {
   id: string;
-  name: string;
-  dataType: string;
+  /** CType serialized as string */
+  returnType: string;
+  identifier: string;
+  parameterList: FunctionParameter[];
+  compoundStatement?: CompoundStatement | undefined;
 }
 
-export interface VarDecl {
+export interface FunctionParameter {
   id: string;
-  name: string;
-  dataType: string;
-  initializer?: ExprNode | undefined;
+  identifier: string;
+  /** CType serialized as string */
+  paramType: string;
 }
 
-export interface ReturnStmt {
+export interface IfStatement {
   id: string;
-  expression?: ExprNode | undefined;
+  condition?: LanguageObject | undefined;
+  compoundStatement?: CompoundStatement | undefined;
+  elseClause?: ElseClause | undefined;
 }
 
-export interface CompStmt {
+export interface NumberLiteral {
   id: string;
-  statements: LanguageObject[];
-}
-
-export interface CallExpr {
-  id: string;
-  calle?: ExprNode | undefined;
-  args: ExprNode[];
-}
-
-export interface DeclRefExpr {
-  id: string;
-  declRefId: string;
-}
-
-export interface AssignmentExpr {
-  id: string;
-  left?: ExprNode | undefined;
-  right?: ExprNode | undefined;
-  op: string;
-}
-
-export interface LiteralExpr {
-  id: string;
-  dataType: string;
   value: string;
 }
 
-export interface IdentifierExpr {
+export interface PreprocInclude {
   id: string;
+  content: string;
+}
+
+export interface Reference {
+  id: string;
+  declarationId: string;
   identifier: string;
+}
+
+export interface ReturnStatement {
+  id: string;
+  value?: LanguageObject | undefined;
+}
+
+export interface StringLiteral {
+  id: string;
+  value: string;
 }
 
 function createBaseLanguageObject(): LanguageObject {
@@ -139,6 +159,57 @@ export const LanguageObject: MessageFns<LanguageObject> = {
     switch (message.languageObject?.$case) {
       case "sourceFile":
         SourceFile.encode(message.languageObject.sourceFile, writer.uint32(10).fork()).join();
+        break;
+      case "assignmentExpression":
+        AssignmentExpression.encode(message.languageObject.assignmentExpression, writer.uint32(18).fork()).join();
+        break;
+      case "binaryExpression":
+        BinaryExpression.encode(message.languageObject.binaryExpression, writer.uint32(26).fork()).join();
+        break;
+      case "callExpression":
+        CallExpression.encode(message.languageObject.callExpression, writer.uint32(34).fork()).join();
+        break;
+      case "comment":
+        Comment.encode(message.languageObject.comment, writer.uint32(42).fork()).join();
+        break;
+      case "declaration":
+        Declaration.encode(message.languageObject.declaration, writer.uint32(50).fork()).join();
+        break;
+      case "elseClause":
+        ElseClause.encode(message.languageObject.elseClause, writer.uint32(58).fork()).join();
+        break;
+      case "expressionStatement":
+        ExpressionStatement.encode(message.languageObject.expressionStatement, writer.uint32(66).fork()).join();
+        break;
+      case "functionDeclaration":
+        FunctionDeclaration.encode(message.languageObject.functionDeclaration, writer.uint32(74).fork()).join();
+        break;
+      case "functionDefinition":
+        FunctionDefinition.encode(message.languageObject.functionDefinition, writer.uint32(82).fork()).join();
+        break;
+      case "functionParameter":
+        FunctionParameter.encode(message.languageObject.functionParameter, writer.uint32(90).fork()).join();
+        break;
+      case "ifStatement":
+        IfStatement.encode(message.languageObject.ifStatement, writer.uint32(98).fork()).join();
+        break;
+      case "numberLiteral":
+        NumberLiteral.encode(message.languageObject.numberLiteral, writer.uint32(106).fork()).join();
+        break;
+      case "preprocInclude":
+        PreprocInclude.encode(message.languageObject.preprocInclude, writer.uint32(114).fork()).join();
+        break;
+      case "reference":
+        Reference.encode(message.languageObject.reference, writer.uint32(122).fork()).join();
+        break;
+      case "returnStatement":
+        ReturnStatement.encode(message.languageObject.returnStatement, writer.uint32(130).fork()).join();
+        break;
+      case "stringLiteral":
+        StringLiteral.encode(message.languageObject.stringLiteral, writer.uint32(138).fork()).join();
+        break;
+      case "compoundStatement":
+        CompoundStatement.encode(message.languageObject.compoundStatement, writer.uint32(146).fork()).join();
         break;
       case "unknownNode":
         UnknownNode.encode(message.languageObject.unknownNode, writer.uint32(3234).fork()).join();
@@ -162,6 +233,178 @@ export const LanguageObject: MessageFns<LanguageObject> = {
           message.languageObject = { $case: "sourceFile", sourceFile: SourceFile.decode(reader, reader.uint32()) };
           continue;
         }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "assignmentExpression",
+            assignmentExpression: AssignmentExpression.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "binaryExpression",
+            binaryExpression: BinaryExpression.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "callExpression",
+            callExpression: CallExpression.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.languageObject = { $case: "comment", comment: Comment.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.languageObject = { $case: "declaration", declaration: Declaration.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.languageObject = { $case: "elseClause", elseClause: ElseClause.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "expressionStatement",
+            expressionStatement: ExpressionStatement.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "functionDeclaration",
+            functionDeclaration: FunctionDeclaration.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "functionDefinition",
+            functionDefinition: FunctionDefinition.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "functionParameter",
+            functionParameter: FunctionParameter.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.languageObject = { $case: "ifStatement", ifStatement: IfStatement.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "numberLiteral",
+            numberLiteral: NumberLiteral.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "preprocInclude",
+            preprocInclude: PreprocInclude.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.languageObject = { $case: "reference", reference: Reference.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "returnStatement",
+            returnStatement: ReturnStatement.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "stringLiteral",
+            stringLiteral: StringLiteral.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.languageObject = {
+            $case: "compoundStatement",
+            compoundStatement: CompoundStatement.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
         case 404: {
           if (tag !== 3234) {
             break;
@@ -183,9 +426,52 @@ export const LanguageObject: MessageFns<LanguageObject> = {
     return {
       languageObject: isSet(object.sourceFile)
         ? { $case: "sourceFile", sourceFile: SourceFile.fromJSON(object.sourceFile) }
-        : isSet(object.unknownNode)
-        ? { $case: "unknownNode", unknownNode: UnknownNode.fromJSON(object.unknownNode) }
-        : undefined,
+        : isSet(object.assignmentExpression)
+          ? {
+            $case: "assignmentExpression",
+            assignmentExpression: AssignmentExpression.fromJSON(object.assignmentExpression),
+          }
+          : isSet(object.binaryExpression)
+            ? { $case: "binaryExpression", binaryExpression: BinaryExpression.fromJSON(object.binaryExpression) }
+            : isSet(object.callExpression)
+              ? { $case: "callExpression", callExpression: CallExpression.fromJSON(object.callExpression) }
+              : isSet(object.comment)
+                ? { $case: "comment", comment: Comment.fromJSON(object.comment) }
+                : isSet(object.declaration)
+                  ? { $case: "declaration", declaration: Declaration.fromJSON(object.declaration) }
+                  : isSet(object.elseClause)
+                    ? { $case: "elseClause", elseClause: ElseClause.fromJSON(object.elseClause) }
+                    : isSet(object.expressionStatement)
+                      ? {
+                        $case: "expressionStatement",
+                        expressionStatement: ExpressionStatement.fromJSON(object.expressionStatement),
+                      }
+                      : isSet(object.functionDeclaration)
+                        ? {
+                          $case: "functionDeclaration",
+                          functionDeclaration: FunctionDeclaration.fromJSON(object.functionDeclaration),
+                        }
+                        : isSet(object.functionDefinition)
+                          ? { $case: "functionDefinition", functionDefinition: FunctionDefinition.fromJSON(object.functionDefinition) }
+                          : isSet(object.functionParameter)
+                            ? { $case: "functionParameter", functionParameter: FunctionParameter.fromJSON(object.functionParameter) }
+                            : isSet(object.ifStatement)
+                              ? { $case: "ifStatement", ifStatement: IfStatement.fromJSON(object.ifStatement) }
+                              : isSet(object.numberLiteral)
+                                ? { $case: "numberLiteral", numberLiteral: NumberLiteral.fromJSON(object.numberLiteral) }
+                                : isSet(object.preprocInclude)
+                                  ? { $case: "preprocInclude", preprocInclude: PreprocInclude.fromJSON(object.preprocInclude) }
+                                  : isSet(object.reference)
+                                    ? { $case: "reference", reference: Reference.fromJSON(object.reference) }
+                                    : isSet(object.returnStatement)
+                                      ? { $case: "returnStatement", returnStatement: ReturnStatement.fromJSON(object.returnStatement) }
+                                      : isSet(object.stringLiteral)
+                                        ? { $case: "stringLiteral", stringLiteral: StringLiteral.fromJSON(object.stringLiteral) }
+                                        : isSet(object.compoundStatement)
+                                          ? { $case: "compoundStatement", compoundStatement: CompoundStatement.fromJSON(object.compoundStatement) }
+                                          : isSet(object.unknownNode)
+                                            ? { $case: "unknownNode", unknownNode: UnknownNode.fromJSON(object.unknownNode) }
+                                            : undefined,
     };
   },
 
@@ -193,6 +479,40 @@ export const LanguageObject: MessageFns<LanguageObject> = {
     const obj: any = {};
     if (message.languageObject?.$case === "sourceFile") {
       obj.sourceFile = SourceFile.toJSON(message.languageObject.sourceFile);
+    } else if (message.languageObject?.$case === "assignmentExpression") {
+      obj.assignmentExpression = AssignmentExpression.toJSON(message.languageObject.assignmentExpression);
+    } else if (message.languageObject?.$case === "binaryExpression") {
+      obj.binaryExpression = BinaryExpression.toJSON(message.languageObject.binaryExpression);
+    } else if (message.languageObject?.$case === "callExpression") {
+      obj.callExpression = CallExpression.toJSON(message.languageObject.callExpression);
+    } else if (message.languageObject?.$case === "comment") {
+      obj.comment = Comment.toJSON(message.languageObject.comment);
+    } else if (message.languageObject?.$case === "declaration") {
+      obj.declaration = Declaration.toJSON(message.languageObject.declaration);
+    } else if (message.languageObject?.$case === "elseClause") {
+      obj.elseClause = ElseClause.toJSON(message.languageObject.elseClause);
+    } else if (message.languageObject?.$case === "expressionStatement") {
+      obj.expressionStatement = ExpressionStatement.toJSON(message.languageObject.expressionStatement);
+    } else if (message.languageObject?.$case === "functionDeclaration") {
+      obj.functionDeclaration = FunctionDeclaration.toJSON(message.languageObject.functionDeclaration);
+    } else if (message.languageObject?.$case === "functionDefinition") {
+      obj.functionDefinition = FunctionDefinition.toJSON(message.languageObject.functionDefinition);
+    } else if (message.languageObject?.$case === "functionParameter") {
+      obj.functionParameter = FunctionParameter.toJSON(message.languageObject.functionParameter);
+    } else if (message.languageObject?.$case === "ifStatement") {
+      obj.ifStatement = IfStatement.toJSON(message.languageObject.ifStatement);
+    } else if (message.languageObject?.$case === "numberLiteral") {
+      obj.numberLiteral = NumberLiteral.toJSON(message.languageObject.numberLiteral);
+    } else if (message.languageObject?.$case === "preprocInclude") {
+      obj.preprocInclude = PreprocInclude.toJSON(message.languageObject.preprocInclude);
+    } else if (message.languageObject?.$case === "reference") {
+      obj.reference = Reference.toJSON(message.languageObject.reference);
+    } else if (message.languageObject?.$case === "returnStatement") {
+      obj.returnStatement = ReturnStatement.toJSON(message.languageObject.returnStatement);
+    } else if (message.languageObject?.$case === "stringLiteral") {
+      obj.stringLiteral = StringLiteral.toJSON(message.languageObject.stringLiteral);
+    } else if (message.languageObject?.$case === "compoundStatement") {
+      obj.compoundStatement = CompoundStatement.toJSON(message.languageObject.compoundStatement);
     } else if (message.languageObject?.$case === "unknownNode") {
       obj.unknownNode = UnknownNode.toJSON(message.languageObject.unknownNode);
     }
@@ -214,6 +534,171 @@ export const LanguageObject: MessageFns<LanguageObject> = {
         }
         break;
       }
+      case "assignmentExpression": {
+        if (
+          object.languageObject?.assignmentExpression !== undefined &&
+          object.languageObject?.assignmentExpression !== null
+        ) {
+          message.languageObject = {
+            $case: "assignmentExpression",
+            assignmentExpression: AssignmentExpression.fromPartial(object.languageObject.assignmentExpression),
+          };
+        }
+        break;
+      }
+      case "binaryExpression": {
+        if (object.languageObject?.binaryExpression !== undefined && object.languageObject?.binaryExpression !== null) {
+          message.languageObject = {
+            $case: "binaryExpression",
+            binaryExpression: BinaryExpression.fromPartial(object.languageObject.binaryExpression),
+          };
+        }
+        break;
+      }
+      case "callExpression": {
+        if (object.languageObject?.callExpression !== undefined && object.languageObject?.callExpression !== null) {
+          message.languageObject = {
+            $case: "callExpression",
+            callExpression: CallExpression.fromPartial(object.languageObject.callExpression),
+          };
+        }
+        break;
+      }
+      case "comment": {
+        if (object.languageObject?.comment !== undefined && object.languageObject?.comment !== null) {
+          message.languageObject = { $case: "comment", comment: Comment.fromPartial(object.languageObject.comment) };
+        }
+        break;
+      }
+      case "declaration": {
+        if (object.languageObject?.declaration !== undefined && object.languageObject?.declaration !== null) {
+          message.languageObject = {
+            $case: "declaration",
+            declaration: Declaration.fromPartial(object.languageObject.declaration),
+          };
+        }
+        break;
+      }
+      case "elseClause": {
+        if (object.languageObject?.elseClause !== undefined && object.languageObject?.elseClause !== null) {
+          message.languageObject = {
+            $case: "elseClause",
+            elseClause: ElseClause.fromPartial(object.languageObject.elseClause),
+          };
+        }
+        break;
+      }
+      case "expressionStatement": {
+        if (
+          object.languageObject?.expressionStatement !== undefined &&
+          object.languageObject?.expressionStatement !== null
+        ) {
+          message.languageObject = {
+            $case: "expressionStatement",
+            expressionStatement: ExpressionStatement.fromPartial(object.languageObject.expressionStatement),
+          };
+        }
+        break;
+      }
+      case "functionDeclaration": {
+        if (
+          object.languageObject?.functionDeclaration !== undefined &&
+          object.languageObject?.functionDeclaration !== null
+        ) {
+          message.languageObject = {
+            $case: "functionDeclaration",
+            functionDeclaration: FunctionDeclaration.fromPartial(object.languageObject.functionDeclaration),
+          };
+        }
+        break;
+      }
+      case "functionDefinition": {
+        if (
+          object.languageObject?.functionDefinition !== undefined && object.languageObject?.functionDefinition !== null
+        ) {
+          message.languageObject = {
+            $case: "functionDefinition",
+            functionDefinition: FunctionDefinition.fromPartial(object.languageObject.functionDefinition),
+          };
+        }
+        break;
+      }
+      case "functionParameter": {
+        if (
+          object.languageObject?.functionParameter !== undefined && object.languageObject?.functionParameter !== null
+        ) {
+          message.languageObject = {
+            $case: "functionParameter",
+            functionParameter: FunctionParameter.fromPartial(object.languageObject.functionParameter),
+          };
+        }
+        break;
+      }
+      case "ifStatement": {
+        if (object.languageObject?.ifStatement !== undefined && object.languageObject?.ifStatement !== null) {
+          message.languageObject = {
+            $case: "ifStatement",
+            ifStatement: IfStatement.fromPartial(object.languageObject.ifStatement),
+          };
+        }
+        break;
+      }
+      case "numberLiteral": {
+        if (object.languageObject?.numberLiteral !== undefined && object.languageObject?.numberLiteral !== null) {
+          message.languageObject = {
+            $case: "numberLiteral",
+            numberLiteral: NumberLiteral.fromPartial(object.languageObject.numberLiteral),
+          };
+        }
+        break;
+      }
+      case "preprocInclude": {
+        if (object.languageObject?.preprocInclude !== undefined && object.languageObject?.preprocInclude !== null) {
+          message.languageObject = {
+            $case: "preprocInclude",
+            preprocInclude: PreprocInclude.fromPartial(object.languageObject.preprocInclude),
+          };
+        }
+        break;
+      }
+      case "reference": {
+        if (object.languageObject?.reference !== undefined && object.languageObject?.reference !== null) {
+          message.languageObject = {
+            $case: "reference",
+            reference: Reference.fromPartial(object.languageObject.reference),
+          };
+        }
+        break;
+      }
+      case "returnStatement": {
+        if (object.languageObject?.returnStatement !== undefined && object.languageObject?.returnStatement !== null) {
+          message.languageObject = {
+            $case: "returnStatement",
+            returnStatement: ReturnStatement.fromPartial(object.languageObject.returnStatement),
+          };
+        }
+        break;
+      }
+      case "stringLiteral": {
+        if (object.languageObject?.stringLiteral !== undefined && object.languageObject?.stringLiteral !== null) {
+          message.languageObject = {
+            $case: "stringLiteral",
+            stringLiteral: StringLiteral.fromPartial(object.languageObject.stringLiteral),
+          };
+        }
+        break;
+      }
+      case "compoundStatement": {
+        if (
+          object.languageObject?.compoundStatement !== undefined && object.languageObject?.compoundStatement !== null
+        ) {
+          message.languageObject = {
+            $case: "compoundStatement",
+            compoundStatement: CompoundStatement.fromPartial(object.languageObject.compoundStatement),
+          };
+        }
+        break;
+      }
       case "unknownNode": {
         if (object.languageObject?.unknownNode !== undefined && object.languageObject?.unknownNode !== null) {
           message.languageObject = {
@@ -229,13 +714,16 @@ export const LanguageObject: MessageFns<LanguageObject> = {
 };
 
 function createBaseSourceFile(): SourceFile {
-  return { code: [] };
+  return { id: "", code: [] };
 }
 
 export const SourceFile: MessageFns<SourceFile> = {
   encode(message: SourceFile, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     for (const v of message.code) {
-      LanguageObject.encode(v!, writer.uint32(10).fork()).join();
+      LanguageObject.encode(v!, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -249,6 +737,14 @@ export const SourceFile: MessageFns<SourceFile> = {
       switch (tag >>> 3) {
         case 1: {
           if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
             break;
           }
 
@@ -266,12 +762,16 @@ export const SourceFile: MessageFns<SourceFile> = {
 
   fromJSON(object: any): SourceFile {
     return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       code: globalThis.Array.isArray(object?.code) ? object.code.map((e: any) => LanguageObject.fromJSON(e)) : [],
     };
   },
 
   toJSON(message: SourceFile): unknown {
     const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
     if (message.code?.length) {
       obj.code = message.code.map((e) => LanguageObject.toJSON(e));
     }
@@ -283,6 +783,7 @@ export const SourceFile: MessageFns<SourceFile> = {
   },
   fromPartial<I extends Exact<DeepPartial<SourceFile>, I>>(object: I): SourceFile {
     const message = createBaseSourceFile();
+    message.id = object.id ?? "";
     message.code = object.code?.map((e) => LanguageObject.fromPartial(e)) || [];
     return message;
   },
@@ -364,1357 +865,28 @@ export const UnknownNode: MessageFns<UnknownNode> = {
   },
 };
 
-function createBaseDeclNode(): DeclNode {
-  return { declaration: undefined };
+function createBaseAssignmentExpression(): AssignmentExpression {
+  return { id: "", identifier: "", value: undefined };
 }
 
-export const DeclNode: MessageFns<DeclNode> = {
-  encode(message: DeclNode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    switch (message.declaration?.$case) {
-      case "includeDecl":
-        IncludeDecl.encode(message.declaration.includeDecl, writer.uint32(10).fork()).join();
-        break;
-      case "funcDecl":
-        FuncDecl.encode(message.declaration.funcDecl, writer.uint32(18).fork()).join();
-        break;
-      case "varDecl":
-        VarDecl.encode(message.declaration.varDecl, writer.uint32(26).fork()).join();
-        break;
-      case "paramDecl":
-        ParamDecl.encode(message.declaration.paramDecl, writer.uint32(34).fork()).join();
-        break;
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeclNode {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeclNode();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.declaration = { $case: "includeDecl", includeDecl: IncludeDecl.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.declaration = { $case: "funcDecl", funcDecl: FuncDecl.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.declaration = { $case: "varDecl", varDecl: VarDecl.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.declaration = { $case: "paramDecl", paramDecl: ParamDecl.decode(reader, reader.uint32()) };
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeclNode {
-    return {
-      declaration: isSet(object.includeDecl)
-        ? { $case: "includeDecl", includeDecl: IncludeDecl.fromJSON(object.includeDecl) }
-        : isSet(object.funcDecl)
-        ? { $case: "funcDecl", funcDecl: FuncDecl.fromJSON(object.funcDecl) }
-        : isSet(object.varDecl)
-        ? { $case: "varDecl", varDecl: VarDecl.fromJSON(object.varDecl) }
-        : isSet(object.paramDecl)
-        ? { $case: "paramDecl", paramDecl: ParamDecl.fromJSON(object.paramDecl) }
-        : undefined,
-    };
-  },
-
-  toJSON(message: DeclNode): unknown {
-    const obj: any = {};
-    if (message.declaration?.$case === "includeDecl") {
-      obj.includeDecl = IncludeDecl.toJSON(message.declaration.includeDecl);
-    } else if (message.declaration?.$case === "funcDecl") {
-      obj.funcDecl = FuncDecl.toJSON(message.declaration.funcDecl);
-    } else if (message.declaration?.$case === "varDecl") {
-      obj.varDecl = VarDecl.toJSON(message.declaration.varDecl);
-    } else if (message.declaration?.$case === "paramDecl") {
-      obj.paramDecl = ParamDecl.toJSON(message.declaration.paramDecl);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeclNode>, I>>(base?: I): DeclNode {
-    return DeclNode.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeclNode>, I>>(object: I): DeclNode {
-    const message = createBaseDeclNode();
-    switch (object.declaration?.$case) {
-      case "includeDecl": {
-        if (object.declaration?.includeDecl !== undefined && object.declaration?.includeDecl !== null) {
-          message.declaration = {
-            $case: "includeDecl",
-            includeDecl: IncludeDecl.fromPartial(object.declaration.includeDecl),
-          };
-        }
-        break;
-      }
-      case "funcDecl": {
-        if (object.declaration?.funcDecl !== undefined && object.declaration?.funcDecl !== null) {
-          message.declaration = { $case: "funcDecl", funcDecl: FuncDecl.fromPartial(object.declaration.funcDecl) };
-        }
-        break;
-      }
-      case "varDecl": {
-        if (object.declaration?.varDecl !== undefined && object.declaration?.varDecl !== null) {
-          message.declaration = { $case: "varDecl", varDecl: VarDecl.fromPartial(object.declaration.varDecl) };
-        }
-        break;
-      }
-      case "paramDecl": {
-        if (object.declaration?.paramDecl !== undefined && object.declaration?.paramDecl !== null) {
-          message.declaration = { $case: "paramDecl", paramDecl: ParamDecl.fromPartial(object.declaration.paramDecl) };
-        }
-        break;
-      }
-    }
-    return message;
-  },
-};
-
-function createBaseStmtNode(): StmtNode {
-  return { statement: undefined };
-}
-
-export const StmtNode: MessageFns<StmtNode> = {
-  encode(message: StmtNode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    switch (message.statement?.$case) {
-      case "compStmt":
-        CompStmt.encode(message.statement.compStmt, writer.uint32(10).fork()).join();
-        break;
-      case "returnStmt":
-        ReturnStmt.encode(message.statement.returnStmt, writer.uint32(18).fork()).join();
-        break;
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): StmtNode {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStmtNode();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.statement = { $case: "compStmt", compStmt: CompStmt.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.statement = { $case: "returnStmt", returnStmt: ReturnStmt.decode(reader, reader.uint32()) };
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): StmtNode {
-    return {
-      statement: isSet(object.compStmt)
-        ? { $case: "compStmt", compStmt: CompStmt.fromJSON(object.compStmt) }
-        : isSet(object.returnStmt)
-        ? { $case: "returnStmt", returnStmt: ReturnStmt.fromJSON(object.returnStmt) }
-        : undefined,
-    };
-  },
-
-  toJSON(message: StmtNode): unknown {
-    const obj: any = {};
-    if (message.statement?.$case === "compStmt") {
-      obj.compStmt = CompStmt.toJSON(message.statement.compStmt);
-    } else if (message.statement?.$case === "returnStmt") {
-      obj.returnStmt = ReturnStmt.toJSON(message.statement.returnStmt);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<StmtNode>, I>>(base?: I): StmtNode {
-    return StmtNode.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<StmtNode>, I>>(object: I): StmtNode {
-    const message = createBaseStmtNode();
-    switch (object.statement?.$case) {
-      case "compStmt": {
-        if (object.statement?.compStmt !== undefined && object.statement?.compStmt !== null) {
-          message.statement = { $case: "compStmt", compStmt: CompStmt.fromPartial(object.statement.compStmt) };
-        }
-        break;
-      }
-      case "returnStmt": {
-        if (object.statement?.returnStmt !== undefined && object.statement?.returnStmt !== null) {
-          message.statement = { $case: "returnStmt", returnStmt: ReturnStmt.fromPartial(object.statement.returnStmt) };
-        }
-        break;
-      }
-    }
-    return message;
-  },
-};
-
-function createBaseExprNode(): ExprNode {
-  return { expression: undefined };
-}
-
-export const ExprNode: MessageFns<ExprNode> = {
-  encode(message: ExprNode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    switch (message.expression?.$case) {
-      case "callExpr":
-        CallExpr.encode(message.expression.callExpr, writer.uint32(10).fork()).join();
-        break;
-      case "declRefExpr":
-        DeclRefExpr.encode(message.expression.declRefExpr, writer.uint32(18).fork()).join();
-        break;
-      case "assignmentExpr":
-        AssignmentExpr.encode(message.expression.assignmentExpr, writer.uint32(26).fork()).join();
-        break;
-      case "literalExpr":
-        LiteralExpr.encode(message.expression.literalExpr, writer.uint32(34).fork()).join();
-        break;
-      case "identifierExpr":
-        IdentifierExpr.encode(message.expression.identifierExpr, writer.uint32(42).fork()).join();
-        break;
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ExprNode {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseExprNode();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.expression = { $case: "callExpr", callExpr: CallExpr.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.expression = { $case: "declRefExpr", declRefExpr: DeclRefExpr.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.expression = {
-            $case: "assignmentExpr",
-            assignmentExpr: AssignmentExpr.decode(reader, reader.uint32()),
-          };
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.expression = { $case: "literalExpr", literalExpr: LiteralExpr.decode(reader, reader.uint32()) };
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.expression = {
-            $case: "identifierExpr",
-            identifierExpr: IdentifierExpr.decode(reader, reader.uint32()),
-          };
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ExprNode {
-    return {
-      expression: isSet(object.callExpr)
-        ? { $case: "callExpr", callExpr: CallExpr.fromJSON(object.callExpr) }
-        : isSet(object.declRefExpr)
-        ? { $case: "declRefExpr", declRefExpr: DeclRefExpr.fromJSON(object.declRefExpr) }
-        : isSet(object.assignmentExpr)
-        ? { $case: "assignmentExpr", assignmentExpr: AssignmentExpr.fromJSON(object.assignmentExpr) }
-        : isSet(object.literalExpr)
-        ? { $case: "literalExpr", literalExpr: LiteralExpr.fromJSON(object.literalExpr) }
-        : isSet(object.identifierExpr)
-        ? { $case: "identifierExpr", identifierExpr: IdentifierExpr.fromJSON(object.identifierExpr) }
-        : undefined,
-    };
-  },
-
-  toJSON(message: ExprNode): unknown {
-    const obj: any = {};
-    if (message.expression?.$case === "callExpr") {
-      obj.callExpr = CallExpr.toJSON(message.expression.callExpr);
-    } else if (message.expression?.$case === "declRefExpr") {
-      obj.declRefExpr = DeclRefExpr.toJSON(message.expression.declRefExpr);
-    } else if (message.expression?.$case === "assignmentExpr") {
-      obj.assignmentExpr = AssignmentExpr.toJSON(message.expression.assignmentExpr);
-    } else if (message.expression?.$case === "literalExpr") {
-      obj.literalExpr = LiteralExpr.toJSON(message.expression.literalExpr);
-    } else if (message.expression?.$case === "identifierExpr") {
-      obj.identifierExpr = IdentifierExpr.toJSON(message.expression.identifierExpr);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ExprNode>, I>>(base?: I): ExprNode {
-    return ExprNode.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ExprNode>, I>>(object: I): ExprNode {
-    const message = createBaseExprNode();
-    switch (object.expression?.$case) {
-      case "callExpr": {
-        if (object.expression?.callExpr !== undefined && object.expression?.callExpr !== null) {
-          message.expression = { $case: "callExpr", callExpr: CallExpr.fromPartial(object.expression.callExpr) };
-        }
-        break;
-      }
-      case "declRefExpr": {
-        if (object.expression?.declRefExpr !== undefined && object.expression?.declRefExpr !== null) {
-          message.expression = {
-            $case: "declRefExpr",
-            declRefExpr: DeclRefExpr.fromPartial(object.expression.declRefExpr),
-          };
-        }
-        break;
-      }
-      case "assignmentExpr": {
-        if (object.expression?.assignmentExpr !== undefined && object.expression?.assignmentExpr !== null) {
-          message.expression = {
-            $case: "assignmentExpr",
-            assignmentExpr: AssignmentExpr.fromPartial(object.expression.assignmentExpr),
-          };
-        }
-        break;
-      }
-      case "literalExpr": {
-        if (object.expression?.literalExpr !== undefined && object.expression?.literalExpr !== null) {
-          message.expression = {
-            $case: "literalExpr",
-            literalExpr: LiteralExpr.fromPartial(object.expression.literalExpr),
-          };
-        }
-        break;
-      }
-      case "identifierExpr": {
-        if (object.expression?.identifierExpr !== undefined && object.expression?.identifierExpr !== null) {
-          message.expression = {
-            $case: "identifierExpr",
-            identifierExpr: IdentifierExpr.fromPartial(object.expression.identifierExpr),
-          };
-        }
-        break;
-      }
-    }
-    return message;
-  },
-};
-
-function createBaseIncludeDecl(): IncludeDecl {
-  return { id: "", directive: "" };
-}
-
-export const IncludeDecl: MessageFns<IncludeDecl> = {
-  encode(message: IncludeDecl, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.directive !== "") {
-      writer.uint32(18).string(message.directive);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): IncludeDecl {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseIncludeDecl();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.directive = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): IncludeDecl {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      directive: isSet(object.directive) ? globalThis.String(object.directive) : "",
-    };
-  },
-
-  toJSON(message: IncludeDecl): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.directive !== "") {
-      obj.directive = message.directive;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<IncludeDecl>, I>>(base?: I): IncludeDecl {
-    return IncludeDecl.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<IncludeDecl>, I>>(object: I): IncludeDecl {
-    const message = createBaseIncludeDecl();
-    message.id = object.id ?? "";
-    message.directive = object.directive ?? "";
-    return message;
-  },
-};
-
-function createBaseFuncDecl(): FuncDecl {
-  return { id: "", name: "", returnType: "", params: [], body: undefined };
-}
-
-export const FuncDecl: MessageFns<FuncDecl> = {
-  encode(message: FuncDecl, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.returnType !== "") {
-      writer.uint32(26).string(message.returnType);
-    }
-    for (const v of message.params) {
-      ParamDecl.encode(v!, writer.uint32(34).fork()).join();
-    }
-    if (message.body !== undefined) {
-      CompStmt.encode(message.body, writer.uint32(42).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): FuncDecl {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFuncDecl();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.returnType = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.params.push(ParamDecl.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.body = CompStmt.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): FuncDecl {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
-      returnType: isSet(object.returnType) ? globalThis.String(object.returnType) : "",
-      params: globalThis.Array.isArray(object?.params) ? object.params.map((e: any) => ParamDecl.fromJSON(e)) : [],
-      body: isSet(object.body) ? CompStmt.fromJSON(object.body) : undefined,
-    };
-  },
-
-  toJSON(message: FuncDecl): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.returnType !== "") {
-      obj.returnType = message.returnType;
-    }
-    if (message.params?.length) {
-      obj.params = message.params.map((e) => ParamDecl.toJSON(e));
-    }
-    if (message.body !== undefined) {
-      obj.body = CompStmt.toJSON(message.body);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<FuncDecl>, I>>(base?: I): FuncDecl {
-    return FuncDecl.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<FuncDecl>, I>>(object: I): FuncDecl {
-    const message = createBaseFuncDecl();
-    message.id = object.id ?? "";
-    message.name = object.name ?? "";
-    message.returnType = object.returnType ?? "";
-    message.params = object.params?.map((e) => ParamDecl.fromPartial(e)) || [];
-    message.body = (object.body !== undefined && object.body !== null) ? CompStmt.fromPartial(object.body) : undefined;
-    return message;
-  },
-};
-
-function createBaseParamDecl(): ParamDecl {
-  return { id: "", name: "", dataType: "" };
-}
-
-export const ParamDecl: MessageFns<ParamDecl> = {
-  encode(message: ParamDecl, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.dataType !== "") {
-      writer.uint32(26).string(message.dataType);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ParamDecl {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseParamDecl();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.dataType = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ParamDecl {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
-      dataType: isSet(object.dataType) ? globalThis.String(object.dataType) : "",
-    };
-  },
-
-  toJSON(message: ParamDecl): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.dataType !== "") {
-      obj.dataType = message.dataType;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ParamDecl>, I>>(base?: I): ParamDecl {
-    return ParamDecl.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ParamDecl>, I>>(object: I): ParamDecl {
-    const message = createBaseParamDecl();
-    message.id = object.id ?? "";
-    message.name = object.name ?? "";
-    message.dataType = object.dataType ?? "";
-    return message;
-  },
-};
-
-function createBaseVarDecl(): VarDecl {
-  return { id: "", name: "", dataType: "", initializer: undefined };
-}
-
-export const VarDecl: MessageFns<VarDecl> = {
-  encode(message: VarDecl, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.dataType !== "") {
-      writer.uint32(26).string(message.dataType);
-    }
-    if (message.initializer !== undefined) {
-      ExprNode.encode(message.initializer, writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): VarDecl {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseVarDecl();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.dataType = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.initializer = ExprNode.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): VarDecl {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
-      dataType: isSet(object.dataType) ? globalThis.String(object.dataType) : "",
-      initializer: isSet(object.initializer) ? ExprNode.fromJSON(object.initializer) : undefined,
-    };
-  },
-
-  toJSON(message: VarDecl): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.dataType !== "") {
-      obj.dataType = message.dataType;
-    }
-    if (message.initializer !== undefined) {
-      obj.initializer = ExprNode.toJSON(message.initializer);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<VarDecl>, I>>(base?: I): VarDecl {
-    return VarDecl.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<VarDecl>, I>>(object: I): VarDecl {
-    const message = createBaseVarDecl();
-    message.id = object.id ?? "";
-    message.name = object.name ?? "";
-    message.dataType = object.dataType ?? "";
-    message.initializer = (object.initializer !== undefined && object.initializer !== null)
-      ? ExprNode.fromPartial(object.initializer)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseReturnStmt(): ReturnStmt {
-  return { id: "", expression: undefined };
-}
-
-export const ReturnStmt: MessageFns<ReturnStmt> = {
-  encode(message: ReturnStmt, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.expression !== undefined) {
-      ExprNode.encode(message.expression, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ReturnStmt {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseReturnStmt();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.expression = ExprNode.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ReturnStmt {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      expression: isSet(object.expression) ? ExprNode.fromJSON(object.expression) : undefined,
-    };
-  },
-
-  toJSON(message: ReturnStmt): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.expression !== undefined) {
-      obj.expression = ExprNode.toJSON(message.expression);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ReturnStmt>, I>>(base?: I): ReturnStmt {
-    return ReturnStmt.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ReturnStmt>, I>>(object: I): ReturnStmt {
-    const message = createBaseReturnStmt();
-    message.id = object.id ?? "";
-    message.expression = (object.expression !== undefined && object.expression !== null)
-      ? ExprNode.fromPartial(object.expression)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseCompStmt(): CompStmt {
-  return { id: "", statements: [] };
-}
-
-export const CompStmt: MessageFns<CompStmt> = {
-  encode(message: CompStmt, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    for (const v of message.statements) {
-      LanguageObject.encode(v!, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CompStmt {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCompStmt();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.statements.push(LanguageObject.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CompStmt {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      statements: globalThis.Array.isArray(object?.statements)
-        ? object.statements.map((e: any) => LanguageObject.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: CompStmt): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.statements?.length) {
-      obj.statements = message.statements.map((e) => LanguageObject.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CompStmt>, I>>(base?: I): CompStmt {
-    return CompStmt.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CompStmt>, I>>(object: I): CompStmt {
-    const message = createBaseCompStmt();
-    message.id = object.id ?? "";
-    message.statements = object.statements?.map((e) => LanguageObject.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseCallExpr(): CallExpr {
-  return { id: "", calle: undefined, args: [] };
-}
-
-export const CallExpr: MessageFns<CallExpr> = {
-  encode(message: CallExpr, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.calle !== undefined) {
-      ExprNode.encode(message.calle, writer.uint32(18).fork()).join();
-    }
-    for (const v of message.args) {
-      ExprNode.encode(v!, writer.uint32(26).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CallExpr {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCallExpr();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.calle = ExprNode.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.args.push(ExprNode.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CallExpr {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      calle: isSet(object.calle) ? ExprNode.fromJSON(object.calle) : undefined,
-      args: globalThis.Array.isArray(object?.args) ? object.args.map((e: any) => ExprNode.fromJSON(e)) : [],
-    };
-  },
-
-  toJSON(message: CallExpr): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.calle !== undefined) {
-      obj.calle = ExprNode.toJSON(message.calle);
-    }
-    if (message.args?.length) {
-      obj.args = message.args.map((e) => ExprNode.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CallExpr>, I>>(base?: I): CallExpr {
-    return CallExpr.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CallExpr>, I>>(object: I): CallExpr {
-    const message = createBaseCallExpr();
-    message.id = object.id ?? "";
-    message.calle = (object.calle !== undefined && object.calle !== null)
-      ? ExprNode.fromPartial(object.calle)
-      : undefined;
-    message.args = object.args?.map((e) => ExprNode.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseDeclRefExpr(): DeclRefExpr {
-  return { id: "", declRefId: "" };
-}
-
-export const DeclRefExpr: MessageFns<DeclRefExpr> = {
-  encode(message: DeclRefExpr, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.declRefId !== "") {
-      writer.uint32(18).string(message.declRefId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeclRefExpr {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeclRefExpr();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.declRefId = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeclRefExpr {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      declRefId: isSet(object.declRefId) ? globalThis.String(object.declRefId) : "",
-    };
-  },
-
-  toJSON(message: DeclRefExpr): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.declRefId !== "") {
-      obj.declRefId = message.declRefId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeclRefExpr>, I>>(base?: I): DeclRefExpr {
-    return DeclRefExpr.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeclRefExpr>, I>>(object: I): DeclRefExpr {
-    const message = createBaseDeclRefExpr();
-    message.id = object.id ?? "";
-    message.declRefId = object.declRefId ?? "";
-    return message;
-  },
-};
-
-function createBaseAssignmentExpr(): AssignmentExpr {
-  return { id: "", left: undefined, right: undefined, op: "" };
-}
-
-export const AssignmentExpr: MessageFns<AssignmentExpr> = {
-  encode(message: AssignmentExpr, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.left !== undefined) {
-      ExprNode.encode(message.left, writer.uint32(18).fork()).join();
-    }
-    if (message.right !== undefined) {
-      ExprNode.encode(message.right, writer.uint32(26).fork()).join();
-    }
-    if (message.op !== "") {
-      writer.uint32(34).string(message.op);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): AssignmentExpr {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAssignmentExpr();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.left = ExprNode.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.right = ExprNode.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.op = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): AssignmentExpr {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      left: isSet(object.left) ? ExprNode.fromJSON(object.left) : undefined,
-      right: isSet(object.right) ? ExprNode.fromJSON(object.right) : undefined,
-      op: isSet(object.op) ? globalThis.String(object.op) : "",
-    };
-  },
-
-  toJSON(message: AssignmentExpr): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.left !== undefined) {
-      obj.left = ExprNode.toJSON(message.left);
-    }
-    if (message.right !== undefined) {
-      obj.right = ExprNode.toJSON(message.right);
-    }
-    if (message.op !== "") {
-      obj.op = message.op;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<AssignmentExpr>, I>>(base?: I): AssignmentExpr {
-    return AssignmentExpr.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<AssignmentExpr>, I>>(object: I): AssignmentExpr {
-    const message = createBaseAssignmentExpr();
-    message.id = object.id ?? "";
-    message.left = (object.left !== undefined && object.left !== null) ? ExprNode.fromPartial(object.left) : undefined;
-    message.right = (object.right !== undefined && object.right !== null)
-      ? ExprNode.fromPartial(object.right)
-      : undefined;
-    message.op = object.op ?? "";
-    return message;
-  },
-};
-
-function createBaseLiteralExpr(): LiteralExpr {
-  return { id: "", dataType: "", value: "" };
-}
-
-export const LiteralExpr: MessageFns<LiteralExpr> = {
-  encode(message: LiteralExpr, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.dataType !== "") {
-      writer.uint32(18).string(message.dataType);
-    }
-    if (message.value !== "") {
-      writer.uint32(26).string(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): LiteralExpr {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLiteralExpr();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.dataType = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.value = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): LiteralExpr {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      dataType: isSet(object.dataType) ? globalThis.String(object.dataType) : "",
-      value: isSet(object.value) ? globalThis.String(object.value) : "",
-    };
-  },
-
-  toJSON(message: LiteralExpr): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.dataType !== "") {
-      obj.dataType = message.dataType;
-    }
-    if (message.value !== "") {
-      obj.value = message.value;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<LiteralExpr>, I>>(base?: I): LiteralExpr {
-    return LiteralExpr.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<LiteralExpr>, I>>(object: I): LiteralExpr {
-    const message = createBaseLiteralExpr();
-    message.id = object.id ?? "";
-    message.dataType = object.dataType ?? "";
-    message.value = object.value ?? "";
-    return message;
-  },
-};
-
-function createBaseIdentifierExpr(): IdentifierExpr {
-  return { id: "", identifier: "" };
-}
-
-export const IdentifierExpr: MessageFns<IdentifierExpr> = {
-  encode(message: IdentifierExpr, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const AssignmentExpression: MessageFns<AssignmentExpression> = {
+  encode(message: AssignmentExpression, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.identifier !== "") {
       writer.uint32(18).string(message.identifier);
     }
+    if (message.value !== undefined) {
+      LanguageObject.encode(message.value, writer.uint32(26).fork()).join();
+    }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): IdentifierExpr {
+  decode(input: BinaryReader | Uint8Array, length?: number): AssignmentExpression {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseIdentifierExpr();
+    const message = createBaseAssignmentExpression();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1734,6 +906,14 @@ export const IdentifierExpr: MessageFns<IdentifierExpr> = {
           message.identifier = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.value = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1743,14 +923,15 @@ export const IdentifierExpr: MessageFns<IdentifierExpr> = {
     return message;
   },
 
-  fromJSON(object: any): IdentifierExpr {
+  fromJSON(object: any): AssignmentExpression {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      value: isSet(object.value) ? LanguageObject.fromJSON(object.value) : undefined,
     };
   },
 
-  toJSON(message: IdentifierExpr): unknown {
+  toJSON(message: AssignmentExpression): unknown {
     const obj: any = {};
     if (message.id !== "") {
       obj.id = message.id;
@@ -1758,16 +939,1546 @@ export const IdentifierExpr: MessageFns<IdentifierExpr> = {
     if (message.identifier !== "") {
       obj.identifier = message.identifier;
     }
+    if (message.value !== undefined) {
+      obj.value = LanguageObject.toJSON(message.value);
+    }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<IdentifierExpr>, I>>(base?: I): IdentifierExpr {
-    return IdentifierExpr.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<AssignmentExpression>, I>>(base?: I): AssignmentExpression {
+    return AssignmentExpression.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<IdentifierExpr>, I>>(object: I): IdentifierExpr {
-    const message = createBaseIdentifierExpr();
+  fromPartial<I extends Exact<DeepPartial<AssignmentExpression>, I>>(object: I): AssignmentExpression {
+    const message = createBaseAssignmentExpression();
     message.id = object.id ?? "";
     message.identifier = object.identifier ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? LanguageObject.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseBinaryExpression(): BinaryExpression {
+  return { id: "", left: undefined, operator: "", right: undefined };
+}
+
+export const BinaryExpression: MessageFns<BinaryExpression> = {
+  encode(message: BinaryExpression, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.left !== undefined) {
+      LanguageObject.encode(message.left, writer.uint32(18).fork()).join();
+    }
+    if (message.operator !== "") {
+      writer.uint32(26).string(message.operator);
+    }
+    if (message.right !== undefined) {
+      LanguageObject.encode(message.right, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): BinaryExpression {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseBinaryExpression();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.left = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.operator = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.right = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): BinaryExpression {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      left: isSet(object.left) ? LanguageObject.fromJSON(object.left) : undefined,
+      operator: isSet(object.operator) ? globalThis.String(object.operator) : "",
+      right: isSet(object.right) ? LanguageObject.fromJSON(object.right) : undefined,
+    };
+  },
+
+  toJSON(message: BinaryExpression): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.left !== undefined) {
+      obj.left = LanguageObject.toJSON(message.left);
+    }
+    if (message.operator !== "") {
+      obj.operator = message.operator;
+    }
+    if (message.right !== undefined) {
+      obj.right = LanguageObject.toJSON(message.right);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<BinaryExpression>, I>>(base?: I): BinaryExpression {
+    return BinaryExpression.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<BinaryExpression>, I>>(object: I): BinaryExpression {
+    const message = createBaseBinaryExpression();
+    message.id = object.id ?? "";
+    message.left = (object.left !== undefined && object.left !== null)
+      ? LanguageObject.fromPartial(object.left)
+      : undefined;
+    message.operator = object.operator ?? "";
+    message.right = (object.right !== undefined && object.right !== null)
+      ? LanguageObject.fromPartial(object.right)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseCallExpression(): CallExpression {
+  return { id: "", idDeclaration: "", identifier: "", argumentList: [] };
+}
+
+export const CallExpression: MessageFns<CallExpression> = {
+  encode(message: CallExpression, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.idDeclaration !== "") {
+      writer.uint32(18).string(message.idDeclaration);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(26).string(message.identifier);
+    }
+    for (const v of message.argumentList) {
+      LanguageObject.encode(v!, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CallExpression {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCallExpression();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.idDeclaration = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.argumentList.push(LanguageObject.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CallExpression {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      idDeclaration: isSet(object.idDeclaration) ? globalThis.String(object.idDeclaration) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      argumentList: globalThis.Array.isArray(object?.argumentList)
+        ? object.argumentList.map((e: any) => LanguageObject.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: CallExpression): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.idDeclaration !== "") {
+      obj.idDeclaration = message.idDeclaration;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.argumentList?.length) {
+      obj.argumentList = message.argumentList.map((e) => LanguageObject.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CallExpression>, I>>(base?: I): CallExpression {
+    return CallExpression.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CallExpression>, I>>(object: I): CallExpression {
+    const message = createBaseCallExpression();
+    message.id = object.id ?? "";
+    message.idDeclaration = object.idDeclaration ?? "";
+    message.identifier = object.identifier ?? "";
+    message.argumentList = object.argumentList?.map((e) => LanguageObject.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseComment(): Comment {
+  return { id: "", content: "" };
+}
+
+export const Comment: MessageFns<Comment> = {
+  encode(message: Comment, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.content !== "") {
+      writer.uint32(18).string(message.content);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Comment {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseComment();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.content = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Comment {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      content: isSet(object.content) ? globalThis.String(object.content) : "",
+    };
+  },
+
+  toJSON(message: Comment): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.content !== "") {
+      obj.content = message.content;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Comment>, I>>(base?: I): Comment {
+    return Comment.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Comment>, I>>(object: I): Comment {
+    const message = createBaseComment();
+    message.id = object.id ?? "";
+    message.content = object.content ?? "";
+    return message;
+  },
+};
+
+function createBaseCompoundStatement(): CompoundStatement {
+  return { id: "", codeBlock: [] };
+}
+
+export const CompoundStatement: MessageFns<CompoundStatement> = {
+  encode(message: CompoundStatement, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    for (const v of message.codeBlock) {
+      LanguageObject.encode(v!, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CompoundStatement {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCompoundStatement();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.codeBlock.push(LanguageObject.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CompoundStatement {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      codeBlock: globalThis.Array.isArray(object?.codeBlock)
+        ? object.codeBlock.map((e: any) => LanguageObject.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: CompoundStatement): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.codeBlock?.length) {
+      obj.codeBlock = message.codeBlock.map((e) => LanguageObject.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CompoundStatement>, I>>(base?: I): CompoundStatement {
+    return CompoundStatement.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CompoundStatement>, I>>(object: I): CompoundStatement {
+    const message = createBaseCompoundStatement();
+    message.id = object.id ?? "";
+    message.codeBlock = object.codeBlock?.map((e) => LanguageObject.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseDeclaration(): Declaration {
+  return { id: "", primitiveType: "", identifier: "", value: undefined };
+}
+
+export const Declaration: MessageFns<Declaration> = {
+  encode(message: Declaration, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.primitiveType !== "") {
+      writer.uint32(18).string(message.primitiveType);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(26).string(message.identifier);
+    }
+    if (message.value !== undefined) {
+      LanguageObject.encode(message.value, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Declaration {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeclaration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.primitiveType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.value = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Declaration {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      primitiveType: isSet(object.primitiveType) ? globalThis.String(object.primitiveType) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      value: isSet(object.value) ? LanguageObject.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: Declaration): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.primitiveType !== "") {
+      obj.primitiveType = message.primitiveType;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.value !== undefined) {
+      obj.value = LanguageObject.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Declaration>, I>>(base?: I): Declaration {
+    return Declaration.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Declaration>, I>>(object: I): Declaration {
+    const message = createBaseDeclaration();
+    message.id = object.id ?? "";
+    message.primitiveType = object.primitiveType ?? "";
+    message.identifier = object.identifier ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? LanguageObject.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseElseClause(): ElseClause {
+  return { id: "", condition: undefined, compoundStatement: undefined };
+}
+
+export const ElseClause: MessageFns<ElseClause> = {
+  encode(message: ElseClause, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.condition !== undefined) {
+      LanguageObject.encode(message.condition, writer.uint32(18).fork()).join();
+    }
+    if (message.compoundStatement !== undefined) {
+      CompoundStatement.encode(message.compoundStatement, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ElseClause {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseElseClause();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.condition = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.compoundStatement = CompoundStatement.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ElseClause {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      condition: isSet(object.condition) ? LanguageObject.fromJSON(object.condition) : undefined,
+      compoundStatement: isSet(object.compoundStatement)
+        ? CompoundStatement.fromJSON(object.compoundStatement)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ElseClause): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.condition !== undefined) {
+      obj.condition = LanguageObject.toJSON(message.condition);
+    }
+    if (message.compoundStatement !== undefined) {
+      obj.compoundStatement = CompoundStatement.toJSON(message.compoundStatement);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ElseClause>, I>>(base?: I): ElseClause {
+    return ElseClause.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ElseClause>, I>>(object: I): ElseClause {
+    const message = createBaseElseClause();
+    message.id = object.id ?? "";
+    message.condition = (object.condition !== undefined && object.condition !== null)
+      ? LanguageObject.fromPartial(object.condition)
+      : undefined;
+    message.compoundStatement = (object.compoundStatement !== undefined && object.compoundStatement !== null)
+      ? CompoundStatement.fromPartial(object.compoundStatement)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseExpressionStatement(): ExpressionStatement {
+  return { id: "", identifier: "", argumentList: [] };
+}
+
+export const ExpressionStatement: MessageFns<ExpressionStatement> = {
+  encode(message: ExpressionStatement, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(18).string(message.identifier);
+    }
+    for (const v of message.argumentList) {
+      LanguageObject.encode(v!, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExpressionStatement {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExpressionStatement();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.argumentList.push(LanguageObject.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExpressionStatement {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      argumentList: globalThis.Array.isArray(object?.argumentList)
+        ? object.argumentList.map((e: any) => LanguageObject.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ExpressionStatement): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.argumentList?.length) {
+      obj.argumentList = message.argumentList.map((e) => LanguageObject.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExpressionStatement>, I>>(base?: I): ExpressionStatement {
+    return ExpressionStatement.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExpressionStatement>, I>>(object: I): ExpressionStatement {
+    const message = createBaseExpressionStatement();
+    message.id = object.id ?? "";
+    message.identifier = object.identifier ?? "";
+    message.argumentList = object.argumentList?.map((e) => LanguageObject.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseFunctionDeclaration(): FunctionDeclaration {
+  return { id: "", returnType: "", identifier: "", parameterList: [] };
+}
+
+export const FunctionDeclaration: MessageFns<FunctionDeclaration> = {
+  encode(message: FunctionDeclaration, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.returnType !== "") {
+      writer.uint32(18).string(message.returnType);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(26).string(message.identifier);
+    }
+    for (const v of message.parameterList) {
+      FunctionParameter.encode(v!, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FunctionDeclaration {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFunctionDeclaration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.returnType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.parameterList.push(FunctionParameter.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FunctionDeclaration {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      returnType: isSet(object.returnType) ? globalThis.String(object.returnType) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      parameterList: globalThis.Array.isArray(object?.parameterList)
+        ? object.parameterList.map((e: any) => FunctionParameter.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: FunctionDeclaration): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.returnType !== "") {
+      obj.returnType = message.returnType;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.parameterList?.length) {
+      obj.parameterList = message.parameterList.map((e) => FunctionParameter.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FunctionDeclaration>, I>>(base?: I): FunctionDeclaration {
+    return FunctionDeclaration.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FunctionDeclaration>, I>>(object: I): FunctionDeclaration {
+    const message = createBaseFunctionDeclaration();
+    message.id = object.id ?? "";
+    message.returnType = object.returnType ?? "";
+    message.identifier = object.identifier ?? "";
+    message.parameterList = object.parameterList?.map((e) => FunctionParameter.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseFunctionDefinition(): FunctionDefinition {
+  return { id: "", returnType: "", identifier: "", parameterList: [], compoundStatement: undefined };
+}
+
+export const FunctionDefinition: MessageFns<FunctionDefinition> = {
+  encode(message: FunctionDefinition, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.returnType !== "") {
+      writer.uint32(18).string(message.returnType);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(26).string(message.identifier);
+    }
+    for (const v of message.parameterList) {
+      FunctionParameter.encode(v!, writer.uint32(34).fork()).join();
+    }
+    if (message.compoundStatement !== undefined) {
+      CompoundStatement.encode(message.compoundStatement, writer.uint32(42).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FunctionDefinition {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFunctionDefinition();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.returnType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.parameterList.push(FunctionParameter.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.compoundStatement = CompoundStatement.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FunctionDefinition {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      returnType: isSet(object.returnType) ? globalThis.String(object.returnType) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      parameterList: globalThis.Array.isArray(object?.parameterList)
+        ? object.parameterList.map((e: any) => FunctionParameter.fromJSON(e))
+        : [],
+      compoundStatement: isSet(object.compoundStatement)
+        ? CompoundStatement.fromJSON(object.compoundStatement)
+        : undefined,
+    };
+  },
+
+  toJSON(message: FunctionDefinition): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.returnType !== "") {
+      obj.returnType = message.returnType;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.parameterList?.length) {
+      obj.parameterList = message.parameterList.map((e) => FunctionParameter.toJSON(e));
+    }
+    if (message.compoundStatement !== undefined) {
+      obj.compoundStatement = CompoundStatement.toJSON(message.compoundStatement);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FunctionDefinition>, I>>(base?: I): FunctionDefinition {
+    return FunctionDefinition.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FunctionDefinition>, I>>(object: I): FunctionDefinition {
+    const message = createBaseFunctionDefinition();
+    message.id = object.id ?? "";
+    message.returnType = object.returnType ?? "";
+    message.identifier = object.identifier ?? "";
+    message.parameterList = object.parameterList?.map((e) => FunctionParameter.fromPartial(e)) || [];
+    message.compoundStatement = (object.compoundStatement !== undefined && object.compoundStatement !== null)
+      ? CompoundStatement.fromPartial(object.compoundStatement)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseFunctionParameter(): FunctionParameter {
+  return { id: "", identifier: "", paramType: "" };
+}
+
+export const FunctionParameter: MessageFns<FunctionParameter> = {
+  encode(message: FunctionParameter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(18).string(message.identifier);
+    }
+    if (message.paramType !== "") {
+      writer.uint32(26).string(message.paramType);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FunctionParameter {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFunctionParameter();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.paramType = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FunctionParameter {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+      paramType: isSet(object.paramType) ? globalThis.String(object.paramType) : "",
+    };
+  },
+
+  toJSON(message: FunctionParameter): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    if (message.paramType !== "") {
+      obj.paramType = message.paramType;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FunctionParameter>, I>>(base?: I): FunctionParameter {
+    return FunctionParameter.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FunctionParameter>, I>>(object: I): FunctionParameter {
+    const message = createBaseFunctionParameter();
+    message.id = object.id ?? "";
+    message.identifier = object.identifier ?? "";
+    message.paramType = object.paramType ?? "";
+    return message;
+  },
+};
+
+function createBaseIfStatement(): IfStatement {
+  return { id: "", condition: undefined, compoundStatement: undefined, elseClause: undefined };
+}
+
+export const IfStatement: MessageFns<IfStatement> = {
+  encode(message: IfStatement, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.condition !== undefined) {
+      LanguageObject.encode(message.condition, writer.uint32(18).fork()).join();
+    }
+    if (message.compoundStatement !== undefined) {
+      CompoundStatement.encode(message.compoundStatement, writer.uint32(26).fork()).join();
+    }
+    if (message.elseClause !== undefined) {
+      ElseClause.encode(message.elseClause, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): IfStatement {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseIfStatement();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.condition = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.compoundStatement = CompoundStatement.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.elseClause = ElseClause.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): IfStatement {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      condition: isSet(object.condition) ? LanguageObject.fromJSON(object.condition) : undefined,
+      compoundStatement: isSet(object.compoundStatement)
+        ? CompoundStatement.fromJSON(object.compoundStatement)
+        : undefined,
+      elseClause: isSet(object.elseClause) ? ElseClause.fromJSON(object.elseClause) : undefined,
+    };
+  },
+
+  toJSON(message: IfStatement): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.condition !== undefined) {
+      obj.condition = LanguageObject.toJSON(message.condition);
+    }
+    if (message.compoundStatement !== undefined) {
+      obj.compoundStatement = CompoundStatement.toJSON(message.compoundStatement);
+    }
+    if (message.elseClause !== undefined) {
+      obj.elseClause = ElseClause.toJSON(message.elseClause);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<IfStatement>, I>>(base?: I): IfStatement {
+    return IfStatement.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<IfStatement>, I>>(object: I): IfStatement {
+    const message = createBaseIfStatement();
+    message.id = object.id ?? "";
+    message.condition = (object.condition !== undefined && object.condition !== null)
+      ? LanguageObject.fromPartial(object.condition)
+      : undefined;
+    message.compoundStatement = (object.compoundStatement !== undefined && object.compoundStatement !== null)
+      ? CompoundStatement.fromPartial(object.compoundStatement)
+      : undefined;
+    message.elseClause = (object.elseClause !== undefined && object.elseClause !== null)
+      ? ElseClause.fromPartial(object.elseClause)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseNumberLiteral(): NumberLiteral {
+  return { id: "", value: "" };
+}
+
+export const NumberLiteral: MessageFns<NumberLiteral> = {
+  encode(message: NumberLiteral, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NumberLiteral {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNumberLiteral();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NumberLiteral {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: NumberLiteral): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NumberLiteral>, I>>(base?: I): NumberLiteral {
+    return NumberLiteral.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NumberLiteral>, I>>(object: I): NumberLiteral {
+    const message = createBaseNumberLiteral();
+    message.id = object.id ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBasePreprocInclude(): PreprocInclude {
+  return { id: "", content: "" };
+}
+
+export const PreprocInclude: MessageFns<PreprocInclude> = {
+  encode(message: PreprocInclude, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.content !== "") {
+      writer.uint32(18).string(message.content);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PreprocInclude {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePreprocInclude();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.content = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PreprocInclude {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      content: isSet(object.content) ? globalThis.String(object.content) : "",
+    };
+  },
+
+  toJSON(message: PreprocInclude): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.content !== "") {
+      obj.content = message.content;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PreprocInclude>, I>>(base?: I): PreprocInclude {
+    return PreprocInclude.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PreprocInclude>, I>>(object: I): PreprocInclude {
+    const message = createBasePreprocInclude();
+    message.id = object.id ?? "";
+    message.content = object.content ?? "";
+    return message;
+  },
+};
+
+function createBaseReference(): Reference {
+  return { id: "", declarationId: "", identifier: "" };
+}
+
+export const Reference: MessageFns<Reference> = {
+  encode(message: Reference, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.declarationId !== "") {
+      writer.uint32(18).string(message.declarationId);
+    }
+    if (message.identifier !== "") {
+      writer.uint32(26).string(message.identifier);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Reference {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReference();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.declarationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Reference {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      declarationId: isSet(object.declarationId) ? globalThis.String(object.declarationId) : "",
+      identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
+    };
+  },
+
+  toJSON(message: Reference): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.declarationId !== "") {
+      obj.declarationId = message.declarationId;
+    }
+    if (message.identifier !== "") {
+      obj.identifier = message.identifier;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Reference>, I>>(base?: I): Reference {
+    return Reference.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Reference>, I>>(object: I): Reference {
+    const message = createBaseReference();
+    message.id = object.id ?? "";
+    message.declarationId = object.declarationId ?? "";
+    message.identifier = object.identifier ?? "";
+    return message;
+  },
+};
+
+function createBaseReturnStatement(): ReturnStatement {
+  return { id: "", value: undefined };
+}
+
+export const ReturnStatement: MessageFns<ReturnStatement> = {
+  encode(message: ReturnStatement, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.value !== undefined) {
+      LanguageObject.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReturnStatement {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReturnStatement();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = LanguageObject.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReturnStatement {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      value: isSet(object.value) ? LanguageObject.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: ReturnStatement): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.value !== undefined) {
+      obj.value = LanguageObject.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReturnStatement>, I>>(base?: I): ReturnStatement {
+    return ReturnStatement.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReturnStatement>, I>>(object: I): ReturnStatement {
+    const message = createBaseReturnStatement();
+    message.id = object.id ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? LanguageObject.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseStringLiteral(): StringLiteral {
+  return { id: "", value: "" };
+}
+
+export const StringLiteral: MessageFns<StringLiteral> = {
+  encode(message: StringLiteral, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StringLiteral {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStringLiteral();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StringLiteral {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: StringLiteral): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StringLiteral>, I>>(base?: I): StringLiteral {
+    return StringLiteral.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StringLiteral>, I>>(object: I): StringLiteral {
+    const message = createBaseStringLiteral();
+    message.id = object.id ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
