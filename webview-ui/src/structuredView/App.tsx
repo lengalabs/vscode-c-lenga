@@ -25,7 +25,7 @@ export default function App() {
   }, [])
 
   const onEdit = (edit: nodes.Node) => {
-    const message = {type: 'nodeEdit', contents: edit}
+    const message = { type: 'nodeEdit', contents: edit }
     setAst((prev) => [...prev]); //Placeholder
     console.log("sending message: ", message);
     //vscode.postMessage(message)

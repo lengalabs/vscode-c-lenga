@@ -38,8 +38,9 @@ message UnknownNode {
 
 message AssignmentExpression {
     string id = 1;
-    string identifier = 2;
-    optional LanguageObject value = 3;
+    string id_declaration = 2;
+    string identifier = 3;
+    optional LanguageObject value = 4;
 }
 
 message BinaryExpression {

@@ -10,10 +10,10 @@ import {
   type Edge,
   type Connection,
 } from '@xyflow/react';
- 
+
 import '@xyflow/react/dist/style.css';
 import { FunctionNode } from './nodes/FunctionNode';
- 
+
 const nodeType = {
   function: FunctionNode,
 }
@@ -28,7 +28,7 @@ const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 export default function App() {
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
- 
+
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
@@ -47,7 +47,7 @@ export default function App() {
       >
         <Controls />
         <MiniMap />
-        <Background/>
+        <Background />
       </ReactFlow>
     </div>
   );

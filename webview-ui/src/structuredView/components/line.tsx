@@ -60,6 +60,7 @@ export function Line({ indent, node, children }: LineProps) {
                 value: "",
             };
             const newDeclaration: nodes.Declaration = {
+                id: crypto.randomUUID(),
                 type: "Declaration",
                 data_type: "",
                 name: "",
@@ -139,7 +140,7 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
         case "Reference":
             return (<DeclRefExprRender declRefExpr={node as nodes.Reference} />)
         case "AssignmentExpr":
-            return (<AssignmentExprRender assignmentExpr={node as nodes.AssignmentExpr} />)
+            return (<AssignmentExprRender assignmentExpr={node as nodes.AssignmentExpression} />)
         case "NumberLiteral":
             return (<NumberLiteralExprRender literalExpr={node as nodes.NumberLiteral} />)
         case "StringLiteral":
@@ -252,7 +253,7 @@ function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStat
 function CallExprRender({ callExpr }: { callExpr: nodes.CallExpression }): React.ReactNode {
     return (
         <>
-            <IdentifierRender name={callExpr.identifier} indent={0} />
+            {EditableField(callExpr, "identifier")}
             {"("}
             {callExpr.args.map((arg, i) => (
                 <React.Fragment key={arg.id}>
@@ -276,7 +277,7 @@ function DeclRefExprRender({ declRefExpr }: { declRefExpr: nodes.Reference }): R
     return (<>{targetNode.name}</>)
 }
 
-function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.AssignmentExpr }): React.ReactNode {
+function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.AssignmentExpression }): React.ReactNode {
     return (
         <>
             {"TODO assignmentExpr. node id: "}
@@ -294,11 +295,5 @@ function NumberLiteralExprRender({ literalExpr }: { literalExpr: nodes.NumberLit
 function StringLiteralExprRender({ literalExpr }: { literalExpr: nodes.StringLiteral }): React.ReactNode {
     return (
         <>{EditableField(literalExpr, "value")}</>
-    )
-}
-
-function IdentifierRender({ name }: { name: string }): React.ReactNode {
-    return (
-        <>{EditableField({ name }, "name")}</>
     )
 }

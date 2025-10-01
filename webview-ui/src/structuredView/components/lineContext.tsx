@@ -45,10 +45,15 @@ export function buildMaps(ast: nodes.Node[]): {
     if (parent) parentMap.set(node.id, { parent, key, index });
 
     switch (node.type) {
-      case "FuncDecl": {
-        const funcDecl = node as nodes.FuncDecl;
+      case "FunctionDeclaration": {
+        const funcDecl = node as nodes.FunctionDeclaration;
         funcDecl.params.forEach((p, i) => traverse(p, funcDecl, "params", i));
-        if (funcDecl.body) traverse(funcDecl.body, node, "body", 0);
+        break;
+      }
+      case "FunctionDefinition": {
+        const funcDecl = node as nodes.FunctionDefinition;
+        funcDecl.params.forEach((p, i) => traverse(p, funcDecl, "params", i));
+        traverse(funcDecl.body, node, "body", 0);
         break;
       }
       case "CompoundStatement": {
@@ -68,14 +73,13 @@ export function buildMaps(ast: nodes.Node[]): {
       }
       case "CallExpression": {
         const callExpr = node as nodes.CallExpression;
-        traverse(callExpr.calle, callExpr, "calle", 0);
+        traverse(callExpr, callExpr, "calle", 0);
         callExpr.args.forEach((arg, i) => traverse(arg, callExpr, "args", i));
         break;
       }
       case "AssignmentExpr": {
-        const assignmentExpr = node as nodes.AssignmentExpr;
-        traverse(assignmentExpr.left, node, "left", 0);
-        traverse(assignmentExpr.right, node, "right", 0);
+        const assignmentExpr = node as nodes.AssignmentExpression;
+        traverse(assignmentExpr.value, node, "value", 0);
         break;
       }
       default:

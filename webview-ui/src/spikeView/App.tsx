@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { vscode } from '../vscode'
-import * as nodes from '../../../rpc/generated/nodes';
+import * as nodes from '../../../rpc/generated/c/objects';
 
 export default function App() {
-  const [content, setContent] = useState<nodes.Node>()
+  const [content, setContent] = useState<nodes.LanguageObject>()
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -13,7 +13,7 @@ export default function App() {
 
     window.addEventListener('message', handleMessage);
 
-    vscode.postMessage({type: 'ready'});
+    vscode.postMessage({ type: 'ready' });
 
     return () => {
       window.removeEventListener('message', handleMessage)

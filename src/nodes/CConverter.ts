@@ -160,10 +160,11 @@ function convertReferenceToTS(reference: cObjects.Reference): cNode.Reference {
     };
 }
 
-function convertAssignmentExpressionToTS(assignmentExpression: cObjects.AssignmentExpression): cNode.AssignmentExpr {
+function convertAssignmentExpressionToTS(assignmentExpression: cObjects.AssignmentExpression): cNode.AssignmentExpression {
     return {
         id: assignmentExpression.id,
-        type: "AssignmentExpr",
+        type: "AssignmentExpression",
+        id_reference: assignmentExpression.idDeclaration,
         value: convertProtoNodeToTs(assignmentExpression.value!) as cNode.CExpressionNode,
     };
 }
@@ -292,7 +293,7 @@ function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
         }
 
         case "AssignmentExpr": {
-            const assign = object as cNode.AssignmentExpr;
+            const assign = object as cNode.AssignmentExpression;
             const val: cObjects.LanguageObject = {
                 languageObject: {
                     $case: "assignmentExpression",
@@ -344,10 +345,11 @@ function numberLiteralToProto(lit: cNode.NumberLiteral): cObjects.NumberLiteral 
     };
 }
 
-function assignmentExpressionToProto(assign: cNode.AssignmentExpr): cObjects.AssignmentExpression {
+function assignmentExpressionToProto(assign: cNode.AssignmentExpression): cObjects.AssignmentExpression {
     return {
         id: assign.id,
         identifier: "TODO",
+        idDeclaration: assign.id_reference,
         value: convertTsNodeToProto(assign.value),
     };
 }

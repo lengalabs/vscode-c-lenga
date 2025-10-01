@@ -14,7 +14,7 @@ export type CStatementNode =
 export type CExpressionNode =
     | CallExpression
     | Reference
-    | AssignmentExpr
+    | AssignmentExpression
     | NumberLiteral
     | StringLiteral
 
@@ -93,9 +93,9 @@ export type Reference = Node & {
     DeclRefId: string
 }
 
-export type AssignmentExpr = Node & {
-    type: "AssignmentExpr"
-    id: string
+export type AssignmentExpression = Node & {
+    type: "AssignmentExpression"
+    id_reference: string
     value: CExpressionNode
 }
 

@@ -11,26 +11,26 @@ export const protobufPackage = "c.lenga";
 
 export interface LanguageObject {
   languageObject?:
-  | { $case: "sourceFile"; sourceFile: SourceFile }
-  | { $case: "assignmentExpression"; assignmentExpression: AssignmentExpression }
-  | { $case: "binaryExpression"; binaryExpression: BinaryExpression }
-  | { $case: "callExpression"; callExpression: CallExpression }
-  | { $case: "comment"; comment: Comment }
-  | { $case: "declaration"; declaration: Declaration }
-  | { $case: "elseClause"; elseClause: ElseClause }
-  | { $case: "expressionStatement"; expressionStatement: ExpressionStatement }
-  | { $case: "functionDeclaration"; functionDeclaration: FunctionDeclaration }
-  | { $case: "functionDefinition"; functionDefinition: FunctionDefinition }
-  | { $case: "functionParameter"; functionParameter: FunctionParameter }
-  | { $case: "ifStatement"; ifStatement: IfStatement }
-  | { $case: "numberLiteral"; numberLiteral: NumberLiteral }
-  | { $case: "preprocInclude"; preprocInclude: PreprocInclude }
-  | { $case: "reference"; reference: Reference }
-  | { $case: "returnStatement"; returnStatement: ReturnStatement }
-  | { $case: "stringLiteral"; stringLiteral: StringLiteral }
-  | { $case: "compoundStatement"; compoundStatement: CompoundStatement }
-  | { $case: "unknownNode"; unknownNode: UnknownNode }
-  | undefined;
+    | { $case: "sourceFile"; sourceFile: SourceFile }
+    | { $case: "assignmentExpression"; assignmentExpression: AssignmentExpression }
+    | { $case: "binaryExpression"; binaryExpression: BinaryExpression }
+    | { $case: "callExpression"; callExpression: CallExpression }
+    | { $case: "comment"; comment: Comment }
+    | { $case: "declaration"; declaration: Declaration }
+    | { $case: "elseClause"; elseClause: ElseClause }
+    | { $case: "expressionStatement"; expressionStatement: ExpressionStatement }
+    | { $case: "functionDeclaration"; functionDeclaration: FunctionDeclaration }
+    | { $case: "functionDefinition"; functionDefinition: FunctionDefinition }
+    | { $case: "functionParameter"; functionParameter: FunctionParameter }
+    | { $case: "ifStatement"; ifStatement: IfStatement }
+    | { $case: "numberLiteral"; numberLiteral: NumberLiteral }
+    | { $case: "preprocInclude"; preprocInclude: PreprocInclude }
+    | { $case: "reference"; reference: Reference }
+    | { $case: "returnStatement"; returnStatement: ReturnStatement }
+    | { $case: "stringLiteral"; stringLiteral: StringLiteral }
+    | { $case: "compoundStatement"; compoundStatement: CompoundStatement }
+    | { $case: "unknownNode"; unknownNode: UnknownNode }
+    | undefined;
 }
 
 export interface SourceFile {
@@ -45,6 +45,7 @@ export interface UnknownNode {
 
 export interface AssignmentExpression {
   id: string;
+  idDeclaration: string;
   identifier: string;
   value?: LanguageObject | undefined;
 }
@@ -427,51 +428,51 @@ export const LanguageObject: MessageFns<LanguageObject> = {
       languageObject: isSet(object.sourceFile)
         ? { $case: "sourceFile", sourceFile: SourceFile.fromJSON(object.sourceFile) }
         : isSet(object.assignmentExpression)
-          ? {
-            $case: "assignmentExpression",
-            assignmentExpression: AssignmentExpression.fromJSON(object.assignmentExpression),
-          }
-          : isSet(object.binaryExpression)
-            ? { $case: "binaryExpression", binaryExpression: BinaryExpression.fromJSON(object.binaryExpression) }
-            : isSet(object.callExpression)
-              ? { $case: "callExpression", callExpression: CallExpression.fromJSON(object.callExpression) }
-              : isSet(object.comment)
-                ? { $case: "comment", comment: Comment.fromJSON(object.comment) }
-                : isSet(object.declaration)
-                  ? { $case: "declaration", declaration: Declaration.fromJSON(object.declaration) }
-                  : isSet(object.elseClause)
-                    ? { $case: "elseClause", elseClause: ElseClause.fromJSON(object.elseClause) }
-                    : isSet(object.expressionStatement)
-                      ? {
-                        $case: "expressionStatement",
-                        expressionStatement: ExpressionStatement.fromJSON(object.expressionStatement),
-                      }
-                      : isSet(object.functionDeclaration)
-                        ? {
-                          $case: "functionDeclaration",
-                          functionDeclaration: FunctionDeclaration.fromJSON(object.functionDeclaration),
-                        }
-                        : isSet(object.functionDefinition)
-                          ? { $case: "functionDefinition", functionDefinition: FunctionDefinition.fromJSON(object.functionDefinition) }
-                          : isSet(object.functionParameter)
-                            ? { $case: "functionParameter", functionParameter: FunctionParameter.fromJSON(object.functionParameter) }
-                            : isSet(object.ifStatement)
-                              ? { $case: "ifStatement", ifStatement: IfStatement.fromJSON(object.ifStatement) }
-                              : isSet(object.numberLiteral)
-                                ? { $case: "numberLiteral", numberLiteral: NumberLiteral.fromJSON(object.numberLiteral) }
-                                : isSet(object.preprocInclude)
-                                  ? { $case: "preprocInclude", preprocInclude: PreprocInclude.fromJSON(object.preprocInclude) }
-                                  : isSet(object.reference)
-                                    ? { $case: "reference", reference: Reference.fromJSON(object.reference) }
-                                    : isSet(object.returnStatement)
-                                      ? { $case: "returnStatement", returnStatement: ReturnStatement.fromJSON(object.returnStatement) }
-                                      : isSet(object.stringLiteral)
-                                        ? { $case: "stringLiteral", stringLiteral: StringLiteral.fromJSON(object.stringLiteral) }
-                                        : isSet(object.compoundStatement)
-                                          ? { $case: "compoundStatement", compoundStatement: CompoundStatement.fromJSON(object.compoundStatement) }
-                                          : isSet(object.unknownNode)
-                                            ? { $case: "unknownNode", unknownNode: UnknownNode.fromJSON(object.unknownNode) }
-                                            : undefined,
+        ? {
+          $case: "assignmentExpression",
+          assignmentExpression: AssignmentExpression.fromJSON(object.assignmentExpression),
+        }
+        : isSet(object.binaryExpression)
+        ? { $case: "binaryExpression", binaryExpression: BinaryExpression.fromJSON(object.binaryExpression) }
+        : isSet(object.callExpression)
+        ? { $case: "callExpression", callExpression: CallExpression.fromJSON(object.callExpression) }
+        : isSet(object.comment)
+        ? { $case: "comment", comment: Comment.fromJSON(object.comment) }
+        : isSet(object.declaration)
+        ? { $case: "declaration", declaration: Declaration.fromJSON(object.declaration) }
+        : isSet(object.elseClause)
+        ? { $case: "elseClause", elseClause: ElseClause.fromJSON(object.elseClause) }
+        : isSet(object.expressionStatement)
+        ? {
+          $case: "expressionStatement",
+          expressionStatement: ExpressionStatement.fromJSON(object.expressionStatement),
+        }
+        : isSet(object.functionDeclaration)
+        ? {
+          $case: "functionDeclaration",
+          functionDeclaration: FunctionDeclaration.fromJSON(object.functionDeclaration),
+        }
+        : isSet(object.functionDefinition)
+        ? { $case: "functionDefinition", functionDefinition: FunctionDefinition.fromJSON(object.functionDefinition) }
+        : isSet(object.functionParameter)
+        ? { $case: "functionParameter", functionParameter: FunctionParameter.fromJSON(object.functionParameter) }
+        : isSet(object.ifStatement)
+        ? { $case: "ifStatement", ifStatement: IfStatement.fromJSON(object.ifStatement) }
+        : isSet(object.numberLiteral)
+        ? { $case: "numberLiteral", numberLiteral: NumberLiteral.fromJSON(object.numberLiteral) }
+        : isSet(object.preprocInclude)
+        ? { $case: "preprocInclude", preprocInclude: PreprocInclude.fromJSON(object.preprocInclude) }
+        : isSet(object.reference)
+        ? { $case: "reference", reference: Reference.fromJSON(object.reference) }
+        : isSet(object.returnStatement)
+        ? { $case: "returnStatement", returnStatement: ReturnStatement.fromJSON(object.returnStatement) }
+        : isSet(object.stringLiteral)
+        ? { $case: "stringLiteral", stringLiteral: StringLiteral.fromJSON(object.stringLiteral) }
+        : isSet(object.compoundStatement)
+        ? { $case: "compoundStatement", compoundStatement: CompoundStatement.fromJSON(object.compoundStatement) }
+        : isSet(object.unknownNode)
+        ? { $case: "unknownNode", unknownNode: UnknownNode.fromJSON(object.unknownNode) }
+        : undefined,
     };
   },
 
@@ -866,7 +867,7 @@ export const UnknownNode: MessageFns<UnknownNode> = {
 };
 
 function createBaseAssignmentExpression(): AssignmentExpression {
-  return { id: "", identifier: "", value: undefined };
+  return { id: "", idDeclaration: "", identifier: "", value: undefined };
 }
 
 export const AssignmentExpression: MessageFns<AssignmentExpression> = {
@@ -874,11 +875,14 @@ export const AssignmentExpression: MessageFns<AssignmentExpression> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
+    if (message.idDeclaration !== "") {
+      writer.uint32(18).string(message.idDeclaration);
+    }
     if (message.identifier !== "") {
-      writer.uint32(18).string(message.identifier);
+      writer.uint32(26).string(message.identifier);
     }
     if (message.value !== undefined) {
-      LanguageObject.encode(message.value, writer.uint32(26).fork()).join();
+      LanguageObject.encode(message.value, writer.uint32(34).fork()).join();
     }
     return writer;
   },
@@ -903,11 +907,19 @@ export const AssignmentExpression: MessageFns<AssignmentExpression> = {
             break;
           }
 
-          message.identifier = reader.string();
+          message.idDeclaration = reader.string();
           continue;
         }
         case 3: {
           if (tag !== 26) {
+            break;
+          }
+
+          message.identifier = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
             break;
           }
 
@@ -926,6 +938,7 @@ export const AssignmentExpression: MessageFns<AssignmentExpression> = {
   fromJSON(object: any): AssignmentExpression {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
+      idDeclaration: isSet(object.idDeclaration) ? globalThis.String(object.idDeclaration) : "",
       identifier: isSet(object.identifier) ? globalThis.String(object.identifier) : "",
       value: isSet(object.value) ? LanguageObject.fromJSON(object.value) : undefined,
     };
@@ -935,6 +948,9 @@ export const AssignmentExpression: MessageFns<AssignmentExpression> = {
     const obj: any = {};
     if (message.id !== "") {
       obj.id = message.id;
+    }
+    if (message.idDeclaration !== "") {
+      obj.idDeclaration = message.idDeclaration;
     }
     if (message.identifier !== "") {
       obj.identifier = message.identifier;
@@ -951,6 +967,7 @@ export const AssignmentExpression: MessageFns<AssignmentExpression> = {
   fromPartial<I extends Exact<DeepPartial<AssignmentExpression>, I>>(object: I): AssignmentExpression {
     const message = createBaseAssignmentExpression();
     message.id = object.id ?? "";
+    message.idDeclaration = object.idDeclaration ?? "";
     message.identifier = object.identifier ?? "";
     message.value = (object.value !== undefined && object.value !== null)
       ? LanguageObject.fromPartial(object.value)

@@ -52,12 +52,12 @@
       "editor/title": [
         {
           "command": "lengalab.setStructuredView",
-          "when": "activeCustomEditorId == lengalab.lenga",
+          "when": "activeCustomEditorId == lengalab.c",
           "group": "navigation"
         },
         {
           "command": "lengalab.setSpikeView",
-          "when": "activeCustomEditorId == lengalab.lenga",
+          "when": "activeCustomEditorId == lengalab.c",
           "group": "navigation"
         }
       ]

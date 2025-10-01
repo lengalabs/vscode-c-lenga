@@ -5,21 +5,21 @@ import * as nodes from './nodes/cNodes';
 
 export enum View {
 	Spike = 'spikeView',
-    Structured = 'structuredView',
+	Structured = 'structuredView',
 }
 
-export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
-    private static readonly viewType = 'tpp-extension.saturn';
+export class ClengaEditorProvider implements vscode.CustomTextEditorProvider {
+	private static readonly viewType = 'lengalab.c';
 
 	public static register(context: vscode.ExtensionContext, client: Client): vscode.Disposable {
-		const provider = new SaturnEditorProvider(context, client);
-		const providerRegistration = vscode.window.registerCustomEditorProvider(SaturnEditorProvider.viewType, provider);
+		const provider = new ClengaEditorProvider(context, client);
+		const providerRegistration = vscode.window.registerCustomEditorProvider(ClengaEditorProvider.viewType, provider);
 		return providerRegistration;
 	}
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-        private saturnClient: Client,
+		private lengaClient: Client,
 	) { }
 
 	public async resolveCustomTextEditor(
@@ -29,11 +29,11 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 	): Promise<void> {
 		let state: nodes.Node[];
 		const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
-		
+
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
-		const lastView = this.context.workspaceState.get<View>(keyForFile(document.uri), View.Spike);
+		const lastView = this.context.workspaceState.get<View>(keyForFile(document.uri), View.Structured);
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, lastView);
 
 		function updateWebview(contents: nodes.Node[]) {
@@ -43,13 +43,13 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 				contents: contents,
 			});
 		}
-		
-		const d1 = vscode.commands.registerCommand("tpp-extension.setStructuredView", (uri: vscode.Uri) => {
+
+		const d1 = vscode.commands.registerCommand("clenga.setStructuredView", (uri: vscode.Uri) => {
 			this.context.workspaceState.update(keyForFile(uri), View.Structured);
 			webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
 		});
 
-		const d2 = vscode.commands.registerCommand("tpp-extension.setSpikeView", (uri: vscode.Uri) => {
+		const d2 = vscode.commands.registerCommand("clenga.setSpikeView", (uri: vscode.Uri) => {
 			this.context.workspaceState.update(keyForFile(uri), View.Spike);
 			webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Spike);
 		});
@@ -60,19 +60,19 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 					updateWebview(state);
 					break;
 				case 'edit':
-					this.saturnClient.edit(document.uri.path, e.data)
-						.then( result => {
+					this.lengaClient.edit(document.uri.path, e.data)
+						.then(result => {
 							state = result;
 							updateWebview(state);
 						})
-						.catch( err => {
+						.catch(err => {
 							vscode.window.showErrorMessage(err);
 						});
 					return;
 				case 'nodeEdit':
 					vscode.window.showInformationMessage("edit!!");
 					updateWebview([e.contents]);
-					return; 
+					return;
 			}
 		});
 
@@ -81,7 +81,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
 			d2.dispose();
 		});
 
-        this.saturnClient.openFile(document.uri.fsPath)
+		this.lengaClient.openFile(document.uri.fsPath)
 			.then(result => {
 				state = result;
 				console.log(JSON.stringify(state, null, 2));
@@ -106,7 +106,7 @@ export class SaturnEditorProvider implements vscode.CustomTextEditorProvider {
                     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <link href="${styleMainUri}" rel="stylesheet" />
-                    <title>Saturn Editor</title>
+                    <title>CLenga Editor</title>
                 </head>
                 <body>
                     <div id="root"></div>

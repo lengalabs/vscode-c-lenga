@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { startServer } from './server';
 import { Client } from './client';
-import { SaturnEditorProvider, View } from './views';
+import { ClengaEditorProvider, View } from './views';
 //import { GraphView } from './graphView';
 import { StructuredView } from './structuredView';
- 
+
 let server: cp.ChildProcessWithoutNullStreams;
 let editor: vscode.TextEditor;
 
@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 	vscode.window.showInformationMessage('view change!');
 	// }));
 
-	context.subscriptions.push(SaturnEditorProvider.register(context, client));
+	context.subscriptions.push(ClengaEditorProvider.register(context, client));
 
 	context.subscriptions.push(StructuredView.register(context));
 	//context.subscriptions.push(GraphView.register(context));
@@ -36,9 +36,10 @@ function initServerWorkspace(client: Client) {
 	var rootNodeToml: string = "";
 	vscode.workspace.findFiles('**/nodes.toml').then(files => {
 		if (files.length > 0) {
-  		rootNodeToml = files[0].fsPath;
-	}});
-	
+			rootNodeToml = files[0].fsPath;
+		}
+	});
+
 	if (workDirFolders && workDirFolders.length > 0) {
 		client.initialize(workDirFolders[0].uri.fsPath, rootNodeToml).then(_ => {
 			vscode.window.showInformationMessage(`[extension] server initialized correctly`);
