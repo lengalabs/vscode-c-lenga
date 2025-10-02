@@ -35,7 +35,7 @@ interface LineProps {
     children: React.ReactNode;
 }
 
-export function Line({ indent, node, children }: LineProps) {
+export function Object({ indent, node, children }: LineProps) {
     const { selectedNodeId, setSelectedNodeId, insertTargetId, setInsertTargetId, onEdit, nodeMap, parentMap } = useLineContext();
     const isSelected = selectedNodeId === node.id;
     const showDropdown = insertTargetId === node.id;
@@ -49,30 +49,144 @@ export function Line({ indent, node, children }: LineProps) {
         }
     };
 
-    const handleSelect = (type: "Declaration" | "ReturnStatement") => {
+    const handleSelect = (type: nodes.NodeTypes) => {
         if (!node) return;
         // create new node based on selection
         let newNode: nodes.Node;
-        if (type === "Declaration") {
-            const newLocal: nodes.StringLiteral = {
-                id: crypto.randomUUID(),
-                type: "StringLiteral",
-                value: "",
-            };
-            const newDeclaration: nodes.Declaration = {
-                id: crypto.randomUUID(),
-                type: "Declaration",
-                data_type: "",
-                name: "",
-                initializer: newLocal as nodes.CExpressionNode,
-            };
-            newNode = newDeclaration;
-        } else {
-            newNode = {
-                id: crypto.randomUUID(),
-                type: "ReturnStatement",
-                expression: undefined
-            } as nodes.ReturnStatement;
+        switch (type) {
+            case "Declaration": {
+                const newLocal: nodes.StringLiteral = {
+                    id: crypto.randomUUID(),
+                    type: "StringLiteral",
+                    value: "",
+                };
+                const newDeclaration: nodes.Declaration = {
+                    id: crypto.randomUUID(),
+                    type: "Declaration",
+                    data_type: "",
+                    name: "",
+                    initializer: newLocal as nodes.CExpressionNode,
+                };
+                newNode = newDeclaration;
+                break;
+            }
+            case "ReturnStatement": {
+                const newReturnStatement: nodes.ReturnStatement = {
+                    id: crypto.randomUUID(),
+                    type: "ReturnStatement",
+                    expression: undefined
+                };
+                newNode = newReturnStatement
+                break;
+            }
+            case 'UnknownNode': {
+                const newUnknownNode: nodes.UnknownNode = {
+                    id: crypto.randomUUID(),
+                    type: 'UnknownNode',
+                    contents: ""
+                }
+                newNode = newUnknownNode;
+                break;
+            }
+            case 'PreprocInclude': {
+                const newPreprocInclude: nodes.PreprocInclude = {
+                    id: crypto.randomUUID(),
+                    type: 'PreprocInclude',
+                    directive: ""
+                }
+                newNode = newPreprocInclude;
+                break;
+            }
+            case 'FunctionParameter': {
+                const newFunctionParameter: nodes.FunctionParameter = {
+                    id: crypto.randomUUID(),
+                    type: 'FunctionParameter',
+                    name: "",
+                    data_type: "",
+                }
+                newNode = newFunctionParameter;
+                break;
+            }
+            case 'FunctionDeclaration': {
+                const newFunctionDeclaration: nodes.FunctionDeclaration = {
+                    id: crypto.randomUUID(),
+                    type: 'FunctionDeclaration',
+                    name: "",
+                    return_type: "",
+                    params: []
+                }
+                newNode = newFunctionDeclaration;
+                break;
+            }
+            case 'FunctionDefinition': {
+                const newFunctionDefinition: nodes.FunctionDefinition = {
+                    id: crypto.randomUUID(),
+                    type: 'FunctionDefinition',
+                    name: "",
+                    return_type: "",
+                    params: [],
+                    body: { id: crypto.randomUUID(), type: "CompoundStatement", statements: [] }
+                }
+                newNode = newFunctionDefinition;
+                break;
+            }
+            case 'CompoundStatement': {
+                const newCompoundStatement: nodes.CompoundStatement = {
+                    id: crypto.randomUUID(),
+                    type: 'CompoundStatement',
+                    statements: []
+                }
+                newNode = newCompoundStatement;
+                break;
+            }
+            case 'CallExpression': {
+                const newCallExpression: nodes.CallExpression = {
+                    id: crypto.randomUUID(),
+                    type: 'CallExpression',
+                    identifier: '',
+                    idDeclaration: '',
+                    args: []
+                }
+                newNode = newCallExpression;
+                break;
+            }
+            case 'Reference': {
+                const newReference: nodes.Reference = {
+                    id: crypto.randomUUID(),
+                    type: 'Reference',
+                    DeclRefId: ''
+                }
+                newNode = newReference;
+                break;
+            }
+            case 'AssignmentExpression': {
+                const newAssignmentExpression: nodes.AssignmentExpression = {
+                    id: crypto.randomUUID(),
+                    type: 'AssignmentExpression',
+                    id_reference: '',
+                    value: { id: crypto.randomUUID(), type: "StringLiteral", value: '' }
+                }
+                newNode = newAssignmentExpression;
+                break;
+            }
+            case 'NumberLiteral': {
+                const newNumberLiteral: nodes.NumberLiteral = {
+                    id: crypto.randomUUID(),
+                    type: 'NumberLiteral',
+                    value: ''
+                }
+                newNode = newNumberLiteral;
+                break;
+            }
+            case 'StringLiteral': {
+                const newStringLiteral: nodes.StringLiteral = {
+                    id: crypto.randomUUID(),
+                    type: 'StringLiteral',
+                    value: ''
+                }
+                newNode = newStringLiteral;
+                break;
+            }
         }
 
         // insert logic: e.g., in CompoundStatement
@@ -95,7 +209,7 @@ export function Line({ indent, node, children }: LineProps) {
     return (
         <div
             tabIndex={0} onClick={() => setSelectedNodeId(node.id)} onKeyDown={handleKeyDown}
-            style={{ backgroundColor: isSelected ? "rgba(0,120,215,0.2)" : "transparent" }}
+            style={{ backgroundColor: isSelected ? "rgba(116, 116, 116, 0.05)" : "transparent" }}
         >
             <div style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
                 {"    ".repeat(indent)}
@@ -123,23 +237,23 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
     switch (node.type) {
         case "PreprocInclude":
             return (<IncludeDeclRender includeDecl={node as nodes.PreprocInclude} indent={indent} />)
+        case "FunctionParameter":
+            return (<ParamDeclRender paramDecl={node as nodes.FunctionParameter} />)
         case "FunctionDeclaration":
             throw new Error("Not implemented")
         case "FunctionDefinition":
             return (<FuncDefRender funcDef={node as nodes.FunctionDefinition} indent={indent} />)
         case "Declaration":
             return (<VarDeclRender varDecl={node as nodes.Declaration} indent={indent} />)
-        case "FunctionParameter":
-            return (<ParamDeclRender paramDecl={node as nodes.FunctionParameter} />)
-        case "CompoundStatement":
-            return (<CompStmtRender compStmt={node as nodes.CompoundStatement} indent={indent} />)
         case "ReturnStatement":
             return (<ReturnStmtRender returnStmt={node as nodes.ReturnStatement} indent={indent} />)
+        case "CompoundStatement":
+            return (<CompStmtRender compStmt={node as nodes.CompoundStatement} indent={indent} />)
         case "CallExpression":
             return (<CallExprRender callExpr={node as nodes.CallExpression} />)
         case "Reference":
             return (<DeclRefExprRender declRefExpr={node as nodes.Reference} />)
-        case "AssignmentExpr":
+        case "AssignmentExpression":
             return (<AssignmentExprRender assignmentExpr={node as nodes.AssignmentExpression} />)
         case "NumberLiteral":
             return (<NumberLiteralExprRender literalExpr={node as nodes.NumberLiteral} />)
@@ -152,7 +266,7 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
 
 function IncludeDeclRender({ includeDecl, indent }: { includeDecl: nodes.PreprocInclude, indent: number }): React.ReactNode {
     return (
-        <Line indent={indent} node={includeDecl}>
+        <Object indent={indent} node={includeDecl}>
             <>
                 {"#include "}
                 {"<"}
@@ -160,7 +274,7 @@ function IncludeDeclRender({ includeDecl, indent }: { includeDecl: nodes.Preproc
                 {">"}
                 {";"}
             </>
-        </Line>
+        </Object>
 
     )
 }
@@ -171,7 +285,7 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
 
     return (
         <>
-            <Line indent={indent} node={funcDef}>
+            <Object indent={indent} node={funcDef}>
                 <>
                     {EditableField(funcDef, "return_type")}
                     {EditableField(funcDef, "name")}
@@ -185,13 +299,13 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
                     {")"}
                     {"{"}
                 </>
-            </Line>
+            </Object>
 
             {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent + 1} />)}
 
-            <Line indent={indent} node={funcDef}>
+            <Object indent={indent} node={funcDef}>
                 {"}"}
-            </Line>
+            </Object>
         </>
     )
 }
@@ -201,7 +315,7 @@ function VarDeclRender({ varDecl, indent }: { varDecl: nodes.Declaration, indent
     nodeMap.set(varDecl.id, varDecl);
 
     return (
-        <Line indent={indent} node={varDecl}>
+        <Object indent={indent} node={varDecl}>
             {EditableField(varDecl, "data_type")}
             {EditableField(varDecl, "name")}
             {varDecl.initializer && (
@@ -211,7 +325,7 @@ function VarDeclRender({ varDecl, indent }: { varDecl: nodes.Declaration, indent
                 </>
             )}
             {";"}
-        </Line>
+        </Object>
     )
 }
 
@@ -237,7 +351,7 @@ function CompStmtRender({ compStmt, indent }: { compStmt: nodes.CompoundStatemen
 
 function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStatement, indent: number }): React.ReactNode {
     return (
-        <Line indent={indent} node={returnStmt}>
+        <Object indent={indent} node={returnStmt}>
             {"return"}
             {returnStmt.expression && (
                 <>
@@ -246,7 +360,7 @@ function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStat
                 </>
             )}
             {";"}
-        </Line>
+        </Object>
     )
 }
 

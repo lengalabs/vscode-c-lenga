@@ -22,8 +22,22 @@ export type CExpressionNode =
 
 export interface Node {
     id: string
-    type: string
+    type: NodeTypes
 }
+
+export type NodeTypes = "UnknownNode"
+    | "PreprocInclude"
+    | "FunctionParameter"
+    | "FunctionDeclaration"
+    | "FunctionDefinition"
+    | "Declaration"
+    | "ReturnStatement"
+    | "CompoundStatement"
+    | "CallExpression"
+    | "Reference"
+    | "AssignmentExpression"
+    | "NumberLiteral"
+    | "StringLiteral"
 
 export type UnknownNode = Node & {
     type: "UnknownNode"

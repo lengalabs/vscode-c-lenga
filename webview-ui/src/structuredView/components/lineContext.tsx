@@ -77,7 +77,7 @@ export function buildMaps(ast: nodes.Node[]): {
         callExpr.args.forEach((arg, i) => traverse(arg, callExpr, "args", i));
         break;
       }
-      case "AssignmentExpr": {
+      case "AssignmentExpression": {
         const assignmentExpr = node as nodes.AssignmentExpression;
         traverse(assignmentExpr.value, node, "value", 0);
         break;

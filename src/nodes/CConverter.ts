@@ -292,7 +292,7 @@ function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
             return val;
         }
 
-        case "AssignmentExpr": {
+        case "AssignmentExpression": {
             const assign = object as cNode.AssignmentExpression;
             const val: cObjects.LanguageObject = {
                 languageObject: {
