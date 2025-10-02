@@ -2,8 +2,9 @@ import React from 'react';
 import { useLineContext } from './lineContext';
 import * as nodes from '../../../../src/nodes/cNodes';
 
-function EditableField<T extends nodes.Node, K extends keyof T>(node: T, key: K) {
-    const { onEdit } = useLineContext();
+function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T, key: K) {
+    const { selectedNodeId, selectedKey, onEdit, setSelectedNodeId, setSelectedKey } = useLineContext();
+    const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key
     const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
 
     // Keep inputValue in sync if node[key] changes externally
@@ -14,16 +15,22 @@ function EditableField<T extends nodes.Node, K extends keyof T>(node: T, key: K)
     return (
         <input
             className="inline-editor"
+            style={{
+                ...(isSelected ? {
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)"
+                } : {})
+            }}
             value={inputValue}
             size={Math.max(1, inputValue.length)}
             onChange={(e) => setInputValue(e.target.value)}
-            onInput={(e) => {
-                const el = e.target as HTMLInputElement;
-                el.size = Math.max(1, el.value.length); // dynamically adjust width
+            onFocus={(_) => {
+                setSelectedKey(key)
+                setSelectedNodeId(node.id)
             }}
             onBlur={() => {
                 node[key] = inputValue as T[K];
-                onEdit(node);
+                onEdit(node, key);
             }}
         />
     );
@@ -203,7 +210,7 @@ export function Object({ indent, node, children }: LineProps) {
         parentMap.set(newNode.id, { parent, key, index: index + 1 });
 
         setInsertTargetId(null); // close dropdown
-        onEdit(parent);
+        onEdit(parent, null);
     };
 
     return (
@@ -216,13 +223,15 @@ export function Object({ indent, node, children }: LineProps) {
                 {children}
             </div>
 
-            {showDropdown && (
-                <div style={{ border: "1px solid #ccc", background: "black", position: "absolute" }}>
-                    <div onClick={() => handleSelect("Declaration")}>Declaration</div>
-                    <div onClick={() => handleSelect("ReturnStatement")}>ReturnStatement</div>
-                </div>
-            )}
-        </div>
+            {
+                showDropdown && (
+                    <div style={{ border: "1px solid #ccc", background: "black", position: "absolute" }}>
+                        <div onClick={() => handleSelect("Declaration")}>Declaration</div>
+                        <div onClick={() => handleSelect("ReturnStatement")}>ReturnStatement</div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 

@@ -8,9 +8,11 @@ export interface ParentInfo {
 }
 
 export interface LineContextType {
-  onEdit: (node: nodes.Node) => void;
+  onEdit: <T extends nodes.Node, K extends string & keyof T>(node: T, key: K | null) => void;
   selectedNodeId: string | null;
+  selectedKey: string | null;
   setSelectedNodeId: (id: string) => void;
+  setSelectedKey: (id: string) => void;
   nodeMap: Map<string, nodes.Node>;
   parentMap: Map<string, ParentInfo>;
   insertTargetId: string | null;
@@ -93,9 +95,11 @@ export function buildMaps(ast: nodes.Node[]): {
 
 interface LineProviderProps {
   ast: nodes.Node[];
-  onEdit: (node: nodes.Node) => void;
+  onEdit: <T extends nodes.Node, K extends string & keyof T>(node: T, key: K | null) => void;
   selectedNodeId: string | null;
+  selectedKey: string | null;
   setSelectedNodeId: (id: string) => void;
+  setSelectedKey: (key: string) => void;
   insertTargetId: string | null;
   setInsertTargetId: (id: string | null) => void;
   children: React.ReactNode;
@@ -105,7 +109,9 @@ export function LineProvider({
   ast,
   onEdit,
   selectedNodeId,
+  selectedKey,
   setSelectedNodeId,
+  setSelectedKey,
   insertTargetId,
   setInsertTargetId,
   children,
@@ -113,7 +119,7 @@ export function LineProvider({
   const { nodeMap, parentMap } = useMemo(() => buildMaps(ast), [ast]);
 
   return (
-    <LineContext.Provider value={{ onEdit, selectedNodeId, setSelectedNodeId, nodeMap, parentMap, insertTargetId, setInsertTargetId }}>
+    <LineContext.Provider value={{ onEdit, selectedNodeId, selectedKey, setSelectedNodeId, setSelectedKey, nodeMap, parentMap, insertTargetId, setInsertTargetId }}>
       {children}
     </LineContext.Provider>
   );
