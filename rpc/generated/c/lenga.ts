@@ -4,7 +4,6 @@
 //   protoc               v3.19.6
 // source: c/lenga.proto
 
-/* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import {
   type CallOptions,
@@ -41,7 +40,7 @@ export interface OpenRequest {
 
 export interface EditRequest {
   path: string;
-  editData: string;
+  editedObject?: LanguageObject | undefined;
 }
 
 function createBaseVoid(): Void {
@@ -298,7 +297,7 @@ export const OpenRequest: MessageFns<OpenRequest> = {
 };
 
 function createBaseEditRequest(): EditRequest {
-  return { path: "", editData: "" };
+  return { path: "", editedObject: undefined };
 }
 
 export const EditRequest: MessageFns<EditRequest> = {
@@ -306,8 +305,8 @@ export const EditRequest: MessageFns<EditRequest> = {
     if (message.path !== "") {
       writer.uint32(10).string(message.path);
     }
-    if (message.editData !== "") {
-      writer.uint32(18).string(message.editData);
+    if (message.editedObject !== undefined) {
+      LanguageObject.encode(message.editedObject, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -332,7 +331,7 @@ export const EditRequest: MessageFns<EditRequest> = {
             break;
           }
 
-          message.editData = reader.string();
+          message.editedObject = LanguageObject.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -347,7 +346,7 @@ export const EditRequest: MessageFns<EditRequest> = {
   fromJSON(object: any): EditRequest {
     return {
       path: isSet(object.path) ? globalThis.String(object.path) : "",
-      editData: isSet(object.editData) ? globalThis.String(object.editData) : "",
+      editedObject: isSet(object.editedObject) ? LanguageObject.fromJSON(object.editedObject) : undefined,
     };
   },
 
@@ -356,8 +355,8 @@ export const EditRequest: MessageFns<EditRequest> = {
     if (message.path !== "") {
       obj.path = message.path;
     }
-    if (message.editData !== "") {
-      obj.editData = message.editData;
+    if (message.editedObject !== undefined) {
+      obj.editedObject = LanguageObject.toJSON(message.editedObject);
     }
     return obj;
   },
@@ -368,7 +367,9 @@ export const EditRequest: MessageFns<EditRequest> = {
   fromPartial<I extends Exact<DeepPartial<EditRequest>, I>>(object: I): EditRequest {
     const message = createBaseEditRequest();
     message.path = object.path ?? "";
-    message.editData = object.editData ?? "";
+    message.editedObject = (object.editedObject !== undefined && object.editedObject !== null)
+      ? LanguageObject.fromPartial(object.editedObject)
+      : undefined;
     return message;
   },
 };
@@ -453,7 +454,7 @@ export interface CLengaClient extends Client {
 }
 
 export const CLengaClient = makeGenericClientConstructor(CLengaService, "c.lenga.CLenga") as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): CLengaClient;
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): CLengaClient;
   service: typeof CLengaService;
   serviceName: string;
 };

@@ -11,8 +11,8 @@ export class Client {
     private converter: CConverter;
 
     constructor() {
-        this.lenga_stub = new lenga.LengaClient("localhost:49200", credentials.createInsecure());
-        this.clenga_stub = new clenga.CLengaClient("localhost:49200", credentials.createInsecure());
+        this.lenga_stub = new lenga.LengaClient("localhost:49100", credentials.createInsecure());
+        this.clenga_stub = new clenga.CLengaClient("localhost:49100", credentials.createInsecure());
         this.converter = new CConverter();
     }
 
@@ -23,7 +23,7 @@ export class Client {
         };
 
         return new Promise((resolve, reject) => {
-            this.lenga_stub.initialize(request, (err: ServiceError | null, response: lenga.Void) => {
+            this.clenga_stub.initialize(request, (err: ServiceError | null, response: lenga.Void) => {
                 if (err) {
                     reject(new Error(`${err.message}`));
                 } else {
@@ -39,7 +39,7 @@ export class Client {
         };
 
         return new Promise((resolve, reject) => {
-            this.lenga_stub.openFile(request, (err: ServiceError | null, objects: cObjects.SourceFile) => {
+            this.clenga_stub.openFile(request, (err: ServiceError | null, objects: cObjects.SourceFile) => {
                 if (err) {
                     reject(new Error(`${err.message}`));
                 } else {
@@ -50,14 +50,14 @@ export class Client {
         });
     }
 
-    edit(path: string, editData: string): Promise<Array<cNodes.Node>> {
+    edit(path: string, editedObject: cNodes.Node): Promise<Array<cNodes.Node>> {
         var request: clenga.EditRequest = {
             path: path,
-            editData: editData,
+            editedObject: undefined, // TODO
         };
 
         return new Promise((resolve, reject) => {
-            this.lenga_stub.edit(request, (err: ServiceError, objects: cObjects.SourceFile) => {
+            this.clenga_stub.edit(request, (err: ServiceError, objects: cObjects.SourceFile) => {
                 if (err) {
                     reject(new Error(`${err}`));
                 } else {

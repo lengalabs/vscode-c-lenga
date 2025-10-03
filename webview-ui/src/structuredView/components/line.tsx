@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLineContext } from './lineContext';
+import { useLineContext } from "./context";
 import * as nodes from '../../../../src/nodes/cNodes';
 
 function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T, key: K) {
@@ -24,7 +24,7 @@ function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T
             value={inputValue}
             size={Math.max(1, inputValue.length)}
             onChange={(e) => setInputValue(e.target.value)}
-            onFocus={(_) => {
+            onFocus={() => {
                 setSelectedKey(key)
                 setSelectedNodeId(node.id)
             }}
@@ -194,6 +194,9 @@ export function Object({ indent, node, children }: LineProps) {
                 newNode = newStringLiteral;
                 break;
             }
+            case "SourceFile": {
+                throw new Error("Unimplemented")
+            }
         }
 
         // insert logic: e.g., in CompoundStatement
@@ -249,7 +252,7 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
         case "FunctionParameter":
             return (<ParamDeclRender paramDecl={node as nodes.FunctionParameter} />)
         case "FunctionDeclaration":
-            throw new Error("Not implemented")
+            return (<FunctionDeclarationRender functionDeclaration={node as nodes.FunctionDeclaration} indent={indent} />)
         case "FunctionDefinition":
             return (<FuncDefRender funcDef={node as nodes.FunctionDefinition} indent={indent} />)
         case "Declaration":
@@ -287,6 +290,32 @@ function IncludeDeclRender({ includeDecl, indent }: { includeDecl: nodes.Preproc
 
     )
 }
+
+
+function FunctionDeclarationRender({ functionDeclaration, indent }: { functionDeclaration: nodes.FunctionDeclaration, indent: number }): React.ReactNode {
+    const { nodeMap } = useLineContext();
+    nodeMap.set(functionDeclaration.id, functionDeclaration);
+
+    return (
+        <>
+            <Object indent={indent} node={functionDeclaration}>
+                <>
+                    {EditableField(functionDeclaration, "return_type")}
+                    {EditableField(functionDeclaration, "name")}
+                    {"("}
+                    {functionDeclaration.params.map((param, i) => (
+                        <React.Fragment key={param.id}>
+                            {i > 0 && ", "}
+                            <ParamDeclRender paramDecl={param} />
+                        </React.Fragment>
+                    ))}
+                    {")"}
+                </>
+            </Object>
+        </>
+    )
+}
+
 
 function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition, indent: number }): React.ReactNode {
     const { nodeMap } = useLineContext();

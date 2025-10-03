@@ -41,25 +41,30 @@ function convertProtoNodeToTs(protoObject: cObjects.LanguageObject): cNode.Node 
         case "assignmentExpression":
             return convertAssignmentExpressionToTS(object.assignmentExpression);
         case "binaryExpression":
-            throw new Error("binaryExpression not implemented"); // TODO 
+            // throw new Error("binaryExpression not implemented"); // TODO 
+            return newUnknownNode(protoObject); // TODO implement
         case "callExpression":
             return convertCallExpressionToTS(object.callExpression);
         case "sourceFile":
-            throw new Error("sourceFile not implemented"); // TODO
+            return convertSourceFileToTS(object.sourceFile);
         case "comment":
-            throw new Error("comment not implemented"); // TODO
+            // throw new Error("comment not implemented"); // TODO
+            return newUnknownNode(protoObject); // TODO implement
         case "declaration":
             return variableDeclarationToTS(object.declaration);
         case "elseClause":
-            throw new Error("elseClause not implemented"); // TODO
+            // throw new Error("elseClause not implemented"); // TODO
+            return newUnknownNode(protoObject); // TODO implement
         case "expressionStatement":
-            throw new Error("expressionStatement not implemented"); // TODO this is not used in the server either
+            // throw new Error("expressionStatement not implemented"); // TODO this is not used in the server either
+            return newUnknownNode(protoObject); // TODO implement
         case "functionDefinition":
             return convertFunctionDefinitionToTS(object.functionDefinition);
         case "functionParameter":
             return convertFunctionParameterToTS(object.functionParameter);
         case "ifStatement":
-            throw new Error("ifStatement not implemented"); // TODO
+            // throw new Error("ifStatement not implemented"); // TODO
+            return newUnknownNode(protoObject); // TODO implement
         case "numberLiteral":
             return convertNumberLiteralToTS(object.numberLiteral);
         case "reference":
@@ -77,6 +82,14 @@ function convertProtoNodeToTs(protoObject: cObjects.LanguageObject): cNode.Node 
         case "unknownNode":
             throw new Error("TODO remove unknown node");
     }
+}
+
+function newUnknownNode(obj: cObjects.LanguageObject): cNode.UnknownNode {
+    return {
+        id: crypto.randomUUID(),
+        type: "UnknownNode",
+        contents: String(obj.languageObject)
+    };
 }
 
 function convertPreprocIncludeToTs(preprocInclude: cObjects.PreprocInclude): cNode.PreprocInclude {
@@ -109,7 +122,7 @@ function convertCompoundStatementToTs(compoundStatement: cObjects.CompoundStatem
         id: compoundStatement.id,
         type: "CompoundStatement",
         statements: compoundStatement.codeBlock.map(convertProtoNodeToTs)
-    }
+    };
 }
 
 function convertFunctionParameterToTS(functionParameter: cObjects.FunctionParameter): cNode.FunctionParameter {
@@ -141,7 +154,7 @@ function convertReturnStatementToTS(returnStatement: cObjects.ReturnStatement): 
 }
 
 function convertCallExpressionToTS(callExpression: cObjects.CallExpression): cNode.CallExpression {
-    const args = callExpression.argumentList.map(convertProtoNodeToTs)
+    const args = callExpression.argumentList.map(convertProtoNodeToTs);
 
     return {
         id: callExpression.id,
@@ -149,6 +162,14 @@ function convertCallExpressionToTS(callExpression: cObjects.CallExpression): cNo
         identifier: callExpression.identifier,
         idDeclaration: callExpression.idDeclaration,
         args: args as cNode.CExpressionNode[], // TODO
+    };
+}
+
+function convertSourceFileToTS(sourceFile: cObjects.SourceFile): cNode.SourceFile {
+    return {
+        id: sourceFile.id,
+        type: "SourceFile",
+        code: sourceFile.code.map(convertProtoNodeToTs),
     };
 }
 

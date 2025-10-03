@@ -38,6 +38,7 @@ export type NodeTypes = "UnknownNode"
     | "AssignmentExpression"
     | "NumberLiteral"
     | "StringLiteral"
+    | "SourceFile"
 
 export type UnknownNode = Node & {
     type: "UnknownNode"
@@ -49,6 +50,11 @@ export type UnknownNode = Node & {
 export type PreprocInclude = Node & {
     type: "PreprocInclude"
     directive: string
+}
+
+export type SourceFile = Node & {
+    type: "SourceFile"
+    code: Array<Node>
 }
 
 // Declaration Nodes

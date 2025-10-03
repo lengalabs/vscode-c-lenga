@@ -28,5 +28,5 @@ message OpenRequest {
 
 message EditRequest {
     string path = 1;
-    string editData = 2;
+    LanguageObject editedObject = 2;
 }
