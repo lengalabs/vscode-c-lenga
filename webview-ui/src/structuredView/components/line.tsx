@@ -1,16 +1,19 @@
 import React from 'react';
 import { useLineContext } from "./context";
 import * as nodes from '../../../../src/nodes/cNodes';
+import '../index.css';
 
 function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T, key: K) {
     const { selectedNodeId, selectedKey, onEdit, setSelectedNodeId, setSelectedKey } = useLineContext();
-    const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key
+    const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key;
     const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
 
-    // Keep inputValue in sync if node[key] changes externally
     React.useEffect(() => {
         setInputValue(String(node[key] ?? ""));
     }, [node, key]);
+
+    // width in ch units, at least 1ch
+    const width = Math.max(1, inputValue.length) + "ch";
 
     return (
         <input
@@ -19,14 +22,14 @@ function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T
                 ...(isSelected ? {
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
                     boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)"
-                } : {})
+                } : {}),
+                width,   // dynamically set width in ch
             }}
             value={inputValue}
-            size={Math.max(1, inputValue.length)}
             onChange={(e) => setInputValue(e.target.value)}
             onFocus={() => {
-                setSelectedKey(key)
-                setSelectedNodeId(node.id)
+                setSelectedKey(key);
+                setSelectedNodeId(node.id);
             }}
             onBlur={() => {
                 node[key] = inputValue as T[K];
@@ -43,9 +46,9 @@ interface ObjectProps {
 }
 
 export function Object({ indent, node, children }: ObjectProps) {
-    const { selectedNodeId, setSelectedNodeId, insertTargetId, setInsertTargetId, onEdit, nodeMap, parentMap } = useLineContext();
+    const { selectedNodeId, setSelectedNodeId/*, insertTargetId, setInsertTargetId, onEdit, nodeMap, parentMap*/ } = useLineContext();
     const isSelected = selectedNodeId === node.id;
-    const showDropdown = insertTargetId === node.id;
+    /*const showDropdown = insertTargetId === node.id;
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (!isSelected) return;
@@ -214,27 +217,18 @@ export function Object({ indent, node, children }: ObjectProps) {
 
         setInsertTargetId(null); // close dropdown
         onEdit(parent, null);
-    };
+    };*/
 
     return (
         <div
-            tabIndex={0} onClick={() => setSelectedNodeId(node.id)} onKeyDown={handleKeyDown}
-            style={{ backgroundColor: isSelected ? "rgba(116, 116, 116, 0.05)" : "transparent" }}
+            className={`object-container ${isSelected ? 'object-selected' : ''}`}
+            style={{ paddingLeft: `${indent * 20}px` }}
+            onClick={() => setSelectedNodeId(node.id)}
+            tabIndex={0}
         >
-            <div style={{ whiteSpace: "pre-wrap", fontFamily: "monospace", paddingLeft: `${indent * 34}px`}}>
-                {children}
-            </div>
-
-            {
-                showDropdown && (
-                    <div style={{ border: "1px solid #ccc", background: "black", position: "absolute" }}>
-                        <div onClick={() => handleSelect("Declaration")}>Declaration</div>
-                        <div onClick={() => handleSelect("ReturnStatement")}>ReturnStatement</div>
-                    </div>
-                )
-            }
-        </div >
-    );
+            {children}
+        </div>
+  );
 }
 
 interface NodeRenderProps {
@@ -282,7 +276,8 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
 function IncludeDeclRender({ includeDecl }: { includeDecl: nodes.PreprocInclude }): React.ReactNode {
     return (
         <>
-            {"#include "}
+            {"#include"}
+            {" "}
             {"<"}
             {EditableField(includeDecl, "directive")}
             {">"}
@@ -301,6 +296,7 @@ function FunctionDeclarationRender({ functionDeclaration }: { functionDeclaratio
         <>
             <>
                 {EditableField(functionDeclaration, "return_type")}
+                {" "}
                 {EditableField(functionDeclaration, "name")}
                 {"("}
                 {functionDeclaration.params.map((param, i) => (
@@ -323,6 +319,7 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
     return (
         <>
             {EditableField(funcDef, "return_type")}
+            {" "}
             {EditableField(funcDef, "name")}
             {"("}
             {funcDef.params.map((param, i) => (
@@ -332,7 +329,6 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
                 </React.Fragment>
             ))}
             {")"}
-
             {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent} />)}
         </>
     )
@@ -345,10 +341,13 @@ function VarDeclRender({ varDecl }: { varDecl: nodes.Declaration }): React.React
     return (
         <>
             {EditableField(varDecl, "data_type")}
+            {" "}
             {EditableField(varDecl, "name")}
             {varDecl.initializer && (
                 <>
-                    {"= "}
+                    {" "}
+                    {"="}
+                    {" "}
                     <NodeRender node={varDecl.initializer} indent={0} />
                 </>
             )}
@@ -364,6 +363,7 @@ function ParamDeclRender({ paramDecl }: { paramDecl: nodes.FunctionParameter }):
     return (
         <>
             {EditableField(paramDecl, "data_type")}
+            {" "}
             {EditableField(paramDecl, "name")}
         </>
     )
@@ -387,9 +387,11 @@ function IfStatementRender({ifStatement, indent}: { ifStatement: nodes.IfStateme
     return(
         <>
             {"if"}
-            {" ("}
+            {" "}
+            {"("}
             {<NodeRender node={ifStatement.condition} indent={0} />}
-            {") "}
+            {")"}
+            {" "}
             {<CompStmtRender compStmt={ifStatement.compoundStatement} indent={indent} />}
             {ifStatement.elseClause && (<ElseClauseRender elseClause={ifStatement.elseClause} indent={indent} />)}
         </>
@@ -432,7 +434,8 @@ function CallExprRender({ callExpr }: { callExpr: nodes.CallExpression }): React
                     <NodeRender node={arg} indent={0} />
                 </React.Fragment>
             ))}
-            {");"}
+            {")"}
+            {";"}
         </>
     )
 }
@@ -459,7 +462,9 @@ function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.Assign
     return (
         <>
             {targetNode.name}
-            {" = "}
+            {" "}
+            {"="}
+            {" "}
             <NodeRender node={assignmentExpr.value} indent={0} />
         </>
     )
@@ -473,7 +478,11 @@ function NumberLiteralExprRender({ literalExpr }: { literalExpr: nodes.NumberLit
 
 function StringLiteralExprRender({ literalExpr }: { literalExpr: nodes.StringLiteral }): React.ReactNode {
     return (
-        <>{EditableField(literalExpr, "value")}</>
+        <>
+        {"\""}
+        {EditableField(literalExpr, "value")}
+        {"\""}
+        </>
     )
 }
 

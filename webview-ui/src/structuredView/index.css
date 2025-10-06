@@ -1,19 +1,57 @@
-.inline-editor {
-  border: none;
-  outline: none;
-  background: transparent;
-  color: inherit;
-  font-family: monospace;
-  font-size: inherit;
-  padding: 0;
-  margin: 0;
-  min-width: 1ch;
-  width: auto;
-  display: inline-block;
-  line-height: 1;
+/* Support VS Code dark/light mode automatically */
+:root {
+  color-scheme: var(--vscode-color-scheme);
 }
 
-.inline-editor:focus {
-  outline: none;
+/* Body base styles */
+body {
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 14px);
+  margin: 0;
+  padding: 0;
+}
+
+/* Inline editor input */
+.inline-editor {
+  all: unset;                     /* remove browser defaults */
+  display: inline;                /* inline avoids inline-block spacing issues */
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 14px);
+  line-height: var(--vscode-editor-line-height, 1.2);
+  color: var(--vscode-editor-foreground, #d4d4d4);
   background: transparent;
+  padding: 0;
+  margin: 0;
+  width: auto;                     /* allow width to fit content */
+  min-width: 1ch;
+  vertical-align: baseline;
+  caret-color: var(--vscode-editorCursor-foreground, #aeafad);
+
+  /* Fix right-side extra space */
+  box-sizing: content-box;         /* width only counts content, not padding/border */
+  overflow: hidden;                /* clip extra spacing */
+  white-space: pre;                /* preserve spaces exactly */
+}
+
+/* Focused input */
+.inline-editor:focus {
+  background-color: var(--vscode-editor-selectionBackground);
+  color: var(--vscode-editor-selectionForeground);
+  box-shadow: inset 0 -1px 0 0 var(--vscode-editorCursor-foreground);
+}
+
+/* Selected node highlight */
+.object-selected {
+  outline: 1px solid var(--vscode-editorLineNumber-activeForeground, #007acc);
+  outline-offset: -2px;
+}
+
+/* Regular node container */
+.object-container {
+  color: var(--vscode-editor-foreground);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
 }
