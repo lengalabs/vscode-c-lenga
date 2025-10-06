@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NodeRender } from './components/line'
+import { NodeRender, Object } from './components/line'
 import { LineProvider } from './components/lineContext'
 import { vscode } from '../vscode'
 import * as nodes from '../../../src/nodes/cNodes';
@@ -39,7 +39,9 @@ export default function App() {
       <LineProvider ast={ast} onEdit={onEdit} selectedNodeId={selectedNodeId} selectedKey={selectedKey} setSelectedNodeId={setSelectedNodeId} setSelectedKey={setSelectedKey} insertTargetId={insertTargetId} setInsertTargetId={setInsertTargetId}>
         <div>
           {ast.map(node => (
-            <NodeRender key={node.id} node={node} indent={0} />
+            <Object indent={0} node={node}>
+              <NodeRender key={node.id} node={node} indent={0} />
+            </Object>
           ))}
         </div>
       </LineProvider>

@@ -36,13 +36,13 @@ function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T
     );
 }
 
-interface LineProps {
+interface ObjectProps {
     indent: number;
     node: nodes.Node;
     children: React.ReactNode;
 }
 
-export function Object({ indent, node, children }: LineProps) {
+export function Object({ indent, node, children }: ObjectProps) {
     const { selectedNodeId, setSelectedNodeId, insertTargetId, setInsertTargetId, onEdit, nodeMap, parentMap } = useLineContext();
     const isSelected = selectedNodeId === node.id;
     const showDropdown = insertTargetId === node.id;
@@ -194,7 +194,7 @@ export function Object({ indent, node, children }: LineProps) {
                 newNode = newStringLiteral;
                 break;
             }
-            case "SourceFile": {
+            default: {
                 throw new Error("Unimplemented")
             }
         }
@@ -221,8 +221,7 @@ export function Object({ indent, node, children }: LineProps) {
             tabIndex={0} onClick={() => setSelectedNodeId(node.id)} onKeyDown={handleKeyDown}
             style={{ backgroundColor: isSelected ? "rgba(116, 116, 116, 0.05)" : "transparent" }}
         >
-            <div style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
-                {"    ".repeat(indent)}
+            <div style={{ whiteSpace: "pre-wrap", fontFamily: "monospace", paddingLeft: `${indent * 34}px`}}>
                 {children}
             </div>
 
@@ -244,23 +243,25 @@ interface NodeRenderProps {
 }
 
 export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
-    //console.log(node.type);
-
     switch (node.type) {
         case "PreprocInclude":
-            return (<IncludeDeclRender includeDecl={node as nodes.PreprocInclude} indent={indent} />)
+            return (<IncludeDeclRender includeDecl={node as nodes.PreprocInclude} />)
         case "FunctionParameter":
             return (<ParamDeclRender paramDecl={node as nodes.FunctionParameter} />)
         case "FunctionDeclaration":
-            return (<FunctionDeclarationRender functionDeclaration={node as nodes.FunctionDeclaration} indent={indent} />)
+            return (<FunctionDeclarationRender functionDeclaration={node as nodes.FunctionDeclaration} />)
         case "FunctionDefinition":
             return (<FuncDefRender funcDef={node as nodes.FunctionDefinition} indent={indent} />)
         case "Declaration":
-            return (<VarDeclRender varDecl={node as nodes.Declaration} indent={indent} />)
+            return (<VarDeclRender varDecl={node as nodes.Declaration} />)
         case "ReturnStatement":
-            return (<ReturnStmtRender returnStmt={node as nodes.ReturnStatement} indent={indent} />)
+            return (<ReturnStmtRender returnStmt={node as nodes.ReturnStatement} />)
         case "CompoundStatement":
             return (<CompStmtRender compStmt={node as nodes.CompoundStatement} indent={indent} />)
+        case "IfStatement":
+            return (<IfStatementRender ifStatement={node as nodes.IfStatement} indent={indent}/>)
+        case "ElseClause":
+            return (<ElseClauseRender elseClause={node as nodes.ElseClause} indent={indent}/>)
         case "CallExpression":
             return (<CallExprRender callExpr={node as nodes.CallExpression} />)
         case "Reference":
@@ -271,47 +272,45 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
             return (<NumberLiteralExprRender literalExpr={node as nodes.NumberLiteral} />)
         case "StringLiteral":
             return (<StringLiteralExprRender literalExpr={node as nodes.StringLiteral} />)
+        case "BinaryExpression":
+            return (<BinaryExpressionRender binaryExpression={node as nodes.BinaryExpression} />)
         default:
             return ("WIP")
     }
 }
 
-function IncludeDeclRender({ includeDecl, indent }: { includeDecl: nodes.PreprocInclude, indent: number }): React.ReactNode {
+function IncludeDeclRender({ includeDecl }: { includeDecl: nodes.PreprocInclude }): React.ReactNode {
     return (
-        <Object indent={indent} node={includeDecl}>
-            <>
-                {"#include "}
-                {"<"}
-                {EditableField(includeDecl, "directive")}
-                {">"}
-                {";"}
-            </>
-        </Object>
+        <>
+            {"#include "}
+            {"<"}
+            {EditableField(includeDecl, "directive")}
+            {">"}
+            {";"}
+        </>
 
     )
 }
 
 
-function FunctionDeclarationRender({ functionDeclaration, indent }: { functionDeclaration: nodes.FunctionDeclaration, indent: number }): React.ReactNode {
+function FunctionDeclarationRender({ functionDeclaration }: { functionDeclaration: nodes.FunctionDeclaration }): React.ReactNode {
     const { nodeMap } = useLineContext();
     nodeMap.set(functionDeclaration.id, functionDeclaration);
 
     return (
         <>
-            <Object indent={indent} node={functionDeclaration}>
-                <>
-                    {EditableField(functionDeclaration, "return_type")}
-                    {EditableField(functionDeclaration, "name")}
-                    {"("}
-                    {functionDeclaration.params.map((param, i) => (
-                        <React.Fragment key={param.id}>
-                            {i > 0 && ", "}
-                            <ParamDeclRender paramDecl={param} />
-                        </React.Fragment>
-                    ))}
-                    {")"}
-                </>
-            </Object>
+            <>
+                {EditableField(functionDeclaration, "return_type")}
+                {EditableField(functionDeclaration, "name")}
+                {"("}
+                {functionDeclaration.params.map((param, i) => (
+                    <React.Fragment key={param.id}>
+                        {i > 0 && ", "}
+                        <ParamDeclRender paramDecl={param} />
+                    </React.Fragment>
+                ))}
+                {")"}
+            </>
         </>
     )
 }
@@ -323,47 +322,38 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
 
     return (
         <>
-            <Object indent={indent} node={funcDef}>
-                <>
-                    {EditableField(funcDef, "return_type")}
-                    {EditableField(funcDef, "name")}
-                    {"("}
-                    {funcDef.params.map((param, i) => (
-                        <React.Fragment key={param.id}>
-                            {i > 0 && ", "}
-                            <ParamDeclRender paramDecl={param} />
-                        </React.Fragment>
-                    ))}
-                    {")"}
-                    {"{"}
-                </>
-            </Object>
+            {EditableField(funcDef, "return_type")}
+            {EditableField(funcDef, "name")}
+            {"("}
+            {funcDef.params.map((param, i) => (
+                <React.Fragment key={param.id}>
+                    {i > 0 && ", "}
+                    <ParamDeclRender paramDecl={param} />
+                </React.Fragment>
+            ))}
+            {")"}
 
-            {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent + 1} />)}
-
-            <Object indent={indent} node={funcDef}>
-                {"}"}
-            </Object>
+            {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent} />)}
         </>
     )
 }
 
-function VarDeclRender({ varDecl, indent }: { varDecl: nodes.Declaration, indent: number }): React.ReactNode {
+function VarDeclRender({ varDecl }: { varDecl: nodes.Declaration }): React.ReactNode {
     const { nodeMap } = useLineContext();
     nodeMap.set(varDecl.id, varDecl);
 
     return (
-        <Object indent={indent} node={varDecl}>
+        <>
             {EditableField(varDecl, "data_type")}
             {EditableField(varDecl, "name")}
             {varDecl.initializer && (
                 <>
                     {"= "}
-                    <NodeRender node={varDecl.initializer} indent={indent} />
+                    <NodeRender node={varDecl.initializer} indent={0} />
                 </>
             )}
             {";"}
-        </Object>
+        </>
     )
 }
 
@@ -381,15 +371,44 @@ function ParamDeclRender({ paramDecl }: { paramDecl: nodes.FunctionParameter }):
 
 function CompStmtRender({ compStmt, indent }: { compStmt: nodes.CompoundStatement, indent: number }): React.ReactNode {
     return (
-        compStmt.statements.map(node => (
-            <NodeRender node={node} indent={indent} />
-        ))
+        <>
+            {"{"}
+            {compStmt.statements.map(node => (
+                <Object indent={indent+1} node={node}>
+                    <NodeRender node={node} indent={indent} />
+                </Object>
+            ))}
+            {"}"}
+        </>
     )
 }
 
-function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStatement, indent: number }): React.ReactNode {
+function IfStatementRender({ifStatement, indent}: { ifStatement: nodes.IfStatement, indent: number }): React.ReactNode {
+    return(
+        <>
+            {"if"}
+            {" ("}
+            {<NodeRender node={ifStatement.condition} indent={0} />}
+            {") "}
+            {<CompStmtRender compStmt={ifStatement.compoundStatement} indent={indent} />}
+            {ifStatement.elseClause && (<ElseClauseRender elseClause={ifStatement.elseClause} indent={indent} />)}
+        </>
+    )
+}
+
+function ElseClauseRender({elseClause, indent}: { elseClause: nodes.ElseClause, indent: number }): React.ReactNode {
+    return(
+        <>
+            {"else"}
+            {" "}
+            {<CompStmtRender compStmt={elseClause.compoundStatement} indent={indent} />}
+        </>
+    )
+}
+
+function ReturnStmtRender({ returnStmt }: { returnStmt: nodes.ReturnStatement }): React.ReactNode {
     return (
-        <Object indent={indent} node={returnStmt}>
+        <>
             {"return"}
             {returnStmt.expression && (
                 <>
@@ -398,7 +417,7 @@ function ReturnStmtRender({ returnStmt, indent }: { returnStmt: nodes.ReturnStat
                 </>
             )}
             {";"}
-        </Object>
+        </>
     )
 }
 
@@ -430,11 +449,19 @@ function DeclRefExprRender({ declRefExpr }: { declRefExpr: nodes.Reference }): R
 }
 
 function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.AssignmentExpression }): React.ReactNode {
+    const { nodeMap } = useLineContext();
+    const targetNode = nodeMap.get(assignmentExpr.id_reference);
+    
+    if (!targetNode || !("name" in targetNode)) {
+        return (<>{assignmentExpr.id_reference}</>)
+    }
+
     return (
         <>
-            {"TODO assignmentExpr. node id: "}
-            {assignmentExpr.id}
-        </> //TODO
+            {targetNode.name}
+            {" = "}
+            <NodeRender node={assignmentExpr.value} indent={0} />
+        </>
     )
 }
 
@@ -447,5 +474,15 @@ function NumberLiteralExprRender({ literalExpr }: { literalExpr: nodes.NumberLit
 function StringLiteralExprRender({ literalExpr }: { literalExpr: nodes.StringLiteral }): React.ReactNode {
     return (
         <>{EditableField(literalExpr, "value")}</>
+    )
+}
+
+function BinaryExpressionRender({ binaryExpression }: {binaryExpression: nodes.BinaryExpression }): React.ReactNode {
+    return(
+        <>
+            <NodeRender node={binaryExpression.left} indent={0} />
+            {binaryExpression.operator}
+            <NodeRender node={binaryExpression.right} indent={0} />
+        </>
     )
 }

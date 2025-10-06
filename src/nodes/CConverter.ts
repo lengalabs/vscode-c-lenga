@@ -41,30 +41,25 @@ function convertProtoNodeToTs(protoObject: cObjects.LanguageObject): cNode.Node 
         case "assignmentExpression":
             return convertAssignmentExpressionToTS(object.assignmentExpression);
         case "binaryExpression":
-            // throw new Error("binaryExpression not implemented"); // TODO 
-            return newUnknownNode(protoObject); // TODO implement
+            return convertBinaryExpressionToTs(object.binaryExpression);
         case "callExpression":
             return convertCallExpressionToTS(object.callExpression);
         case "sourceFile":
             return convertSourceFileToTS(object.sourceFile);
         case "comment":
-            // throw new Error("comment not implemented"); // TODO
-            return newUnknownNode(protoObject); // TODO implement
+            return convertCommentToTs(object.comment);
         case "declaration":
             return variableDeclarationToTS(object.declaration);
         case "elseClause":
-            // throw new Error("elseClause not implemented"); // TODO
-            return newUnknownNode(protoObject); // TODO implement
+            return convertElseClauseToTs(object.elseClause);
         case "expressionStatement":
-            // throw new Error("expressionStatement not implemented"); // TODO this is not used in the server either
-            return newUnknownNode(protoObject); // TODO implement
+            return newUnknownNode(protoObject); // TODO remove node
         case "functionDefinition":
             return convertFunctionDefinitionToTS(object.functionDefinition);
         case "functionParameter":
             return convertFunctionParameterToTS(object.functionParameter);
         case "ifStatement":
-            // throw new Error("ifStatement not implemented"); // TODO
-            return newUnknownNode(protoObject); // TODO implement
+            return convertIfStatementToTs(object.ifStatement);
         case "numberLiteral":
             return convertNumberLiteralToTS(object.numberLiteral);
         case "reference":
@@ -206,6 +201,43 @@ function convertStringLiteralToTS(stringLiteral: cObjects.StringLiteral): cNode.
     };
 }
 
+function convertBinaryExpressionToTs(binaryExpression: cObjects.BinaryExpression): cNode.BinaryExpression {
+    return {
+        id: binaryExpression.id,
+        type: "BinaryExpression",
+        left: convertProtoNodeToTs(binaryExpression.left!) as cNode.CExpressionNode,
+        operator: binaryExpression.operator,
+        right: convertProtoNodeToTs(binaryExpression.right!) as cNode.CExpressionNode,
+    };
+}
+
+function convertIfStatementToTs(ifStatement: cObjects.IfStatement): cNode.IfStatement {
+    return {
+        id: ifStatement.id,
+        type: "IfStatement",
+        condition: convertProtoNodeToTs(ifStatement.condition!) as cNode.CExpressionNode,
+        compoundStatement: convertCompoundStatementToTs(ifStatement.compoundStatement!),
+        elseClause: ifStatement.elseClause ? convertElseClauseToTs(ifStatement.elseClause) : undefined,
+    };
+}
+
+function convertElseClauseToTs(elseClause: cObjects.ElseClause): cNode.ElseClause {
+    return {
+        id: elseClause.id,
+        type: "ElseClause",
+        condition: convertProtoNodeToTs(elseClause.condition!) as cNode.CExpressionNode,
+        compoundStatement: convertCompoundStatementToTs(elseClause.compoundStatement!),
+    };
+}
+
+function convertCommentToTs(comment: cObjects.Comment): cNode.Comment {
+    return {
+        id: comment.id,
+        type: "Comment",
+        content: comment.content,
+    };
+}
+
 function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
 
     switch (object.type) {
@@ -297,7 +329,11 @@ function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
         case "CallExpression": {
             const call = object as cNode.CallExpression;
             const val: cObjects.LanguageObject = {
-                languageObject: languageObjectToProto(call)
+                languageObject:  {
+                    $case: "callExpression",
+                    callExpression: callExpressionToProto(call)
+                }
+
             };
             return val;
         }
@@ -307,7 +343,7 @@ function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
             const val: cObjects.LanguageObject = {
                 languageObject: {
                     $case: "reference",
-                    reference: { id: declRef.id, identifier: "TODO", declarationId: declRef.DeclRefId }
+                    reference: { id: declRef.id, identifier: "TODO", declarationId: declRef.DeclRefId } //TODO recover identifier
                 }
             };
             return val;
@@ -346,6 +382,61 @@ function convertTsNodeToProto(object: cNode.Node): cObjects.LanguageObject {
             return val;
         }
 
+        case "SourceFile": {
+            const src = object as cNode.SourceFile;
+            const val: cObjects.LanguageObject = {
+                languageObject: {
+                    $case: "sourceFile",
+                    sourceFile: sourceFileToProto(src)
+                }
+            };
+            return val;
+        }
+
+        case "Comment": {
+            const comment = object as cNode.Comment;
+            const val: cObjects.LanguageObject = {
+                languageObject: {
+                    $case: "comment",
+                    comment: commentToProto(comment)
+                }
+            };
+            return val;
+        }
+
+        case "BinaryExpression": {
+            const bin = object as cNode.BinaryExpression;
+            const val: cObjects.LanguageObject = {
+                languageObject: {
+                    $case: "binaryExpression",
+                    binaryExpression: binaryExpressionToProto(bin)
+                }
+            };
+            return val;
+        }
+
+        case "IfStatement": {
+            const ifStmt = object as cNode.IfStatement;
+            const val: cObjects.LanguageObject = {
+                languageObject: {
+                    $case: "ifStatement",
+                    ifStatement: ifStatementToProto(ifStmt)
+                }
+            };
+            return val;
+        }
+
+        case "ElseClause": {
+            const elseClause = object as cNode.ElseClause;
+            const val: cObjects.LanguageObject = {
+                languageObject: {
+                    $case: "elseClause",
+                    elseClause: elseClauseToProto(elseClause)
+                }
+            };
+            return val;
+        }
+
         default:
             throw new Error("Unexpected");
     }
@@ -369,21 +460,18 @@ function numberLiteralToProto(lit: cNode.NumberLiteral): cObjects.NumberLiteral 
 function assignmentExpressionToProto(assign: cNode.AssignmentExpression): cObjects.AssignmentExpression {
     return {
         id: assign.id,
-        identifier: "TODO",
+        identifier: "TODO", // TODO recover identifier
         idDeclaration: assign.id_reference,
         value: convertTsNodeToProto(assign.value),
     };
 }
 
-function languageObjectToProto(call: cNode.CallExpression): { $case: "sourceFile"; sourceFile: cObjects.SourceFile; } | { $case: "assignmentExpression"; assignmentExpression: cObjects.AssignmentExpression; } | { $case: "binaryExpression"; binaryExpression: cObjects.BinaryExpression; } | { $case: "callExpression"; callExpression: cObjects.CallExpression; } | { $case: "comment"; comment: cObjects.Comment; } | { $case: "declaration"; declaration: cObjects.Declaration; } | { $case: "elseClause"; elseClause: cObjects.ElseClause; } | { $case: "expressionStatement"; expressionStatement: cObjects.ExpressionStatement; } | { $case: "functionDeclaration"; functionDeclaration: cObjects.FunctionDeclaration; } | { $case: "functionDefinition"; functionDefinition: cObjects.FunctionDefinition; } | { $case: "functionParameter"; functionParameter: cObjects.FunctionParameter; } | { $case: "ifStatement"; ifStatement: cObjects.IfStatement; } | { $case: "numberLiteral"; numberLiteral: cObjects.NumberLiteral; } | { $case: "preprocInclude"; preprocInclude: cObjects.PreprocInclude; } | { $case: "reference"; reference: cObjects.Reference; } | { $case: "returnStatement"; returnStatement: cObjects.ReturnStatement; } | { $case: "stringLiteral"; stringLiteral: cObjects.StringLiteral; } | { $case: "compoundStatement"; compoundStatement: cObjects.CompoundStatement; } | { $case: "unknownNode"; unknownNode: cObjects.UnknownNode; } | undefined {
+function callExpressionToProto(call: cNode.CallExpression): cObjects.CallExpression {
     return {
-        $case: "callExpression",
-        callExpression: {
-            id: call.id,
-            idDeclaration: call.idDeclaration,
-            identifier: call.identifier,
-            argumentList: call.args.map(convertTsNodeToProto)
-        }
+        id: call.id,
+        idDeclaration: call.idDeclaration,
+        identifier: call.identifier,
+        argumentList: call.args.map(convertTsNodeToProto)
     };
 }
 
@@ -423,3 +511,31 @@ function functionParameterToProto(param: cNode.FunctionParameter): cObjects.Func
     return { id: param.id, identifier: param.name, paramType: param.data_type };
 }
 
+function sourceFileToProto(src: cNode.SourceFile): cObjects.SourceFile {
+    return { id: src.id, code: src.code.map(convertTsNodeToProto) };
+}
+
+function commentToProto(comment: cNode.Comment): cObjects.Comment {
+    return { id: comment.id, content: comment.content };
+}
+
+function binaryExpressionToProto(bin: cNode.BinaryExpression): cObjects.BinaryExpression {
+    return { id: bin.id, left: convertTsNodeToProto(bin.left), operator: bin.operator, right: convertTsNodeToProto(bin.right) };
+}
+
+function ifStatementToProto(ifStmt: cNode.IfStatement): cObjects.IfStatement {
+    return {
+        id: ifStmt.id, 
+        condition: convertTsNodeToProto(ifStmt.condition), 
+        compoundStatement: compoundStatementToProto(ifStmt.compoundStatement), 
+        elseClause: ifStmt.elseClause ? elseClauseToProto(ifStmt.elseClause) : undefined,
+    };
+}
+
+function elseClauseToProto(elseClause: cNode.ElseClause): cObjects.ElseClause {
+    return {
+        id: elseClause.id, 
+        condition: convertTsNodeToProto(elseClause.condition),
+        compoundStatement: compoundStatementToProto(elseClause.compoundStatement),
+    };
+}

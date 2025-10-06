@@ -10,6 +10,9 @@ export type CDeclarationNode =
 export type CStatementNode =
     | CompoundStatement
     | ReturnStatement
+    | IfStatement
+    | ElseClause
+    | ExpressionStatement
 
 export type CExpressionNode =
     | CallExpression
@@ -17,6 +20,7 @@ export type CExpressionNode =
     | AssignmentExpression
     | NumberLiteral
     | StringLiteral
+    | BinaryExpression
 
 // Base Nodes
 
@@ -26,19 +30,24 @@ export interface Node {
 }
 
 export type NodeTypes = "UnknownNode"
-    | "PreprocInclude"
-    | "FunctionParameter"
+    | "SourceFile"
+    | "AssignmentExpression"
+    | "BinaryExpression"
+    | "CallExpression"
+    | "Comment"
+    | "Declaration"
+    | "ElseClause"
     | "FunctionDeclaration"
     | "FunctionDefinition"
-    | "Declaration"
-    | "ReturnStatement"
-    | "CompoundStatement"
-    | "CallExpression"
-    | "Reference"
-    | "AssignmentExpression"
+    | "FunctionParameter"
+    | "IfStatement"
     | "NumberLiteral"
+    | "PreprocInclude"
+    | "Reference"
+    | "ReturnStatement"
     | "StringLiteral"
-    | "SourceFile"
+    | "CompoundStatement"
+    | "ExpressionStatement"
 
 export type UnknownNode = Node & {
     type: "UnknownNode"
@@ -55,6 +64,11 @@ export type PreprocInclude = Node & {
 export type SourceFile = Node & {
     type: "SourceFile"
     code: Array<Node>
+}
+
+export type Comment = Node & {
+    type: "Comment"
+    content: string
 }
 
 // Declaration Nodes
@@ -99,6 +113,24 @@ export type CompoundStatement = Node & {
     statements: Array<Node>
 }
 
+export type IfStatement = Node & {
+    type: "IfStatement"
+    condition: CExpressionNode
+    compoundStatement: CompoundStatement
+    elseClause?: ElseClause
+}
+
+export type ElseClause = Node & {
+    type: "ElseClause"
+    condition: CExpressionNode
+    compoundStatement: CompoundStatement
+}
+
+export type ExpressionStatement = Node & {
+    type: "ExpressionStatement"
+    expression: CExpressionNode
+}
+
 // Expression Nodes
 
 export type CallExpression = Node & {
@@ -129,6 +161,13 @@ export type StringLiteral = Node & {
     value: string
 }
 
+export type BinaryExpression = Node & {
+    type: "BinaryExpression"
+    left: CExpressionNode
+    operator: string // Assuming the operators are stored as a string
+    right: CExpressionNode
+}
+
 /* List of basic nodes
 
 1. X Translation Unit (Remplazarlo por el nodo de include ?)
@@ -153,7 +192,7 @@ export type StringLiteral = Node & {
     10. LabelStmt
     11. NullStmt (Tiene sentido permitir esto siendo que estamos delimitando la estructura que se puede armar ?)
 4. Expresiones
-    1. BinaryOp
+    1. X BinaryOp
     2. UnaryOp
     3. CondOp (Tenia entendido que esto no existia en C)
     4. X AssignmentOp
