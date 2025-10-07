@@ -29,7 +29,7 @@ export default function App() {
     const message = { type: 'nodeEdit', contents: node, key: key }
     setAst((prev) => [...prev]); //Placeholder
     console.log("sending message: ", message);
-    //vscode.postMessage(message)
+    vscode.postMessage(message)
   }
 
   const debug = true

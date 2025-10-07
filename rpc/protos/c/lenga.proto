@@ -7,7 +7,8 @@ import public "c/objects.proto";
 service CLenga {
     rpc Initialize(InitRequest) returns (SessionId);
     rpc OpenFile(OpenRequest) returns (SourceFile);
-    rpc Edit(EditRequest) returns (LanguageObject);
+    rpc Edit(EditRequest) returns (EditResponse);
+    rpc Save(SaveRequest) returns (Void);
 }
 
 message Void {}
@@ -29,4 +30,14 @@ message OpenRequest {
 message EditRequest {
     string path = 1;
     LanguageObject editedObject = 2;
+}
+
+message EditResponse {
+    LanguageObject newObject = 1;
+    LanguageObject oldObject = 2;
+}
+
+message SaveRequest {
+    string path = 1;
+    string writePath = 2;
 }

@@ -50,19 +50,42 @@ export class Client {
         });
     }
 
-    edit(path: string, editedObject: cNodes.Node): Promise<Array<cNodes.Node>> {
+    edit(path: string, editedNode: cNodes.Node): Promise<[cNodes.Node[], cNodes.Node]> {
         var request: clenga.EditRequest = {
             path: path,
-            editedObject: undefined, // TODO
+            editedObject: this.converter.nodeToProto(editedNode),
         };
 
         return new Promise((resolve, reject) => {
-            this.clenga_stub.edit(request, (err: ServiceError, objects: cObjects.SourceFile) => {
+            this.clenga_stub.edit(request, (err: ServiceError, objects: clenga.EditResponse) => {
                 if (err) {
                     reject(new Error(`${err}`));
                 } else {
-                    const nodes = this.converter.fromProto(objects);
-                    resolve(nodes);
+                    const new_nodes_proto = objects.newObject?.languageObject;
+                    if (new_nodes_proto && new_nodes_proto.$case === "sourceFile") {
+                        const new_nodes = this.converter.fromProto(new_nodes_proto.sourceFile);
+                        const old_nodes = this.converter.protoToNode(objects.oldObject!);
+                        resolve([new_nodes, old_nodes]);
+                    } else {
+                        reject(new Error(`No sourcefile`));
+                    }
+                }
+            });
+        });
+    }
+
+    save(path: string, writePath: string): Promise<void> {
+        var request: clenga.SaveRequest = {
+            path,
+            writePath,
+        };
+
+        return new Promise((resolve, reject) => {
+            this.clenga_stub.save(request, (err: ServiceError, objects: clenga.Void) => {
+                if (err) {
+                    reject(new Error(`${err}`));
+                } else {
+                    resolve();
                 }
             });
         });

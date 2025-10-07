@@ -29,6 +29,14 @@ export class CConverter {
     public toProto(TsAst: cNode.Node[]): cObjects.SourceFile {
         return { id: "1", code: TsAst.map(convertTsNodeToProto) };
     }
+
+    public nodeToProto(ts: cNode.Node): cObjects.LanguageObject {
+        return convertTsNodeToProto(ts);
+    }
+
+    public protoToNode(p: cObjects.LanguageObject): cNode.Node {
+        return convertProtoNodeToTs(p);
+    }
 }
 
 function convertProtoNodeToTs(protoObject: cObjects.LanguageObject): cNode.Node {
