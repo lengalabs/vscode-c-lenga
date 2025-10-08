@@ -15,7 +15,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
 
 	public static register(context: vscode.ExtensionContext, client: Client): vscode.Disposable {
 		const provider = new ClengaEditorProvider(context, client);
-		const providerRegistration = vscode.window.registerCustomEditorProvider(ClengaEditorProvider.viewType, provider);
+		const providerRegistration = vscode.window.registerCustomEditorProvider(ClengaEditorProvider.viewType, provider, {supportsMultipleEditorsPerDocument: true});
 		return providerRegistration;
 	}
 
@@ -45,13 +45,12 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
 			});
 		}));
 
-		// listeners.push(document.onDidChangeContent(e => {
-		// 	console.log("contents", JSON.stringify(e, null, 2)); //TODO: Check validity
-		// 	// Update all webviews when the document changes
-		// 	for (const webviewPanel of this.webviews.get(document.uri)) {
-		// 		this.postMessage(webviewPanel, 'update', e);
-		// 	}
-		// }));
+		listeners.push(document.onDidChangeContent(e => {
+			// Update all webviews when the document changes
+			for (const webviewPanel of this.webviews.get(document.uri)) {
+				this.postMessage(webviewPanel, 'update', e.content);
+			}
+		}));
 
 		document.onDidDispose(() => disposeAll(listeners));
 
@@ -73,6 +72,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, lastView);
 
 		webviewPanel.webview.onDidReceiveMessage(e => {
+			console.log("received:\n", JSON.stringify(e, null, 2));
 			switch (e.type) {
 				case 'ready':
 					this.postMessage(webviewPanel, 'update', document.documentData);
@@ -84,18 +84,19 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
 			}
 		});
 
-		const d1 = vscode.commands.registerCommand("clenga.setStructuredView", (uri: vscode.Uri) => {
-			this.context.workspaceState.update(keyForFile(uri), View.Structured);
-			webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
-		});
+		// TODO: Move to other place, or limit one webview per document
+		// const d1 = vscode.commands.registerCommand("clenga.setStructuredView", (uri: vscode.Uri) => {
+		// 	this.context.workspaceState.update(keyForFile(uri), View.Structured);
+		// 	webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
+		// });
 
-		webviewPanel.onDidDispose(() => {
-			d1.dispose();
-		});
+		// webviewPanel.onDidDispose(() => {
+		// 	d1.dispose();
+		// });
 	}
 
 	private postMessage(panel: vscode.WebviewPanel, type: string, contents: any): void {
-		console.log("sending to webview:\n", JSON.stringify(contents, null, 2));
+		console.log("sending:\n", JSON.stringify(contents, null, 2));
 		panel.webview.postMessage({type, contents});
 	}
 

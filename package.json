@@ -48,7 +48,7 @@
         "category": "View"
       }
     ],
-    "menus": {
+    "//menus": {
       "editor/title": [
         {
           "command": "lengalab.setStructuredView",

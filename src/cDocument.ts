@@ -99,44 +99,45 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
      */
     makeEdit(edit: CLengaEdit) {
         this._delegate.getEditedData(this.uri.fsPath.toString(), edit.new_node)
-            .then(response => {
-                this._documentData = response[0];
-                edit.old_node = response[1];
-            })
-            .catch(_ => {
-                console.log("Could not edit data"); //TODO: Define error case
+        .then(response => {
+            this._documentData = response[0];
+            edit.old_node = response[1];
+
+            this._edits.push(edit);
+
+            this._onDidChange.fire({
+                label: 'Modification',
+                undo: async () => {
+                    this._edits.pop();
+                    // revert to old node
+                    this._documentData = await this._delegate.getEditedData(this.uri.fsPath.toString(), edit.old_node)
+                        .then(res => res[0]);
+                    this._onDidChangeDocument.fire({
+                        content: this._documentData,
+                        edits: this._edits,
+                    });
+                },
+                redo: async () => {
+                    // redo new node
+                    this._documentData = await this._delegate.getEditedData(this.uri.fsPath.toString(), edit.new_node)
+                        .then(res => res[0]);
+                    this._edits.push(edit);
+                    this._onDidChangeDocument.fire({
+                        content: this._documentData,
+                        edits: this._edits,
+                    });
+                }
             });
 
-        this._edits.push(edit);
+            this._onDidChangeDocument.fire({
+                content: this._documentData,
+                edits: this._edits,
+            });
 
-        this._onDidChange.fire({
-            label: 'Modification',
-            undo: async () => {
-                this._edits.pop();
-                // revert to old node
-                this._documentData = await this._delegate.getEditedData(this.uri.fsPath.toString(), edit.old_node)
-                    .then(res => res[0]);
-                this._onDidChangeDocument.fire({
-                    content: this._documentData,
-                    edits: this._edits,
-                });
-            },
-            redo: async () => {
-                // redo new node
-                this._documentData = await this._delegate.getEditedData(this.uri.fsPath.toString(), edit.new_node)
-                    .then(res => res[0]);
-                this._edits.push(edit);
-                this._onDidChangeDocument.fire({
-                    content: this._documentData,
-                    edits: this._edits,
-                });
-            }
+        })
+        .catch(_ => {
+            console.log("Could not edit data"); //TODO: Define error case
         });
-
-        // this._onDidChangeDocument.fire({
-        //     content: this._documentData,
-        //     edits: this._edits,
-        // });
     }
 
     /**

@@ -13,6 +13,7 @@ export default function App() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
+      console.log("got message: ", message);
       setAst(message.contents)
     }
 
@@ -27,7 +28,7 @@ export default function App() {
 
   const onEdit = <T extends nodes.Node, K extends string & keyof T>(node: T, key: K | null) => {
     const message = { type: 'nodeEdit', contents: node, key: key }
-    setAst((prev) => [...prev]); //Placeholder
+    //setAst((prev) => [...prev]); //Placeholder
     console.log("sending message: ", message);
     vscode.postMessage(message)
   }
