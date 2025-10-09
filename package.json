@@ -15,6 +15,13 @@
   ],
   "main": "./out/src/extension.js",
   "contributes": {
+    "languages" : [
+      {
+        "id": "lenga",
+        "aliases": ["Lenga"],
+        "extensions": [".c.lenga"] 
+      }
+    ],
     "customEditors": [
       {
         "viewType": "lengalab.c",
@@ -33,29 +40,32 @@
         "category": "SetView"
       },
       {
-        "command": "lengalab.setSpikeView",
-        "title": "Sets the editors view to a spike format",
-        "category": "SetView"
-      },
-      {
-        "command": "lengalab.graphView",
-        "title": "Function Graph View",
-        "category": "View"
-      },
-      {
         "command": "lengalab.structuredView",
         "title": "Structured editor View",
         "category": "View"
+      },
+      {
+        "command": "lengalab.transpileFile",
+        "title": "Transpile File",
+        "category": "Transpilation"
       }
     ],
-    "//menus": {
-      "editor/title": [
+    "menus": {
+      "//editor/title": [
         {
           "command": "lengalab.setStructuredView",
           "when": "activeCustomEditorId == lengalab.c",
           "group": "navigation"
         }
-      ]
+      ],
+      "explorer/context": [
+        {
+          "command": "lengalab.transpileFile",
+          "when": "resourceLangId == c || resourceLangId == lenga",
+          "group": "navigation",
+          "args": ["${file}"]
+        }
+      ]      
     }
   },
   "scripts": {

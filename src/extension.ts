@@ -1,22 +1,23 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { startServer } from './server';
+import { transpileFile } from './transpile';
 import { Client } from './client';
-import { ClengaEditorProvider, View } from './views';
+import { ClengaEditorProvider } from './views';
 
 let server: cp.ChildProcessWithoutNullStreams;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	server = startServer(context.extensionPath);
+	server = startServer();
 	var client = new Client();
 
 	initServerWorkspace(client);
 
-	// context.subscriptions.push(vscode.commands.registerCommand('tpp-extension.setStructuredView', () => {
-	// 	vscode.window.showInformationMessage('view change!');
-	// }));
+	context.subscriptions.push(vscode.commands.registerCommand('lengalab.transpileFile', (filePath: vscode.Uri) => {
+		transpileFile(filePath);
+	}));
 
 	context.subscriptions.push(ClengaEditorProvider.register(context, client));
 }
