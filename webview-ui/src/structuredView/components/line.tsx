@@ -3,37 +3,39 @@ import { useLineContext } from "./context";
 import * as nodes from '../../../../src/nodes/cNodes';
 import '../index.css';
 
-function EditableField<T extends nodes.Node, K extends string & keyof T>(node: T, key: K) {
-    const { selectedNodeId, selectedKey, onEdit, setSelectedNodeId, setSelectedKey } = useLineContext();
-    const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key;
-    const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
+interface EditableFieldProps<T extends nodes.Node, K extends string & keyof T> {
+    node: T;
+    field: K;
+    className?: string;
+}
 
+function EditableField<T extends nodes.Node, K extends string & keyof T>({ 
+    node, 
+    field, 
+    className,
+}: EditableFieldProps<T, K>) {
+    const { onEdit, setSelectedNodeId, setSelectedKey } = useLineContext();
+    const [inputValue, setInputValue] = React.useState(String(node[field] ?? ""));
+    
     React.useEffect(() => {
-        setInputValue(String(node[key] ?? ""));
-    }, [node, key]);
-
-    // width in ch units, at least 1ch
+        setInputValue(String(node[field] ?? ""));
+    }, [node, field]);
+    
     const width = Math.max(1, inputValue.length) + "ch";
 
     return (
         <input
-            className="inline-editor"
-            style={{
-                ...(isSelected ? {
-                    backgroundColor: "rgba(255, 255, 255, 0.05)",
-                    boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)"
-                } : {}),
-                width,   // dynamically set width in ch
-            }}
+            className={`inline-editor ${className ?? ""}`}
+            style={{ width }}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onFocus={() => {
-                setSelectedKey(key);
+                setSelectedKey(field);
                 setSelectedNodeId(node.id);
             }}
             onBlur={() => {
-                node[key] = inputValue as T[K];
-                onEdit(node, key);
+                node[field] = inputValue as T[K];
+                onEdit(node, field);
             }}
         />
     );
@@ -46,184 +48,17 @@ interface ObjectProps {
 }
 
 export function Object({ indent, node, children }: ObjectProps) {
-    const { selectedNodeId, setSelectedNodeId/*, insertTargetId, setInsertTargetId, onEdit, nodeMap, parentMap*/ } = useLineContext();
+    const { selectedNodeId, setSelectedNodeId } = useLineContext();
     const isSelected = selectedNodeId === node.id;
-    /*const showDropdown = insertTargetId === node.id;
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!isSelected) return;
-
-        if (e.key === "Enter") {
-            e.preventDefault();
-            setInsertTargetId(node.id); // trigger dropdown
-        }
-    };
-
-    const handleSelect = (type: nodes.NodeTypes) => {
-        if (!node) return;
-        // create new node based on selection
-        let newNode: nodes.Node;
-        switch (type) {
-            case "Declaration": {
-                const newLocal: nodes.StringLiteral = {
-                    id: crypto.randomUUID(),
-                    type: "StringLiteral",
-                    value: "",
-                };
-                const newDeclaration: nodes.Declaration = {
-                    id: crypto.randomUUID(),
-                    type: "Declaration",
-                    data_type: "",
-                    name: "",
-                    initializer: newLocal as nodes.CExpressionNode,
-                };
-                newNode = newDeclaration;
-                break;
-            }
-            case "ReturnStatement": {
-                const newReturnStatement: nodes.ReturnStatement = {
-                    id: crypto.randomUUID(),
-                    type: "ReturnStatement",
-                    expression: undefined
-                };
-                newNode = newReturnStatement
-                break;
-            }
-            case 'UnknownNode': {
-                const newUnknownNode: nodes.UnknownNode = {
-                    id: crypto.randomUUID(),
-                    type: 'UnknownNode',
-                    contents: ""
-                }
-                newNode = newUnknownNode;
-                break;
-            }
-            case 'PreprocInclude': {
-                const newPreprocInclude: nodes.PreprocInclude = {
-                    id: crypto.randomUUID(),
-                    type: 'PreprocInclude',
-                    directive: ""
-                }
-                newNode = newPreprocInclude;
-                break;
-            }
-            case 'FunctionParameter': {
-                const newFunctionParameter: nodes.FunctionParameter = {
-                    id: crypto.randomUUID(),
-                    type: 'FunctionParameter',
-                    name: "",
-                    data_type: "",
-                }
-                newNode = newFunctionParameter;
-                break;
-            }
-            case 'FunctionDeclaration': {
-                const newFunctionDeclaration: nodes.FunctionDeclaration = {
-                    id: crypto.randomUUID(),
-                    type: 'FunctionDeclaration',
-                    name: "",
-                    return_type: "",
-                    params: []
-                }
-                newNode = newFunctionDeclaration;
-                break;
-            }
-            case 'FunctionDefinition': {
-                const newFunctionDefinition: nodes.FunctionDefinition = {
-                    id: crypto.randomUUID(),
-                    type: 'FunctionDefinition',
-                    name: "",
-                    return_type: "",
-                    params: [],
-                    body: { id: crypto.randomUUID(), type: "CompoundStatement", statements: [] }
-                }
-                newNode = newFunctionDefinition;
-                break;
-            }
-            case 'CompoundStatement': {
-                const newCompoundStatement: nodes.CompoundStatement = {
-                    id: crypto.randomUUID(),
-                    type: 'CompoundStatement',
-                    statements: []
-                }
-                newNode = newCompoundStatement;
-                break;
-            }
-            case 'CallExpression': {
-                const newCallExpression: nodes.CallExpression = {
-                    id: crypto.randomUUID(),
-                    type: 'CallExpression',
-                    identifier: '',
-                    idDeclaration: '',
-                    args: []
-                }
-                newNode = newCallExpression;
-                break;
-            }
-            case 'Reference': {
-                const newReference: nodes.Reference = {
-                    id: crypto.randomUUID(),
-                    type: 'Reference',
-                    DeclRefId: ''
-                }
-                newNode = newReference;
-                break;
-            }
-            case 'AssignmentExpression': {
-                const newAssignmentExpression: nodes.AssignmentExpression = {
-                    id: crypto.randomUUID(),
-                    type: 'AssignmentExpression',
-                    id_reference: '',
-                    value: { id: crypto.randomUUID(), type: "StringLiteral", value: '' }
-                }
-                newNode = newAssignmentExpression;
-                break;
-            }
-            case 'NumberLiteral': {
-                const newNumberLiteral: nodes.NumberLiteral = {
-                    id: crypto.randomUUID(),
-                    type: 'NumberLiteral',
-                    value: ''
-                }
-                newNode = newNumberLiteral;
-                break;
-            }
-            case 'StringLiteral': {
-                const newStringLiteral: nodes.StringLiteral = {
-                    id: crypto.randomUUID(),
-                    type: 'StringLiteral',
-                    value: ''
-                }
-                newNode = newStringLiteral;
-                break;
-            }
-            default: {
-                throw new Error("Unimplemented")
-            }
-        }
-
-        // insert logic: e.g., in CompoundStatement
-        const parentInfo = parentMap.get(node.id);
-        if (!parentInfo) return;
-        const { parent, key, index } = parentInfo;
-        if (!parent || !("statements" in parent)) return;
-
-        const field = parent["statements"] as nodes.Node[];
-        const newArray = [...field.slice(0, index + 1), newNode, ...field.slice(index + 1)];
-        parent["statements"] = newArray;
-
-        nodeMap.set(newNode.id, newNode);
-        parentMap.set(newNode.id, { parent, key, index: index + 1 });
-
-        setInsertTargetId(null); // close dropdown
-        onEdit(parent, null);
-    };*/
 
     return (
         <div
             className={`object-container ${isSelected ? 'object-selected' : ''}`}
             style={{ paddingLeft: `${indent * 20}px` }}
-            onClick={() => setSelectedNodeId(node.id)}
+            onClick={(e) => {
+                e.stopPropagation();
+                setSelectedNodeId(node.id)
+            }}
             tabIndex={0}
         >
             {children}
@@ -276,12 +111,11 @@ export function NodeRender({ node, indent }: NodeRenderProps): React.ReactNode {
 function IncludeDeclRender({ includeDecl }: { includeDecl: nodes.PreprocInclude }): React.ReactNode {
     return (
         <>
-            {"#include"}
+            <span className='token-keyword'>#include</span>
             {" "}
-            {"<"}
-            {EditableField(includeDecl, "directive")}
-            {">"}
-            {";"}
+            <span className='token-string'>{"<"}</span>
+            <EditableField node={includeDecl} field="directive" className='token-string' />
+            <span className='token-string'>{">"}</span>
         </>
 
     )
@@ -295,17 +129,17 @@ function FunctionDeclarationRender({ functionDeclaration }: { functionDeclaratio
     return (
         <>
             <>
-                {EditableField(functionDeclaration, "return_type")}
+                <EditableField node={functionDeclaration} field="return_type" className='token-type' />
                 {" "}
-                {EditableField(functionDeclaration, "name")}
-                {"("}
+                <EditableField node={functionDeclaration} field="name" className='token-function' />
+                <span className='token-delimiter'>{"("}</span>
                 {functionDeclaration.params.map((param, i) => (
                     <React.Fragment key={param.id}>
                         {i > 0 && ", "}
                         <ParamDeclRender paramDecl={param} />
                     </React.Fragment>
                 ))}
-                {")"}
+                <span className='token-delimiter'>{")"}</span>
             </>
         </>
     )
@@ -318,17 +152,17 @@ function FuncDefRender({ funcDef, indent }: { funcDef: nodes.FunctionDefinition,
 
     return (
         <>
-            {EditableField(funcDef, "return_type")}
+            <EditableField node={funcDef} field="return_type" className='token-type' />
             {" "}
-            {EditableField(funcDef, "name")}
-            {"("}
+            <EditableField node={funcDef} field="name" className='token-function' />
+            <span className='token-delimiter'>{"("}</span>
             {funcDef.params.map((param, i) => (
                 <React.Fragment key={param.id}>
                     {i > 0 && ", "}
                     <ParamDeclRender paramDecl={param} />
                 </React.Fragment>
             ))}
-            {")"}
+            <span className='token-delimiter'>{")"}</span>
             {funcDef.body && (<CompStmtRender compStmt={funcDef.body} indent={indent} />)}
         </>
     )
@@ -340,9 +174,9 @@ function VarDeclRender({ varDecl }: { varDecl: nodes.Declaration }): React.React
 
     return (
         <>
-            {EditableField(varDecl, "data_type")}
+            <EditableField node={varDecl} field="data_type" className='token-type' />
             {" "}
-            {EditableField(varDecl, "name")}
+            <EditableField node={varDecl} field="name" className='token-variable' />
             {varDecl.initializer && (
                 <>
                     {" "}
@@ -362,9 +196,9 @@ function ParamDeclRender({ paramDecl }: { paramDecl: nodes.FunctionParameter }):
 
     return (
         <>
-            {EditableField(paramDecl, "data_type")}
+            <EditableField node={paramDecl} field="data_type" className='token-type' />
             {" "}
-            {EditableField(paramDecl, "name")}
+            <EditableField node={paramDecl} field="name" className='token-variable' />
         </>
     )
 }
@@ -372,13 +206,13 @@ function ParamDeclRender({ paramDecl }: { paramDecl: nodes.FunctionParameter }):
 function CompStmtRender({ compStmt, indent }: { compStmt: nodes.CompoundStatement, indent: number }): React.ReactNode {
     return (
         <>
-            {"{"}
+            <span className='token-delimiter'>{"{"}</span>
             {compStmt.statements.map(node => (
                 <Object indent={indent+1} node={node}>
                     <NodeRender node={node} indent={indent} />
                 </Object>
             ))}
-            {"}"}
+            <span className='token-delimiter'>{"}"}</span>
         </>
     )
 }
@@ -386,11 +220,11 @@ function CompStmtRender({ compStmt, indent }: { compStmt: nodes.CompoundStatemen
 function IfStatementRender({ifStatement, indent}: { ifStatement: nodes.IfStatement, indent: number }): React.ReactNode {
     return(
         <>
-            {"if"}
+            <span className='token-keyword'>if</span>
             {" "}
-            {"("}
+            <span className='token-keyword'>{"("}</span>
             {<NodeRender node={ifStatement.condition} indent={0} />}
-            {")"}
+            <span className='token-keyword'>{")"}</span>
             {" "}
             {<CompStmtRender compStmt={ifStatement.compoundStatement} indent={indent} />}
             {ifStatement.elseClause && (<ElseClauseRender elseClause={ifStatement.elseClause} indent={indent} />)}
@@ -401,7 +235,8 @@ function IfStatementRender({ifStatement, indent}: { ifStatement: nodes.IfStateme
 function ElseClauseRender({elseClause, indent}: { elseClause: nodes.ElseClause, indent: number }): React.ReactNode {
     return(
         <>
-            {"else"}
+            {" "}
+            <span className='token-keyword'>else</span>
             {" "}
             {<CompStmtRender compStmt={elseClause.compoundStatement} indent={indent} />}
         </>
@@ -411,7 +246,7 @@ function ElseClauseRender({elseClause, indent}: { elseClause: nodes.ElseClause, 
 function ReturnStmtRender({ returnStmt }: { returnStmt: nodes.ReturnStatement }): React.ReactNode {
     return (
         <>
-            {"return"}
+            <span className='token-keyword'>return</span>
             {returnStmt.expression && (
                 <>
                     {" "}
@@ -426,15 +261,15 @@ function ReturnStmtRender({ returnStmt }: { returnStmt: nodes.ReturnStatement })
 function CallExprRender({ callExpr }: { callExpr: nodes.CallExpression }): React.ReactNode {
     return (
         <>
-            {EditableField(callExpr, "identifier")}
-            {"("}
+            <EditableField node={callExpr} field="identifier" className='token-function' />
+            <span className='token-delimiter'>{"("}</span>
             {callExpr.args.map((arg, i) => (
                 <React.Fragment key={arg.id}>
                     {i > 0 && ", "}
                     <NodeRender node={arg} indent={0} />
                 </React.Fragment>
             ))}
-            {")"}
+            <span className='token-delimiter'>{")"}</span>
             {";"}
         </>
     )
@@ -448,7 +283,7 @@ function DeclRefExprRender({ declRefExpr }: { declRefExpr: nodes.Reference }): R
         return (<>{declRefExpr.DeclRefId}</>)
     }
 
-    return (<>{targetNode.name}</>)
+    return (<span className='token-variable'>{String(targetNode.name)}</span>)
 }
 
 function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.AssignmentExpression }): React.ReactNode {
@@ -461,7 +296,7 @@ function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.Assign
 
     return (
         <>
-            {targetNode.name}
+            <span className='token-variable'>{String(targetNode.name)}</span>
             {" "}
             {"="}
             {" "}
@@ -472,16 +307,16 @@ function AssignmentExprRender({ assignmentExpr }: { assignmentExpr: nodes.Assign
 
 function NumberLiteralExprRender({ literalExpr }: { literalExpr: nodes.NumberLiteral }): React.ReactNode {
     return (
-        <>{EditableField(literalExpr, "value")}</>
+        <EditableField node={literalExpr} field="value" className='token-number' />
     )
 }
 
 function StringLiteralExprRender({ literalExpr }: { literalExpr: nodes.StringLiteral }): React.ReactNode {
     return (
         <>
-        {"\""}
-        {EditableField(literalExpr, "value")}
-        {"\""}
+        <span className='token-string'>{"\""}</span>
+        <EditableField node={literalExpr} field="value" className='token-string' />
+        <span className='token-string'>{"\""}</span>
         </>
     )
 }
@@ -490,7 +325,9 @@ function BinaryExpressionRender({ binaryExpression }: {binaryExpression: nodes.B
     return(
         <>
             <NodeRender node={binaryExpression.left} indent={0} />
+            {" "}
             {binaryExpression.operator}
+            {" "}
             <NodeRender node={binaryExpression.right} indent={0} />
         </>
     )
