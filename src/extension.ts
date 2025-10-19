@@ -20,6 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(ClengaEditorProvider.register(context, client));
+
+	context.subscriptions.push(vscode.commands.registerCommand('lengalab.toggleDebug', () => {
+		const provider = ClengaEditorProvider.getInstance();
+		if (provider) {
+			provider.toggleDebugForActiveEditor();
+		}
+	}));
 }
 
 export function deactivate() {
