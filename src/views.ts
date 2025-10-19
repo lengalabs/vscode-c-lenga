@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { getNonce } from "./utils";
 import { Client } from "./client";
-import * as nodes from "./nodes/cNodes";
+import * as nodes from "./language_objects/cNodes";
 import { CLengaDocument, CLengaEdit } from "./cDocument";
 import { disposeAll } from "./disposable";
 
@@ -14,12 +14,15 @@ export class ClengaEditorProvider
 {
   private static readonly viewType = "lengalab.c";
   private readonly webviews = new WebviewCollection();
+  private static instance: ClengaEditorProvider | null = null;
+  private activeWebviewPanel: vscode.WebviewPanel | null = null;
 
   public static register(
     context: vscode.ExtensionContext,
     client: Client
   ): vscode.Disposable {
     const provider = new ClengaEditorProvider(context, client);
+    ClengaEditorProvider.instance = provider;
     const providerRegistration = vscode.window.registerCustomEditorProvider(
       ClengaEditorProvider.viewType,
       provider,
@@ -28,10 +31,26 @@ export class ClengaEditorProvider
     return providerRegistration;
   }
 
+  public static getInstance(): ClengaEditorProvider | null {
+    return ClengaEditorProvider.instance;
+  }
+
   constructor(
     private readonly context: vscode.ExtensionContext,
     private lengaClient: Client
   ) {}
+
+  public toggleDebugForActiveEditor() {
+    console.log(
+      "toggleDebugForActiveEditor called, activeWebviewPanel:",
+      this.activeWebviewPanel
+    );
+    if (this.activeWebviewPanel) {
+      this.postMessage(this.activeWebviewPanel, "toggleDebug", {});
+    } else {
+      console.log("No active webview panel found");
+    }
+  }
 
   async openCustomDocument(
     uri: vscode.Uri,
@@ -82,6 +101,18 @@ export class ClengaEditorProvider
     this.webviews.add(document.uri, webviewPanel);
     const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
 
+    // Track when this webview becomes active
+    webviewPanel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.active) {
+        this.activeWebviewPanel = e.webviewPanel;
+      }
+    });
+
+    // Set as active immediately if visible
+    if (webviewPanel.active) {
+      this.activeWebviewPanel = webviewPanel;
+    }
+
     webviewPanel.webview.options = {
       enableScripts: true,
     };
@@ -101,27 +132,26 @@ export class ClengaEditorProvider
           this.postMessage(webviewPanel, "update", document.documentData);
           break;
         case "nodeEdit":
-          const old_node: nodes.UnknownNode = {
+          const old_node: nodes.Unknown = {
             id: "",
-            type: "UnknownNode",
-            contents: "",
+            type: "unknown",
+            content: "",
           };
           const edit: CLengaEdit = { new_node: e.contents, old_node };
           document.makeEdit(edit);
+        case "requestAvailableInserts":
+          this.lengaClient
+            .availableInserts(document.uri.fsPath, e.nodeId, e.nodeKey)
+            .then((options) => {
+              this.postMessage(webviewPanel, "availableInserts", options);
+            })
+            .catch((err) => {
+              console.error("Error getting available inserts:", err);
+            });
+          break;
       }
     });
-
-    // TODO: Move to other place, or limit one webview per document
-    // const d1 = vscode.commands.registerCommand("clenga.setStructuredView", (uri: vscode.Uri) => {
-    // 	this.context.workspaceState.update(keyForFile(uri), View.Structured);
-    // 	webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
-    // });
-
-    // webviewPanel.onDidDispose(() => {
-    // 	d1.dispose();
-    // });
   }
-
   private postMessage(
     panel: vscode.WebviewPanel,
     type: string,
