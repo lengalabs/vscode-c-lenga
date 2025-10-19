@@ -1,0 +1,106 @@
+{
+  "name": "lengalab",
+  "displayName": "lengalab",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:nodes.toml",
+    "workspaceContains:*/nodes.toml"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "languages" : [
+      {
+        "id": "lenga",
+        "aliases": ["Lenga"],
+        "extensions": [".c.lenga"] 
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "lengalab.c",
+        "displayName": "C Lenga Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.lenga"
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "lengalab.setStructuredView",
+        "title": "Sets the editors view to a structured format",
+        "category": "SetView"
+      },
+      {
+        "command": "lengalab.structuredView",
+        "title": "Structured editor View",
+        "category": "View"
+      },
+      {
+        "command": "lengalab.transpileFile",
+        "title": "Transpile File",
+        "category": "Transpilation"
+      }
+    ],
+    "menus": {
+      "//editor/title": [
+        {
+          "command": "lengalab.setStructuredView",
+          "when": "activeCustomEditorId == lengalab.c",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "lengalab.transpileFile",
+          "when": "resourceLangId == c || resourceLangId == lenga",
+          "group": "navigation",
+          "args": ["${file}"]
+        }
+      ]      
+    }
+  },
+  "scripts": {
+    "install:all": "npm install && cd webview-ui && npm install",
+    "start:webview": "cd webview-ui && npm run start",
+    "build:webview": "cd webview-ui && npm run build",
+    "build:protos": "protoc -I=./rpc/protos --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./rpc/generated --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node,oneof=unions ./rpc/protos/*.proto",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/google-protobuf": "^3.15.12",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.101.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "@bufbuild/protobuf": "2.6.3",
+    "eslint": "^9.25.1",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "grpc-tools": "^1.13.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.8.0",
+    "google-protobuf": "^3.21.4",
+    "protobufjs": "^7.5.4",
+    "ts-proto": "^2.7.7",
+    "ts-protoc-gen": "^0.15.0"
+  }
+}

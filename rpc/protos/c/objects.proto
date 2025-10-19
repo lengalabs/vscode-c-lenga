@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package c.lenga;
+
+message LanguageObject {
+    oneof language_object {
+        SourceFile source_file = 1;
+        AssignmentExpression assignment_expression = 2;
+        BinaryExpression binary_expression = 3;
+        CallExpression call_expression = 4;
+        Comment comment = 5;
+        Declaration declaration = 6;
+        ElseClause else_clause = 7;
+        ExpressionStatement expression_statement = 8;
+        FunctionDeclaration function_declaration = 9;
+        FunctionDefinition function_definition = 10;
+        FunctionParameter function_parameter = 11;
+        IfStatement if_statement = 12;
+        NumberLiteral number_literal = 13;
+        PreprocInclude preproc_include = 14;
+        Reference reference = 15;
+        ReturnStatement return_statement = 16;
+        StringLiteral string_literal = 17;
+        CompoundStatement compound_statement = 18;
+        UnknownNode unknown_node = 404;
+    }
+}
+
+message SourceFile {
+    string id = 1;
+    repeated LanguageObject code = 2;
+}
+
+message UnknownNode {
+    string id = 1;
+    string contents = 2;
+}
+
+message AssignmentExpression {
+    string id = 1;
+    string id_declaration = 2;
+    string identifier = 3;
+    optional LanguageObject value = 4;
+}
+
+message BinaryExpression {
+    string id = 1;
+    LanguageObject left = 2;
+    string operator = 3;
+    LanguageObject right = 4;
+}
+
+message CallExpression {
+    string id = 1;
+    string id_declaration = 2;
+    string identifier = 3;
+    repeated LanguageObject argument_list = 4;
+}
+
+message Comment {
+    string id = 1;
+    string content = 2;
+}
+
+message CompoundStatement {
+    string id = 1;
+    repeated LanguageObject code_block = 2;
+}
+
+message Declaration {
+    string id = 1;
+    string primitive_type = 2; // Assuming CType is serialized as string
+    string identifier = 3;
+    optional LanguageObject value = 4;
+}
+
+message ElseClause {
+    string id = 1;
+    optional LanguageObject condition = 2;
+    CompoundStatement compound_statement = 3;
+}
+
+message ExpressionStatement {
+    string id = 1;
+    string identifier = 2;
+    repeated LanguageObject argument_list = 3;
+}
+
+message FunctionDeclaration {
+    string id = 1;
+    string return_type = 2; // CType serialized as string
+    string identifier = 3;
+    repeated FunctionParameter parameter_list = 4;
+}
+
+message FunctionDefinition {
+    string id = 1;
+    string return_type = 2; // CType serialized as string
+    string identifier = 3;
+    repeated FunctionParameter parameter_list = 4;
+    CompoundStatement compound_statement = 5;
+}
+
+message FunctionParameter {
+    string id = 1;
+    string identifier = 2;
+    string param_type = 3; // CType serialized as string
+}
+
+message IfStatement {
+    string id = 1;
+    LanguageObject condition = 2;
+    CompoundStatement compound_statement = 3;
+    optional ElseClause else_clause = 4;
+}
+
+message NumberLiteral {
+    string id = 1;
+    string value = 2;
+}
+
+message PreprocInclude {
+    string id = 1;
+    string content = 2;
+}
+
+message Reference {
+    string id = 1;
+    string declaration_id = 2;
+    string identifier = 3;
+}
+
+message ReturnStatement {
+    string id = 1;
+    LanguageObject value = 2;
+}
+
+message StringLiteral {
+    string id = 1;
+    string value = 2;
+}
