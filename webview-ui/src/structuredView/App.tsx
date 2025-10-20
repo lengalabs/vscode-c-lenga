@@ -1,20 +1,34 @@
 import { useState, useEffect } from 'react'
-import { NodeRender, Object } from './components/line'
+import { NodeRender, Object, ModeIndicator } from './components/line'
+import { childInfo } from './components/childInfo';
 import { LineProvider } from './components/lineContext'
 import { vscode } from '../vscode'
-import * as nodes from '../../../src/nodes/cNodes';
+import * as objects from '../../../src/language_objects/cNodes';
+import { DebugProvider } from './components/debugContext';
+import { ParentInfoV2 } from './components/context';
 
 export default function App() {
-  const [ast, setAst] = useState<nodes.Node[]>([])
+  const [sourceFile, setSourceFile] = useState<objects.SourceFile | undefined>(undefined)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [insertTargetId, setInsertTargetId] = useState<string | null>(null);
+  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfoV2 | null>(null);
+  const [availableInserts, setAvailableInserts] = useState<objects.LanguageObject[] | null>(null);
+  const [debug, setDebug] = useState<boolean>(false);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      console.log("event:", event)
       const message = event.data;
-      console.log("got message: ", message);
-      setAst(message.contents)
+      console.log("message:", message)
+      
+      if (message.type === 'update') {
+        setSourceFile(message.contents)
+      } else if (message.type === 'availableInserts') {
+        setAvailableInserts(message.contents)
+      } else if (message.type === 'toggleDebug') {
+        console.log('Toggling debug mode');
+        setDebug((prev) => !prev)
+      }
     }
 
     window.addEventListener('message', handleMessage)
@@ -26,32 +40,55 @@ export default function App() {
     }
   }, [])
 
-  const onEdit = <T extends nodes.Node, K extends string & keyof T>(node: T, key: K | null) => {
+  const onEdit = <T extends objects.LanguageObject, K extends string & keyof T>(node: T, key: K | null) => {
     const message = { type: 'nodeEdit', contents: node, key: key }
-    //setAst((prev) => [...prev]); //Placeholder
+    // Force re-render by creating a new reference to sourceFile
+    setSourceFile((prev) => prev ? { ...prev } : prev);
     console.log("sending message: ", message);
     vscode.postMessage(message)
   }
 
-  const debug = true
+  const onRequestAvailableInserts = (nodeId: string, nodeKey: string) => {
+    const message = { type: 'requestAvailableInserts', nodeId, nodeKey }
+    console.log("requesting available inserts: ", message);
+    vscode.postMessage(message)
+  }
 
   return (
     <>
-      <LineProvider ast={ast} onEdit={onEdit} selectedNodeId={selectedNodeId} selectedKey={selectedKey} setSelectedNodeId={setSelectedNodeId} setSelectedKey={setSelectedKey} insertTargetId={insertTargetId} setInsertTargetId={setInsertTargetId}>
-        <div>
-          {ast.map(node => (
-            <Object indent={0} node={node}>
-              <NodeRender key={node.id} node={node} indent={0} />
-            </Object>
-          ))}
-        </div>
-      </LineProvider>
-      {debug && <div>
-        <h1>Debug Info</h1>
-        <p>selectedNodeId: {selectedNodeId}</p>
-        <p>selectedKey: {selectedKey}</p>
-        <p>insertTargetId: {insertTargetId}</p>
-      </div>}
+      <DebugProvider debug={debug}>
+        {
+          sourceFile ? <LineProvider
+            sourceFile={sourceFile}
+            onEdit={onEdit}
+            onRequestAvailableInserts={onRequestAvailableInserts}
+            availableInserts={availableInserts}
+            selectedNodeId={selectedNodeId}
+            selectedKey={selectedKey}
+            parentNodeInfo={parentNodeInfo}
+            setSelectedNodeId={setSelectedNodeId}
+            setSelectedKey={setSelectedKey}
+            setParentNodeInfo={setParentNodeInfo}
+          >
+            <ModeIndicator />
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {sourceFile?.code.map((node, i) => (
+                <Object key={node.id} node={node}>
+                  <NodeRender node={node} parentInfo={childInfo(sourceFile, "code", i)} />
+                </Object>
+              ))}
+            </div>
+          </LineProvider> : <p>loading...</p>
+        }
+        {debug && <div>
+          <h1>Debug Info</h1>
+          <p>selectedNodeId: {selectedNodeId}</p>
+          <p>selectedKey: {selectedKey}</p>
+          <p>parentNodeId: {parentNodeInfo?.parent.id}</p>
+          <p>parentKey: {parentNodeInfo?.key}</p>
+          <p>parentIndex: {parentNodeInfo?.index}</p>
+        </div>}
+      </DebugProvider>
     </>
   )
-}
+} 

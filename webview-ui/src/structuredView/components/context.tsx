@@ -1,23 +1,51 @@
 import { createContext, useContext } from "react";
-import * as nodes from "../../../../src/nodes/cNodes";
+import * as objects from "../../../../src/language_objects/cNodes";
 
 
 export interface ParentInfo {
-    parent: nodes.Node | null;
+    parent: objects.LanguageObject | null;
     key: string;
     index: number;
 }
 
+// Type-safe parent info with generics and defaults
+export type ParentInfoV2<
+    T extends objects.LanguageObject = objects.LanguageObject,
+    K extends string & keyof T = string & keyof T
+> = {
+    parent: T;
+    key: K;
+    index: number;
+};
+
+// Helper to create type-safe ParentInfoV2
+export function createParentInfo<T extends objects.LanguageObject, K extends string & keyof T>(
+    parent: T,
+    key: K,
+    index: number
+): ParentInfoV2<T, K> {
+    return { parent, key, index };
+}
+
+export type EditorMode = 'view' | 'edit';
+
 export interface LineContextType {
-    onEdit: <T extends nodes.Node, K extends string & keyof T>(node: T, key: K | null) => void;
+    onEdit: <T extends objects.LanguageObject, K extends string & keyof T>(node: T, key: K | null) => void;
+    onRequestAvailableInserts: (nodeId: string, nodeKey: string) => void;
+    availableInserts: objects.LanguageObject[] | null;
     selectedNodeId: string | null;
     selectedKey: string | null;
+    parentNodeInfo: ParentInfoV2 | null;
+    setParentNodeInfo: (info: ParentInfoV2 | null) => void;
     setSelectedNodeId: (id: string) => void;
-    setSelectedKey: (id: string) => void;
-    nodeMap: Map<string, nodes.Node>;
-    parentMap: Map<string, ParentInfo>;
-    insertTargetId: string | null;
-    setInsertTargetId: (id: string | null) => void;
+    setSelectedKey: (key: string) => void;
+    nodeMap: Map<string, objects.LanguageObject>;
+    parentMap: Map<string, ParentInfoV2>;
+    focusRequest: { nodeId: string; fieldKey: string } | null;
+    requestFocus: (nodeId: string, fieldKey: string) => void;
+    clearFocusRequest: () => void;
+    mode: EditorMode;
+    setMode: (mode: EditorMode) => void;
 }
 
 export const LineContext = createContext<LineContextType | null>(null);
@@ -28,18 +56,16 @@ export function useLineContext(): LineContextType {
     return ctx;
 }
 
-export function buildMaps(ast: nodes.Node[]): {
-    nodeMap: Map<string, nodes.Node>;
-    parentMap: Map<string, ParentInfo>;
+export function buildMaps(ast: objects.LanguageObject[]): {
+    nodeMap: Map<string, objects.LanguageObject>;
+    parentMap: Map<string, ParentInfoV2>;
 } {
-    const nodeMap = new Map<string, nodes.Node>();
-    const parentMap = new Map<string, ParentInfo>();
-
-    return { nodeMap, parentMap };
+    const nodeMap = new Map<string, objects.LanguageObject>();
+    const parentMap = new Map<string, ParentInfoV2>();
 
     function traverse(
-        node: nodes.Node | undefined,
-        parent: nodes.Node | null = null,
+        node: objects.LanguageObject | undefined,
+        parent: objects.LanguageObject | null = null,
         key = "",
         index = 0
     ) {
@@ -47,43 +73,43 @@ export function buildMaps(ast: nodes.Node[]): {
 
         nodeMap.set(node.id, node);
 
-        if (parent) parentMap.set(node.id, { parent, key, index });
+        if (parent) parentMap.set(node.id, { parent, key, index } as ParentInfoV2);
 
         switch (node.type) {
-            case "FunctionDeclaration": {
-                const funcDecl = node as nodes.FunctionDeclaration;
-                funcDecl.params.forEach((p, i) => traverse(p, funcDecl, "params", i));
+            case "functionDeclaration": {
+                const funcDecl = node as objects.FunctionDeclaration;
+                funcDecl.parameterList.forEach((p, i) => traverse(p, funcDecl, "parameterList", i));
                 break;
             }
-            case "FunctionDefinition": {
-                const funcDecl = node as nodes.FunctionDefinition;
-                funcDecl.params.forEach((p, i) => traverse(p, funcDecl, "params", i));
-                traverse(funcDecl.body, node, "body", 0);
+            case "functionDefinition": {
+                const funcDecl = node as objects.FunctionDefinition;
+                funcDecl.parameterList.forEach((p, i) => traverse(p, funcDecl, "parameterList", i));
+                traverse(funcDecl.compoundStatement, node, "compoundStatement", 0);
                 break;
             }
-            case "CompoundStatement": {
-                const compStmt = node as nodes.CompoundStatement;
-                compStmt.statements.forEach((stmt, i) => traverse(stmt, node, "statements", i));
+            case "compoundStatement": {
+                const compStmt = node as objects.CompoundStatement;
+                compStmt.codeBlock.forEach((stmt, i) => traverse(stmt, node, "codeBlock", i));
                 break;
             }
-            case "Declaration": {
-                const varDecl = node as nodes.Declaration;
-                if (varDecl.initializer) traverse(varDecl.initializer, varDecl, "initializer", 0);
+            case "declaration": {
+                const varDecl = node as objects.Declaration;
+                if (varDecl.value) traverse(varDecl.value, varDecl, "value", 0);
                 break;
             }
-            case "ReturnStatement": {
-                const returnStmt = node as nodes.ReturnStatement;
-                if (returnStmt.expression) traverse(returnStmt.expression, returnStmt, "expression", 0);
+            case "returnStatement": {
+                const returnStmt = node as objects.ReturnStatement;
+                if (returnStmt.value) traverse(returnStmt.value, returnStmt, "value", 0);
                 break;
             }
-            case "CallExpression": {
-                const callExpr = node as nodes.CallExpression;
-                traverse(callExpr, callExpr, "calle", 0);
-                callExpr.args.forEach((arg, i) => traverse(arg, callExpr, "args", i));
+            case "callExpression": {
+                const callExpr = node as objects.CallExpression;
+                // traverse(callExpr.callee, callExpr, "calle", 0);
+                callExpr.argumentList.forEach((arg, i) => traverse(arg, callExpr, "argumentList", i));
                 break;
             }
-            case "AssignmentExpression": {
-                const assignmentExpr = node as nodes.AssignmentExpression;
+            case "assignmentExpression": {
+                const assignmentExpr = node as objects.AssignmentExpression;
                 traverse(assignmentExpr.value, node, "value", 0);
                 break;
             }

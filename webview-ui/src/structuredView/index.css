@@ -83,3 +83,11 @@ body {
 .token-comment    { color: var(--syntax-comment); }
 .token-constant   { color: var(--syntax-constant); }
 .token-delimiter  { color: var(--syntax-delimiter); }
+
+.object-container-block {
+  display: block;
+}
+
+.object-container-inline {
+  display: inline;
+}

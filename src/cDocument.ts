@@ -1,22 +1,22 @@
 import * as vscode from "vscode";
-import * as nodes from './nodes/cNodes';
+import * as object from './language_objects/cNodes';
 import { Disposable } from './disposable';
 
 interface CLengaDocumentDelegate {
-    getFileData(uri: string): Promise<nodes.Node[]>;
-    getEditedData(uri: string, edit: nodes.Node): Promise<[nodes.Node[], nodes.Node]>;
+    getFileData(uri: string): Promise<object.SourceFile>;
+    getEditedData(uri: string, edit: object.LanguageObject): Promise<[object.SourceFile, object.LanguageObject]>;
     saveData(uri: string, name: string): Promise<void>;
 }
 
 export interface CLengaEdit {
-    readonly new_node: nodes.Node;
-    old_node: nodes.Node;
+    readonly new_node: object.LanguageObject;
+    old_node: object.LanguageObject;
 }
 
 export class CLengaDocument extends Disposable implements vscode.CustomDocument {
     private readonly _uri: vscode.Uri;
 
-    private _documentData: nodes.Node[];
+    private _documentData: object.SourceFile;
     private _edits: CLengaEdit[] = [];
     private _savedEdits: CLengaEdit[] = [];
 
@@ -33,16 +33,16 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
         return new CLengaDocument(uri, fileData, delegate);
     }
 
-    private static async readFile(uri: vscode.Uri, delegate: CLengaDocumentDelegate): Promise<nodes.Node[]> {
+    private static async readFile(uri: vscode.Uri, delegate: CLengaDocumentDelegate): Promise<object.SourceFile> {
         if (uri.scheme === 'untitled') {
-            return [];
+            return {type: 'sourceFile', id: crypto.randomUUID(), code: []};
         }
         return await delegate.getFileData(uri.fsPath.toString());
     }
 
     private constructor(
         uri: vscode.Uri,
-        initialContent: nodes.Node[],
+        initialContent: object.SourceFile,
         delegate: CLengaDocumentDelegate
     ) {
         super();
@@ -53,7 +53,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
 
     public get uri() { return this._uri; }
 
-    public get documentData(): nodes.Node[] { return this._documentData; }
+    public get documentData(): object.SourceFile { return this._documentData; }
 
     private readonly _onDidDispose = this._register(new vscode.EventEmitter<void>());
     /**
@@ -62,7 +62,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
     public readonly onDidDispose = this._onDidDispose.event;
 
     private readonly _onDidChangeDocument = this._register(new vscode.EventEmitter<{
-        readonly content?: nodes.Node[];
+        readonly content?: object.SourceFile;
         readonly edits: readonly CLengaEdit[];
     }>());
     /**
