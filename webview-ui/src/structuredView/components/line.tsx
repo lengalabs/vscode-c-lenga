@@ -566,13 +566,13 @@ function PreprocIncludeRender({
   return (
     <>
       <span className="token-keyword">#include</span>
-      <EditableField
-        node={includeDecl}
-        key="content"
-        parentInfo={parentInfo}
-        className="token-string"
-      />
-      {";"}
+      {" "}
+      {EditableField({
+        node: includeDecl,
+        key: "content",
+        parentInfo,
+        className: "token-string",
+      })}
     </>
   );
 }
@@ -635,7 +635,7 @@ function FunctionDefinitionRender({
         parentInfo,
         className: "token-type",
       })}{" "}
-      {EditableField({ node: funcDef, key: "identifier", parentInfo })}
+      {EditableField({ node: funcDef, key: "identifier", parentInfo, className: "token-function" })}
       <span className="token-delimiter">{"("}</span>
       {funcDef.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
@@ -690,8 +690,8 @@ function DeclarationRender({
 
   return (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({ node: varDecl, key: "primitiveType", parentInfo })}{" "}
-      {EditableField({ node: varDecl, key: "identifier", parentInfo })}
+      {EditableField({ node: varDecl, key: "primitiveType", parentInfo, className: "token-type"})}{" "}
+      {EditableField({ node: varDecl, key: "identifier", parentInfo, className: "token-variable" })}
       {varDecl.value && (
         <>
           {" "}
@@ -723,7 +723,7 @@ function FunctionParameterRender({
     <>
       {EditableField({
         node: paramDecl,
-        key: "type",
+        key: "paramType",
         parentInfo,
         className: "token-type",
       })}{" "}
@@ -731,7 +731,7 @@ function FunctionParameterRender({
         node: paramDecl,
         key: "identifier",
         parentInfo,
-        className: "token-type",
+        className: "token-variable",
       })}
     </>
   );
@@ -969,7 +969,9 @@ function BinaryExpressionRender({
         node={binaryExpression.left}
         parentInfo={childInfo(binaryExpression, "left")}
       />
+      {" "}
       {EditableField({ node: binaryExpression, key: "operator", parentInfo })}
+      {" "}
       <NodeRender
         node={binaryExpression.right}
         parentInfo={childInfo(binaryExpression, "right")}

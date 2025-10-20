@@ -139,6 +139,7 @@ export class ClengaEditorProvider
           };
           const edit: CLengaEdit = { new_node: e.contents, old_node };
           document.makeEdit(edit);
+          break;
         case "requestAvailableInserts":
           this.lengaClient
             .availableInserts(document.uri.fsPath, e.nodeId, e.nodeKey)

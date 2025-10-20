@@ -4,6 +4,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Build Extension",
 			"type": "npm",
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
@@ -22,42 +23,43 @@
 			"command": "npm run build:webview",
 			"problemMatcher": []
 		},
-		{
-			"label": "Transpile C File",
-			"type": "shell",
-			"command": "transpiler",
-			"args": [
-				"/home/patriciotournepassarino/Documents/uba/tpi/lenga/example/main.c"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "Start Lenga Server",
-			"type": "shell",
-			"command": "echo 'Starting lenga-server...' && lenga-server",
-			"isBackground": true,
-			"problemMatcher": {
-				"pattern": {
-					"regexp": "^$"
-				},
-				"background": {
-					"activeOnStart": true,
-					"beginsPattern": "^Starting lenga-server",
-					"endsPattern": "^Starting lenga-server"
-				}
-			},
-			"presentation": {
-				"reveal": "silent",
-				"panel": "dedicated"
-			}
-		},
+		// {
+		// 	"label": "Transpile C File",
+		// 	"type": "shell",
+		// 	"command": "transpiler",
+		// 	"args": [
+		// 		"/home/patriciotournepassarino/Documents/uba/tpi/lenga/example/main.c"
+		// 	],
+		// 	"problemMatcher": []
+		// },
+		// {
+		// 	"label": "Start Lenga Server",
+		// 	"type": "shell",
+		// 	"command": "echo 'Starting lenga-server...' && lenga-server",
+		// 	"isBackground": true,
+		// 	"problemMatcher": {
+		// 		"pattern": {
+		// 			"regexp": "^$"
+		// 		},
+		// 		"background": {
+		// 			"activeOnStart": true,
+		// 			"beginsPattern": "^Starting lenga-server",
+		// 			"endsPattern": "^Starting lenga-server"
+		// 		}
+		// 	},
+		// 	"presentation": {
+		// 		"reveal": "silent",
+		// 		"panel": "dedicated"
+		// 	}
+		// },
 		{
 			"label": "Pre-launch Setup",
 			"dependsOrder": "sequence",
 			"dependsOn": [
 				"Build Webview",
-				"Transpile C File",
-				"Start Lenga Server"
+				// "Transpile C File",
+				// "Start Lenga Server"
+				"Build Extension",
 			],
 			"problemMatcher": []
 		}
