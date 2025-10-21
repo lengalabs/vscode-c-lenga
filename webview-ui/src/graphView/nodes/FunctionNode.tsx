@@ -1,46 +1,43 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FunctionDefinition } from '../../../../src/language_objects/cNodes';
+import { Object, NodeRender } from '../../components/line';
+import { ParentInfoV2 } from '../../components/context';
+import { Position, Handle } from '@xyflow/react';
 
-export function FunctionNode({ data }: { data: { text: string } }) {
-  const [value, setValue] = useState(data.text || "");
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const mirrorRef = useRef<HTMLDivElement>(null);
+export type FunctionFlowNode = {
+  id: string;
+  type: 'function';
+  position: {x: number; y: number};
+  data: { func: FunctionDefinition, handlerPositions: number[], parentInfo: ParentInfoV2 };
+}
 
-  const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(evt.target.value);
-  }, []);
-
-  useEffect(() => {
-    const mirror = mirrorRef.current;
-    const textarea = textAreaRef.current;
-    if (mirror && textarea) {
-      mirror.textContent = value + "\n";
-      const width = mirror.offsetWidth;
-      const height = mirror.offsetHeight;
-
-      textarea.style.width = `${width}px`;
-      textarea.style.height = `${height}px`;
-    }
-  }, [value]);
-
-  useEffect(() => {
-    setValue(data.text || "");
-  }, [data.text]);
+export function FunctionNode({ data }: { 
+  data: {func: FunctionDefinition, handlerPositions: number[], parentInfo: ParentInfoV2 }}) 
+{
+  const lineHeight = 22;
 
   return (
-    <div className="function-node">
-      <textarea
-        ref={textAreaRef}
-        value={value}
-        onChange={onChange}
-        className="editable-textarea nodrag"
-        rows={1}
-        wrap="off"
+    <div className='function-node'>
+      <Object node={data.func}>
+        <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
+      </Object>
+
+      <Handle type="target" position={Position.Bottom} style={{
+        visibility: 'hidden',
+        transform: 'translateX(50%)',
+        }} 
       />
-      <div
-        ref={mirrorRef}
-        className="textarea-mirror"
-        aria-hidden="true"
-      />
+
+      {data.handlerPositions.map((callPosition, i) => (
+        <Handle id={i.toString()} type="source" position={Position.Right} style={{
+            position: 'absolute',
+            top: callPosition * lineHeight,
+            right: 0,
+            visibility: 'hidden',
+            transform: 'translateY(50%)',
+          }}
+        />
+      ))}
+
     </div>
   );
 }

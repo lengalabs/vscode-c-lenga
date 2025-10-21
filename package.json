@@ -40,13 +40,13 @@
     "commands": [
       {
         "command": "lengalab.setStructuredView",
-        "title": "Sets the editors view to a structured format",
+        "title": "Sets the editors view to a classic structured format",
         "category": "SetView"
       },
       {
-        "command": "lengalab.structuredView",
-        "title": "Structured editor View",
-        "category": "View"
+        "command": "lengalab.setGraphView",
+        "title": "Sets the editors view to a function call graph format",
+        "category": "SetView"
       },
       {
         "command": "lengalab.transpileFile",
@@ -68,9 +68,14 @@
       }
     ],
     "menus": {
-      "//editor/title": [
+      "editor/title": [
         {
           "command": "lengalab.setStructuredView",
+          "when": "activeCustomEditorId == lengalab.c",
+          "group": "navigation"
+        },
+        {
+          "command": "lengalab.setGraphView",
           "when": "activeCustomEditorId == lengalab.c",
           "group": "navigation"
         }
