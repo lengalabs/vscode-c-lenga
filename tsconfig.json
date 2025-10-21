@@ -1,14 +1,12 @@
 {
-	"compilerOptions": {
-		"module": "Node16",
-		"target": "ES2022",
-		"outDir": "out",
-		"lib": [
-			"ES2022"
-		],
-		"sourceMap": true,
-		"strict": true,
-	},
-	"include": ["src", "rpc/generated"],
-	"exclude": ["node_modules", "webview-ui"]
+  "compilerOptions": {
+    "module": "Node16",
+    "target": "ES2022",
+    "outDir": "out",
+    "lib": ["ES2022"],
+    "sourceMap": true,
+    "strict": true
+  },
+  "include": ["src", "rpc/generated"],
+  "exclude": ["node_modules", "webview-ui"]
 }

@@ -7,24 +7,18 @@ import { disposeAll } from "./disposable";
 
 export enum View {
   Structured = "structuredView",
-  Graph = 'graphView',
+  Graph = "graphView",
 }
 
 const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
 
-export class ClengaEditorProvider
-  implements vscode.CustomEditorProvider<CLengaDocument>
-{
+export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaDocument> {
   private static readonly viewType = "lengalab.c";
   private readonly webviews = new WebviewCollection();
   private static instance: ClengaEditorProvider | null = null;
   private activeWebviewPanel: vscode.WebviewPanel | null = null;
 
-
-  public static register(
-    context: vscode.ExtensionContext,
-    client: Client
-  ): vscode.Disposable {
+  public static register(context: vscode.ExtensionContext, client: Client): vscode.Disposable {
     const provider = new ClengaEditorProvider(context, client);
     ClengaEditorProvider.instance = provider;
     const providerRegistration = vscode.window.registerCustomEditorProvider(
@@ -45,31 +39,24 @@ export class ClengaEditorProvider
   ) {}
 
   public toggleDebugForActiveEditor() {
-    console.log(
-      "toggleDebugForActiveEditor called, activeWebviewPanel:",
-      this.activeWebviewPanel
-    );
+    console.log("toggleDebugForActiveEditor called, activeWebviewPanel:", this.activeWebviewPanel);
     if (this.activeWebviewPanel) {
       this.postMessage(this.activeWebviewPanel, "toggleDebug", {});
     } else {
       console.log("No active webview panel found");
     }
   }
-  
+
   async openCustomDocument(
     uri: vscode.Uri,
     openContext: { backupId?: string },
     _token: vscode.CancellationToken
   ): Promise<CLengaDocument> {
-    const document: CLengaDocument = await CLengaDocument.create(
-      uri,
-      openContext.backupId,
-      {
-        getFileData: this.lengaClient.openFile.bind(this.lengaClient),
-        getEditedData: this.lengaClient.edit.bind(this.lengaClient),
-        saveData: this.lengaClient.save.bind(this.lengaClient),
-      }
-    );
+    const document: CLengaDocument = await CLengaDocument.create(uri, openContext.backupId, {
+      getFileData: this.lengaClient.openFile.bind(this.lengaClient),
+      getEditedData: this.lengaClient.edit.bind(this.lengaClient),
+      saveData: this.lengaClient.save.bind(this.lengaClient),
+    });
 
     const listeners: vscode.Disposable[] = [];
 
@@ -87,27 +74,33 @@ export class ClengaEditorProvider
       document.onDidChangeContent((e) => {
         // Update all webviews when the document changes
         for (const webviewPanel of this.webviews.get(document.uri)) {
-          this.postMessage(webviewPanel, 'update', e.content);
+          this.postMessage(webviewPanel, "update", e.content);
         }
-	  	})
+      })
     );
 
-		listeners.push(
+    listeners.push(
       vscode.commands.registerCommand("lengalab.setStructuredView", (uri: vscode.Uri) => {
         this.context.workspaceState.update(keyForFile(uri), View.Structured);
         if (this.activeWebviewPanel) {
-          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(this.activeWebviewPanel.webview, View.Structured);
+          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
+            this.activeWebviewPanel.webview,
+            View.Structured
+          );
         }
-		  })
+      })
     );
 
-		listeners.push(
+    listeners.push(
       vscode.commands.registerCommand("lengalab.setGraphView", (uri: vscode.Uri) => {
         this.context.workspaceState.update(keyForFile(uri), View.Graph);
         if (this.activeWebviewPanel) {
-          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(this.activeWebviewPanel.webview, View.Graph);
+          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
+            this.activeWebviewPanel.webview,
+            View.Graph
+          );
         }
-		  })
+      })
     );
 
     listeners.push(
@@ -150,10 +143,7 @@ export class ClengaEditorProvider
       keyForFile(document.uri),
       View.Structured
     );
-    webviewPanel.webview.html = this.getHtmlForWebview(
-      webviewPanel.webview,
-      View.Structured
-    );
+    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
 
     webviewPanel.webview.onDidReceiveMessage((e) => {
       console.log("received:\n", JSON.stringify(e, null, 2));
@@ -183,11 +173,7 @@ export class ClengaEditorProvider
       }
     });
   }
-  private postMessage(
-    panel: vscode.WebviewPanel,
-    type: string,
-    contents: any
-  ): void {
+  private postMessage(panel: vscode.WebviewPanel, type: string, contents: any): void {
     console.log("sending:\n", JSON.stringify(contents, null, 2));
     panel.webview.postMessage({ type, contents });
   }
@@ -195,8 +181,7 @@ export class ClengaEditorProvider
   private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<
     vscode.CustomDocumentEditEvent<CLengaDocument>
   >();
-  public readonly onDidChangeCustomDocument =
-    this._onDidChangeCustomDocument.event;
+  public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
   public saveCustomDocument(
     document: CLengaDocument,
@@ -227,7 +212,6 @@ export class ClengaEditorProvider
   ): Thenable<vscode.CustomDocumentBackup> {
     return document.backup(context.destination, cancellation);
   }
-
 
   private getHtmlForWebview(webview: vscode.Webview, viewName: string): string {
     const scriptUri = webview.asWebviewUri(

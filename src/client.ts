@@ -12,14 +12,8 @@ export class Client {
   private converter: CConverter;
 
   constructor() {
-    this.lenga_stub = new lenga.LengaClient(
-      "localhost:49100",
-      credentials.createInsecure()
-    );
-    this.clenga_stub = new clenga.CLengaClient(
-      "localhost:49100",
-      credentials.createInsecure()
-    );
+    this.lenga_stub = new lenga.LengaClient("localhost:49100", credentials.createInsecure());
+    this.clenga_stub = new clenga.CLengaClient("localhost:49100", credentials.createInsecure());
     this.converter = new CConverter();
   }
 
@@ -30,16 +24,13 @@ export class Client {
     };
 
     return new Promise((resolve, reject) => {
-      this.clenga_stub.initialize(
-        request,
-        (err: ServiceError | null, response: lenga.Void) => {
-          if (err) {
-            reject(new Error(`${err.message}`));
-          } else {
-            resolve();
-          }
+      this.clenga_stub.initialize(request, (err: ServiceError | null, response: lenga.Void) => {
+        if (err) {
+          reject(new Error(`${err.message}`));
+        } else {
+          resolve();
         }
-      );
+      });
     });
   }
 
@@ -73,27 +64,20 @@ export class Client {
     };
 
     return new Promise((resolve, reject) => {
-      this.clenga_stub.edit(
-        request,
-        (err: ServiceError, objects: clenga.EditResponse) => {
-          if (err) {
-            reject(new Error(`${err}`));
+      this.clenga_stub.edit(request, (err: ServiceError, objects: clenga.EditResponse) => {
+        if (err) {
+          reject(new Error(`${err}`));
+        } else {
+          const new_nodes_proto = objects.newObject?.languageObject;
+          if (new_nodes_proto && new_nodes_proto.$case === "sourceFile") {
+            const new_nodes = this.converter.fromProto(new_nodes_proto.sourceFile);
+            const old_nodes = this.converter.protoToObject(objects.oldObject!);
+            resolve([new_nodes, old_nodes]);
           } else {
-            const new_nodes_proto = objects.newObject?.languageObject;
-            if (new_nodes_proto && new_nodes_proto.$case === "sourceFile") {
-              const new_nodes = this.converter.fromProto(
-                new_nodes_proto.sourceFile
-              );
-              const old_nodes = this.converter.protoToObject(
-                objects.oldObject!
-              );
-              resolve([new_nodes, old_nodes]);
-            } else {
-              reject(new Error(`No sourcefile`));
-            }
+            reject(new Error(`No sourcefile`));
           }
         }
-      );
+      });
     });
   }
 
@@ -115,9 +99,7 @@ export class Client {
           if (err) {
             reject(new Error(`${err}`));
           } else {
-            const objectOptions = options.options!.map(
-              this.converter.protoToObject
-            );
+            const objectOptions = options.options!.map(this.converter.protoToObject);
             resolve(objectOptions);
           }
         }
@@ -132,16 +114,13 @@ export class Client {
     };
 
     return new Promise((resolve, reject) => {
-      this.clenga_stub.save(
-        request,
-        (err: ServiceError, objects: clenga.Void) => {
-          if (err) {
-            reject(new Error(`${err}`));
-          } else {
-            resolve();
-          }
+      this.clenga_stub.save(request, (err: ServiceError, objects: clenga.Void) => {
+        if (err) {
+          reject(new Error(`${err}`));
+        } else {
+          resolve();
         }
-      );
+      });
     });
   }
 }

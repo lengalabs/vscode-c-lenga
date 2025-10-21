@@ -5,24 +5,27 @@ import { convertProtoDeclarationObjectToTs, convertProtoLanguageObjectToTs } fro
 import { convertTsDeclarationObjectToProto, convertTsLanguageObjectToProto } from "./fromTs";
 
 const fieldRenameMap: Record<string, string> = {
-    decl_ref_id: "DeclRefId" // Reference
+  decl_ref_id: "DeclRefId", // Reference
 };
 
 export class CConverter {
-    public fromProto(protoAst: proto.SourceFile): objects.SourceFile {
-        return { type: "sourceFile", id: protoAst.id, code: protoAst.code.map(convertProtoDeclarationObjectToTs) };
-    }
+  public fromProto(protoAst: proto.SourceFile): objects.SourceFile {
+    return {
+      type: "sourceFile",
+      id: protoAst.id,
+      code: protoAst.code.map(convertProtoDeclarationObjectToTs),
+    };
+  }
 
-    public toProto(TsAst: objects.SourceFile): proto.SourceFile {
-        return { id: TsAst.id, code: TsAst.code.map(convertTsDeclarationObjectToProto) };
-    }
+  public toProto(TsAst: objects.SourceFile): proto.SourceFile {
+    return { id: TsAst.id, code: TsAst.code.map(convertTsDeclarationObjectToProto) };
+  }
 
-    public objectToProto(ts: objects.LanguageObject): proto.LanguageObject {
-        return convertTsLanguageObjectToProto(ts);
-    }
+  public objectToProto(ts: objects.LanguageObject): proto.LanguageObject {
+    return convertTsLanguageObjectToProto(ts);
+  }
 
-    public protoToObject(p: proto.LanguageObject): objects.LanguageObject {
-        return convertProtoLanguageObjectToTs(p);
-    }
+  public protoToObject(p: proto.LanguageObject): objects.LanguageObject {
+    return convertProtoLanguageObjectToTs(p);
+  }
 }
-
