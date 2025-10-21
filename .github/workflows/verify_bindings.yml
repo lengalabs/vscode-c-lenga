@@ -32,7 +32,7 @@ jobs:
 
       - name: Run binding generator
         run: |
-          bash nix develop -c rpc/generate.sh  # runs the full protoc generation
+          nix develop -c bash rpc/generate.sh  # runs the full protoc generation
 
       - name: Assert no changes in generated bindings
         run: |
