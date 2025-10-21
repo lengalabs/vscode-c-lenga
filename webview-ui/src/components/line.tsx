@@ -148,7 +148,9 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
   const isSelected = selectedNodeId === node.id;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isSelected) return;
+    if (!isSelected) {
+      return;
+    }
 
     // Only allow inserting unknown nodes in view mode for block elements
     if (e.key === "Enter" && mode === "view") {
@@ -163,9 +165,13 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
   const deleteNode = () => {
     console.log("Deleting node:", node);
     const parentInfo = parentMap.get(node.id);
-    if (!parentInfo) return;
+    if (!parentInfo) {
+      return;
+    }
     const { parent, key, index } = parentInfo;
-    if (!parent || !(key in parent)) return;
+    if (!parent || !(key in parent)) {
+      return;
+    }
 
     // Check if it's an array field
     const field = parent[key];
@@ -173,7 +179,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       console.log("Parent field is an array, removing from array");
       // Remove the node from the array
       const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
 
       // Remove from maps
@@ -205,7 +211,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       );
     } else if (typeof field === "object") {
       console.log("Parent field is single-valued, setting to null");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = null;
       nodeMap.delete(node.id);
       parentMap.delete(node.id);
@@ -224,17 +230,23 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
     };
     // insert logic: e.g., in CompoundStatement
     const parentInfo = parentMap.get(node.id);
-    if (!parentInfo) return;
+    if (!parentInfo) {
+      return;
+    }
     const { parent, key, index } = parentInfo;
-    if (!parent || !(key in parent)) return;
+    if (!parent || !(key in parent)) {
+      return;
+    }
 
     // Now TypeScript knows key is valid for parent!
     // We need to check if it's an array field
     const field = parent[key];
-    if (!Array.isArray(field)) return;
+    if (!Array.isArray(field)) {
+      return;
+    }
 
     const newArray = [...field.slice(0, index + 1), newObject, ...field.slice(index + 1)];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (parent as any)[key] = newArray; // Runtime assignment - type safety maintained by ParentInfoV2
 
     nodeMap.set(newObject.id, newObject);
@@ -425,14 +437,14 @@ function UnknownRender({
         const field = parent[key] as objects.LanguageObject[];
         const newArray = [...field];
         newArray[index] = selectedOption;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (parent as any)[key] = newArray;
         console.log("Parent after insert:", parent);
         // Notify of the edit
         onEdit(parent, key);
       } else if (typeof parent[key] === "object") {
         console.log("Parent field is single-valued, replacing directly");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (parent as any)[key] = selectedOption;
         console.log("Parent after insert:", parent);
         onEdit(parent, key);
@@ -601,7 +613,9 @@ function DeclarationRender({
   nodeMap.set(varDecl.id, varDecl);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (mode !== "edit") return;
+    if (mode !== "edit") {
+      return;
+    }
 
     if (e.key === "Enter" && !varDecl.value) {
       e.preventDefault();

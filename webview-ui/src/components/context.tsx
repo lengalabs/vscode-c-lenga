@@ -54,7 +54,9 @@ export const LineContext = createContext<LineContextType | null>(null);
 
 export function useLineContext(): LineContextType {
   const ctx = useContext(LineContext);
-  if (!ctx) throw new Error("LineContext must be used inside a provider");
+  if (!ctx) {
+    throw new Error("LineContext must be used inside a provider");
+  }
   return ctx;
 }
 
@@ -71,11 +73,15 @@ export function buildMaps(ast: objects.LanguageObject[]): {
     key = "",
     index = 0
   ) {
-    if (!node) return;
+    if (!node) {
+      return;
+    }
 
     nodeMap.set(node.id, node);
 
-    if (parent) parentMap.set(node.id, { parent, key, index } as ParentInfoV2);
+    if (parent) {
+      parentMap.set(node.id, { parent, key, index } as ParentInfoV2);
+    }
 
     switch (node.type) {
       case "functionDeclaration": {
@@ -96,12 +102,16 @@ export function buildMaps(ast: objects.LanguageObject[]): {
       }
       case "declaration": {
         const varDecl = node as objects.Declaration;
-        if (varDecl.value) traverse(varDecl.value, varDecl, "value", 0);
+        if (varDecl.value) {
+          traverse(varDecl.value, varDecl, "value", 0);
+        }
         break;
       }
       case "returnStatement": {
         const returnStmt = node as objects.ReturnStatement;
-        if (returnStmt.value) traverse(returnStmt.value, returnStmt, "value", 0);
+        if (returnStmt.value) {
+          traverse(returnStmt.value, returnStmt, "value", 0);
+        }
         break;
       }
       case "callExpression": {

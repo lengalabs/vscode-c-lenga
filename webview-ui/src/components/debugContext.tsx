@@ -9,7 +9,9 @@ export const DebugContext = createContext<DebugContextType | null>(null);
 
 export function useDebugContext(): DebugContextType {
   const ctx = useContext(DebugContext);
-  if (!ctx) throw new Error("DebugContext must be used inside a provider");
+  if (!ctx) {
+    throw new Error("DebugContext must be used inside a provider");
+  }
   return ctx;
 }
 interface DebugProviderProps {

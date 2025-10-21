@@ -12,7 +12,9 @@ export function visitNodes(
   key = "",
   index = 0
 ) {
-  if (!object) return;
+  if (!object) {
+    return;
+  }
 
   visitor(object, parent, key, index);
 
@@ -39,12 +41,16 @@ export function visitNodes(
     }
     case "declaration": {
       const varDecl = object as objects.Declaration;
-      if (varDecl.value) visitNodes(varDecl.value, visitor, varDecl, "value", 0);
+      if (varDecl.value) {
+        visitNodes(varDecl.value, visitor, varDecl, "value", 0);
+      }
       break;
     }
     case "returnStatement": {
       const returnStmt = object as objects.ReturnStatement;
-      if (returnStmt.value) visitNodes(returnStmt.value, visitor, returnStmt, "value", 0);
+      if (returnStmt.value) {
+        visitNodes(returnStmt.value, visitor, returnStmt, "value", 0);
+      }
       break;
     }
     case "callExpression": {
@@ -63,8 +69,9 @@ export function visitNodes(
       const ifStatement = object as objects.IfStatement;
       visitNodes(ifStatement.condition, visitor, ifStatement, "condition", 0);
       visitNodes(ifStatement.compoundStatement, visitor, ifStatement, "compoundStatement", 0);
-      if (ifStatement.elseClause)
+      if (ifStatement.elseClause) {
         visitNodes(ifStatement.elseClause, visitor, ifStatement, "elseClause", 0);
+      }
       break;
     }
     case "elseClause": {
