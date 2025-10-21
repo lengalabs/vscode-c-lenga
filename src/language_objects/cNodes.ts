@@ -3,8 +3,8 @@
 // ==========================
 
 export interface BaseLanguageObject {
-    id: string;
-    type: string;
+  id: string;
+  type: string;
 }
 
 // ==========================
@@ -12,88 +12,84 @@ export interface BaseLanguageObject {
 // ==========================
 
 export type LanguageObject =
-    | SourceFile
-    | Declaration
-    | FunctionDeclaration
-    | FunctionDefinition
-    | PreprocInclude
-    | Comment
-    | FunctionParameter
-    | AssignmentExpression
-    | BinaryExpression
-    | CallExpression
-    | NumberLiteral
-    | Reference
-    | StringLiteral
-    | CompoundStatement
-    | IfStatement
-    | ReturnStatement
-    | ElseClause
-    | Unknown;
+  | SourceFile
+  | Declaration
+  | FunctionDeclaration
+  | FunctionDefinition
+  | PreprocInclude
+  | Comment
+  | FunctionParameter
+  | AssignmentExpression
+  | BinaryExpression
+  | CallExpression
+  | NumberLiteral
+  | Reference
+  | StringLiteral
+  | CompoundStatement
+  | IfStatement
+  | ReturnStatement
+  | ElseClause
+  | Unknown;
 
 // ==========================
 // Grouped Unions (by role)
 // ==========================
 
 export type DeclarationObject =
-    | Declaration
-    | FunctionDeclaration
-    | FunctionDefinition
-    | PreprocInclude
-    | Comment
-    | Unknown;
+  | Declaration
+  | FunctionDeclaration
+  | FunctionDefinition
+  | PreprocInclude
+  | Comment
+  | Unknown;
 
 export type ExpressionObject =
-    | AssignmentExpression
-    | BinaryExpression
-    | CallExpression
-    | NumberLiteral
-    | Reference
-    | StringLiteral
-    | Unknown;
+  | AssignmentExpression
+  | BinaryExpression
+  | CallExpression
+  | NumberLiteral
+  | Reference
+  | StringLiteral
+  | Unknown;
 
-export type StatementObject =
-    | CompoundStatement
-    | IfStatement
-    | ReturnStatement
-    | Unknown;
+export type StatementObject = CompoundStatement | IfStatement | ReturnStatement | Unknown;
 
 export type CompoundStatementObject =
-    | Declaration
-    | AssignmentExpression
-    | BinaryExpression
-    | CallExpression
-    | NumberLiteral
-    | Reference
-    | StringLiteral
-    | CompoundStatement
-    | IfStatement
-    | ReturnStatement
-    | Comment
-    | Unknown;
+  | Declaration
+  | AssignmentExpression
+  | BinaryExpression
+  | CallExpression
+  | NumberLiteral
+  | Reference
+  | StringLiteral
+  | CompoundStatement
+  | IfStatement
+  | ReturnStatement
+  | Comment
+  | Unknown;
 
 // ==========================
 // Miscellaneous Nodes
 // ==========================
 
 export interface Unknown extends BaseLanguageObject {
-    type: "unknown";
-    content: string;
+  type: "unknown";
+  content: string;
 }
 
 export interface PreprocInclude extends BaseLanguageObject {
-    type: "preprocInclude";
-    content: string;
+  type: "preprocInclude";
+  content: string;
 }
 
 export interface SourceFile extends BaseLanguageObject {
-    type: "sourceFile";
-    code: DeclarationObject[];
+  type: "sourceFile";
+  code: DeclarationObject[];
 }
 
 export interface Comment extends BaseLanguageObject {
-    type: "comment";
-    content: string;
+  type: "comment";
+  content: string;
 }
 
 // ==========================
@@ -101,31 +97,31 @@ export interface Comment extends BaseLanguageObject {
 // ==========================
 
 export interface FunctionParameter extends BaseLanguageObject {
-    type: "functionParameter";
-    identifier: string;
-    paramType: string;
+  type: "functionParameter";
+  identifier: string;
+  paramType: string;
 }
 
 export interface FunctionDeclaration extends BaseLanguageObject {
-    type: "functionDeclaration";
-    identifier: string;
-    returnType: string;
-    parameterList: Array<FunctionParameter>;
+  type: "functionDeclaration";
+  identifier: string;
+  returnType: string;
+  parameterList: Array<FunctionParameter>;
 }
 
 export interface FunctionDefinition extends BaseLanguageObject {
-    type: "functionDefinition";
-    identifier: string;
-    returnType: string;
-    parameterList: Array<FunctionParameter>;
-    compoundStatement: CompoundStatement;
+  type: "functionDefinition";
+  identifier: string;
+  returnType: string;
+  parameterList: Array<FunctionParameter>;
+  compoundStatement: CompoundStatement;
 }
 
 export interface Declaration extends BaseLanguageObject {
-    type: "declaration";
-    identifier: string;
-    primitiveType: string;
-    value?: ExpressionObject;
+  type: "declaration";
+  identifier: string;
+  primitiveType: string;
+  value?: ExpressionObject;
 }
 
 // ==========================
@@ -133,26 +129,26 @@ export interface Declaration extends BaseLanguageObject {
 // ==========================
 
 export interface ReturnStatement extends BaseLanguageObject {
-    type: "returnStatement";
-    value?: ExpressionObject;
+  type: "returnStatement";
+  value?: ExpressionObject;
 }
 
 export interface CompoundStatement extends BaseLanguageObject {
-    type: "compoundStatement";
-    codeBlock: CompoundStatementObject[];
+  type: "compoundStatement";
+  codeBlock: CompoundStatementObject[];
 }
 
 export interface IfStatement extends BaseLanguageObject {
-    type: "ifStatement";
-    condition: ExpressionObject;
-    compoundStatement: StatementObject;
-    elseClause?: ElseClause;
+  type: "ifStatement";
+  condition: ExpressionObject;
+  compoundStatement: StatementObject;
+  elseClause?: ElseClause;
 }
 
 export interface ElseClause extends BaseLanguageObject {
-    type: "elseClause";
-    condition: ExpressionObject;
-    compoundStatement: StatementObject;
+  type: "elseClause";
+  condition: ExpressionObject;
+  compoundStatement: StatementObject;
 }
 
 // ==========================
@@ -160,38 +156,38 @@ export interface ElseClause extends BaseLanguageObject {
 // ==========================
 
 export interface CallExpression extends BaseLanguageObject {
-    type: "callExpression";
-    idDeclaration: string;
-    identifier: string;
-    argumentList: ExpressionObject[];
+  type: "callExpression";
+  idDeclaration: string;
+  identifier: string;
+  argumentList: ExpressionObject[];
 }
 
 export interface Reference extends BaseLanguageObject {
-    type: "reference";
-    declarationId: string;
-    identifier: string;
+  type: "reference";
+  declarationId: string;
+  identifier: string;
 }
 
 export interface AssignmentExpression extends BaseLanguageObject {
-    type: "assignmentExpression";
-    idDeclaration: string;
-    identifier: string;
-    value: ExpressionObject;
+  type: "assignmentExpression";
+  idDeclaration: string;
+  identifier: string;
+  value: ExpressionObject;
 }
 
 export interface NumberLiteral extends BaseLanguageObject {
-    type: "numberLiteral";
-    value: string;
+  type: "numberLiteral";
+  value: string;
 }
 
 export interface StringLiteral extends BaseLanguageObject {
-    type: "stringLiteral";
-    value: string;
+  type: "stringLiteral";
+  value: string;
 }
 
 export interface BinaryExpression extends BaseLanguageObject {
-    type: "binaryExpression";
-    left: ExpressionObject;
-    operator: string;
-    right: ExpressionObject;
+  type: "binaryExpression";
+  left: ExpressionObject;
+  operator: string;
+  right: ExpressionObject;
 }

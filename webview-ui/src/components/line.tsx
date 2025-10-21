@@ -37,20 +37,19 @@ export function ModeIndicator() {
   );
 }
 
-interface EditableFieldProps<
-  T extends objects.LanguageObject,
-  K extends string & keyof T
-> {
+interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
   parentInfo: ParentInfoV2;
   className?: string;
 }
 
-function EditableField<
-  T extends objects.LanguageObject,
-  K extends string & keyof T
->({ node, key, parentInfo, className }: EditableFieldProps<T, K>) {
+function EditableField<T extends objects.LanguageObject, K extends string & keyof T>({
+  node,
+  key,
+  parentInfo,
+  className,
+}: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
     selectedKey,
@@ -63,8 +62,7 @@ function EditableField<
     mode,
     setMode,
   } = useLineContext();
-  const isSelected =
-    selectedNodeId == node.id && selectedKey && selectedKey == key;
+  const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key;
   const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
   const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
@@ -145,15 +143,8 @@ interface ObjectProps {
 }
 
 export function Object({ node, children, display = "block" }: ObjectProps) {
-  const {
-    selectedNodeId,
-    setSelectedNodeId,
-    onEdit,
-    nodeMap,
-    parentMap,
-    requestFocus,
-    mode,
-  } = useLineContext();
+  const { selectedNodeId, setSelectedNodeId, onEdit, nodeMap, parentMap, requestFocus, mode } =
+    useLineContext();
   const isSelected = selectedNodeId === node.id;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,11 +183,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       // Update parent indices for nodes that came after this one
       for (let i = 0; i < newArray.length - index; i++) {
         const siblingNode = newArray[index + i];
-        if (
-          siblingNode &&
-          typeof siblingNode === "object" &&
-          "id" in siblingNode
-        ) {
+        if (siblingNode && typeof siblingNode === "object" && "id" in siblingNode) {
           parentMap.set((siblingNode as objects.LanguageObject).id, {
             parent,
             key,
@@ -223,14 +210,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       nodeMap.delete(node.id);
       parentMap.delete(node.id);
       onEdit(parent, key);
-      console.log(
-        "Deleted node:",
-        node.id,
-        " from parent:",
-        parent,
-        " at key:",
-        key
-      );
+      console.log("Deleted node:", node.id, " from parent:", parent, " at key:", key);
     } else {
       console.error("Parent field is neither array nor object, cannot delete");
     }
@@ -253,11 +233,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
     const field = parent[key];
     if (!Array.isArray(field)) return;
 
-    const newArray = [
-      ...field.slice(0, index + 1),
-      newObject,
-      ...field.slice(index + 1),
-    ];
+    const newArray = [...field.slice(0, index + 1), newObject, ...field.slice(index + 1)];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (parent as any)[key] = newArray; // Runtime assignment - type safety maintained by ParentInfoV2
 
@@ -308,10 +284,7 @@ interface NodeRenderProps {
   parentInfo: ParentInfoV2;
 }
 
-export function NodeRender({
-  node,
-  parentInfo,
-}: NodeRenderProps): React.ReactNode {
+export function NodeRender({ node, parentInfo }: NodeRenderProps): React.ReactNode {
   //console.log(node.type);
 
   switch (node.type) {
@@ -344,12 +317,7 @@ export function NodeRender({
         />
       );
     case "declaration":
-      return (
-        <DeclarationRender
-          varDecl={node as objects.Declaration}
-          parentInfo={parentInfo}
-        />
-      );
+      return <DeclarationRender varDecl={node as objects.Declaration} parentInfo={parentInfo} />;
     case "returnStatement":
       return (
         <ReturnStatementRender
@@ -366,18 +334,10 @@ export function NodeRender({
       );
     case "callExpression":
       return (
-        <CallExpressionRender
-          callExpr={node as objects.CallExpression}
-          parentInfo={parentInfo}
-        />
+        <CallExpressionRender callExpr={node as objects.CallExpression} parentInfo={parentInfo} />
       );
     case "reference":
-      return (
-        <ReferenceRender
-          reference={node as objects.Reference}
-          parentInfo={parentInfo}
-        />
-      );
+      return <ReferenceRender reference={node as objects.Reference} parentInfo={parentInfo} />;
     case "assignmentExpression":
       return (
         <AssignmentExpressionRender
@@ -387,17 +347,11 @@ export function NodeRender({
       );
     case "numberLiteral":
       return (
-        <NumberLiteralRender
-          literalExpr={node as objects.NumberLiteral}
-          parentInfo={parentInfo}
-        />
+        <NumberLiteralRender literalExpr={node as objects.NumberLiteral} parentInfo={parentInfo} />
       );
     case "stringLiteral":
       return (
-        <StringLiteralRender
-          literalExpr={node as objects.StringLiteral}
-          parentInfo={parentInfo}
-        />
+        <StringLiteralRender literalExpr={node as objects.StringLiteral} parentInfo={parentInfo} />
       );
     case "binaryExpression":
       return (
@@ -409,12 +363,7 @@ export function NodeRender({
     case "ifStatement":
       return <IfStatementRender ifStatement={node as objects.IfStatement} />;
     case "unknown":
-      return (
-        <UnknownRender
-          unknown={node as objects.Unknown}
-          parentInfo={parentInfo}
-        />
-      );
+      return <UnknownRender unknown={node as objects.Unknown} parentInfo={parentInfo} />;
     default:
       return "WIP";
   }
@@ -427,8 +376,7 @@ function UnknownRender({
   unknown: objects.Unknown;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { mode, onRequestAvailableInserts, availableInserts, onEdit } =
-    useLineContext();
+  const { mode, onRequestAvailableInserts, availableInserts, onEdit } = useLineContext();
   const [showDropdown, setShowDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLSelectElement>(null);
 
@@ -450,12 +398,7 @@ function UnknownRender({
 
   // Focus the dropdown when it appears and options are loaded
   React.useEffect(() => {
-    if (
-      showDropdown &&
-      availableInserts &&
-      availableInserts.length > 0 &&
-      dropdownRef.current
-    ) {
+    if (showDropdown && availableInserts && availableInserts.length > 0 && dropdownRef.current) {
       dropdownRef.current.focus();
     }
   }, [showDropdown, availableInserts]);
@@ -474,14 +417,7 @@ function UnknownRender({
       const parent = parentInfo.parent;
       const key = parentInfo.key;
       const index = parentInfo.index;
-      console.log(
-        "Parent before insert:",
-        parent,
-        " key:",
-        key,
-        " index:",
-        index
-      );
+      console.log("Parent before insert:", parent, " key:", key, " index:", index);
       console.log("Selected option to insert:", selectedOption);
 
       if (Array.isArray(parent[key])) {
@@ -501,9 +437,7 @@ function UnknownRender({
         console.log("Parent after insert:", parent);
         onEdit(parent, key);
       } else {
-        console.error(
-          "Parent field is neither array nor object, cannot insert"
-        );
+        console.error("Parent field is neither array nor object, cannot insert");
       }
 
       setShowDropdown(false);
@@ -565,8 +499,7 @@ function PreprocIncludeRender({
 }): React.ReactNode {
   return (
     <>
-      <span className="token-keyword">#include</span>
-      {" "}
+      <span className="token-keyword">#include</span>{" "}
       {EditableField({
         node: includeDecl,
         key: "content",
@@ -681,26 +614,20 @@ function DeclarationRender({
       varDecl.value = newUnknown;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(varDecl, null);
-      console.log(
-        "Inserted unknown node as value for declaration:",
-        varDecl.id
-      );
+      console.log("Inserted unknown node as value for declaration:", varDecl.id);
     }
   };
 
   return (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({ node: varDecl, key: "primitiveType", parentInfo, className: "token-type"})}{" "}
+      {EditableField({ node: varDecl, key: "primitiveType", parentInfo, className: "token-type" })}{" "}
       {EditableField({ node: varDecl, key: "identifier", parentInfo, className: "token-variable" })}
       {varDecl.value && (
         <>
           {" "}
           {"="}{" "}
           <Object node={varDecl.value} display="inline">
-            <NodeRender
-              node={varDecl.value}
-              parentInfo={childInfo(varDecl, "value")}
-            />
+            <NodeRender node={varDecl.value} parentInfo={childInfo(varDecl, "value")} />
           </Object>
         </>
       )}
@@ -755,10 +682,7 @@ function CompoundStatementRender({
       >
         {compStmt.codeBlock.map((node, i) => (
           <Object key={node.id} node={node}>
-            <NodeRender
-              node={node}
-              parentInfo={childInfo(compStmt, "codeBlock", i)}
-            />
+            <NodeRender node={node} parentInfo={childInfo(compStmt, "codeBlock", i)} />
           </Object>
         ))}
       </div>
@@ -767,21 +691,11 @@ function CompoundStatementRender({
   );
 }
 
-function IfStatementRender({
-  ifStatement,
-}: {
-  ifStatement: objects.IfStatement;
-}): React.ReactNode {
+function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }): React.ReactNode {
   return (
     <>
-      <span className="token-keyword">if</span>{" "}
-      <span className="token-keyword">{"("}</span>
-      {
-        <NodeRender
-          node={ifStatement.condition}
-          parentInfo={childInfo(ifStatement, "condition")}
-        />
-      }
+      <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
+      {<NodeRender node={ifStatement.condition} parentInfo={childInfo(ifStatement, "condition")} />}
       <span className="token-keyword">{")"}</span>{" "}
       {
         <CompoundStatementRender
@@ -791,18 +705,12 @@ function IfStatementRender({
           parentInfo={childInfo(ifStatement, "compoundStatement")}
         />
       }
-      {ifStatement.elseClause && (
-        <ElseClauseRender elseClause={ifStatement.elseClause} />
-      )}
+      {ifStatement.elseClause && <ElseClauseRender elseClause={ifStatement.elseClause} />}
     </>
   );
 }
 
-function ElseClauseRender({
-  elseClause,
-}: {
-  elseClause: objects.ElseClause;
-}): React.ReactNode {
+function ElseClauseRender({ elseClause }: { elseClause: objects.ElseClause }): React.ReactNode {
   return (
     <>
       {" "}
@@ -831,10 +739,7 @@ function ReturnStatementRender({
       {returnStmt.value && (
         <>
           {" "}
-          <NodeRender
-            node={returnStmt.value}
-            parentInfo={childInfo(returnStmt, "value")}
-          />
+          <NodeRender node={returnStmt.value} parentInfo={childInfo(returnStmt, "value")} />
         </>
       )}
       {";"}
@@ -861,10 +766,7 @@ function CallExpressionRender({
       {callExpr.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
           {i > 0 && ", "}
-          <NodeRender
-            node={arg}
-            parentInfo={childInfo(callExpr, "argumentList", i)}
-          />
+          <NodeRender node={arg} parentInfo={childInfo(callExpr, "argumentList", i)} />
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
@@ -886,9 +788,7 @@ function ReferenceRender({
     return <>{reference.declarationId}</>;
   }
 
-  return (
-    <span className="token-variable">{String(targetNode.identifier)}</span>
-  );
+  return <span className="token-variable">{String(targetNode.identifier)}</span>;
 }
 
 function AssignmentExpressionRender({
@@ -906,12 +806,8 @@ function AssignmentExpressionRender({
 
   return (
     <>
-      <span className="token-variable">{String(targetNode.identifier)}</span>{" "}
-      {"="}{" "}
-      <NodeRender
-        node={assignmentExpr.value}
-        parentInfo={childInfo(assignmentExpr, "value")}
-      />
+      <span className="token-variable">{String(targetNode.identifier)}</span> {"="}{" "}
+      <NodeRender node={assignmentExpr.value} parentInfo={childInfo(assignmentExpr, "value")} />
     </>
   );
 }
@@ -965,17 +861,9 @@ function BinaryExpressionRender({
 }): React.ReactNode {
   return (
     <>
-      <NodeRender
-        node={binaryExpression.left}
-        parentInfo={childInfo(binaryExpression, "left")}
-      />
-      {" "}
-      {EditableField({ node: binaryExpression, key: "operator", parentInfo })}
-      {" "}
-      <NodeRender
-        node={binaryExpression.right}
-        parentInfo={childInfo(binaryExpression, "right")}
-      />
+      <NodeRender node={binaryExpression.left} parentInfo={childInfo(binaryExpression, "left")} />{" "}
+      {EditableField({ node: binaryExpression, key: "operator", parentInfo })}{" "}
+      <NodeRender node={binaryExpression.right} parentInfo={childInfo(binaryExpression, "right")} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 import { createContext, useContext } from "react";
 
 export interface DebugContextType {
-  debug: boolean
+  debug: boolean;
 }
 
 export const DebugContext = createContext<DebugContextType | null>(null);
@@ -13,19 +13,17 @@ export function useDebugContext(): DebugContextType {
   return ctx;
 }
 interface DebugProviderProps {
-  debug: boolean
+  debug: boolean;
   children: React.ReactNode;
 }
 
-export function DebugProvider({
-  debug,
-  children,
-}: DebugProviderProps) {
-
+export function DebugProvider({ debug, children }: DebugProviderProps) {
   return (
-    <DebugContext.Provider value={{
-      debug
-    }}>
+    <DebugContext.Provider
+      value={{
+        debug,
+      }}
+    >
       {children}
     </DebugContext.Provider>
   );

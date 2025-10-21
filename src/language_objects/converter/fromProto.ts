@@ -156,9 +156,7 @@ export function convertProtoCompoundStatementObjectToTs(
   }
 }
 
-function convertPreprocIncludeToTs(
-  preprocInclude: proto.PreprocInclude
-): objects.PreprocInclude {
+function convertPreprocIncludeToTs(preprocInclude: proto.PreprocInclude): objects.PreprocInclude {
   return {
     id: preprocInclude.id,
     type: "preprocInclude",
@@ -174,9 +172,7 @@ function convertFunctionDeclarationToTs(
     type: "functionDeclaration",
     identifier: functionDeclaration.identifier,
     returnType: functionDeclaration.returnType,
-    parameterList: functionDeclaration.parameterList.map(
-      convertFunctionParameterToTS
-    ),
+    parameterList: functionDeclaration.parameterList.map(convertFunctionParameterToTS),
   };
 }
 function convertFunctionDefinitionToTS(
@@ -187,12 +183,8 @@ function convertFunctionDefinitionToTS(
     type: "functionDefinition",
     identifier: functionDefinition.identifier,
     returnType: functionDefinition.returnType,
-    parameterList: functionDefinition.parameterList.map(
-      convertFunctionParameterToTS
-    ),
-    compoundStatement: convertCompoundStatementToTs(
-      functionDefinition.compoundStatement!
-    ), // TODO why is this optional?
+    parameterList: functionDefinition.parameterList.map(convertFunctionParameterToTS),
+    compoundStatement: convertCompoundStatementToTs(functionDefinition.compoundStatement!), // TODO why is this optional?
   };
 }
 
@@ -202,9 +194,7 @@ function convertCompoundStatementToTs(
   return {
     id: compoundStatement.id,
     type: "compoundStatement",
-    codeBlock: compoundStatement.codeBlock.map(
-      convertProtoCompoundStatementObjectToTs
-    ),
+    codeBlock: compoundStatement.codeBlock.map(convertProtoCompoundStatementObjectToTs),
   };
 }
 
@@ -218,17 +208,13 @@ function convertFunctionParameterToTS(
     paramType: functionParameter.paramType,
   };
 }
-function variableDeclarationToTS(
-  variableDeclaration: proto.Declaration
-): objects.Declaration {
+function variableDeclarationToTS(variableDeclaration: proto.Declaration): objects.Declaration {
   return {
     type: "declaration",
     id: variableDeclaration.id,
     identifier: variableDeclaration.identifier,
     primitiveType: variableDeclaration.primitiveType,
-    value:
-      variableDeclaration.value &&
-      convertProtoExpressionObjectToTs(variableDeclaration.value),
+    value: variableDeclaration.value && convertProtoExpressionObjectToTs(variableDeclaration.value),
   };
 }
 function convertReturnStatementToTS(
@@ -237,27 +223,19 @@ function convertReturnStatementToTS(
   return {
     id: returnStatement.id,
     type: "returnStatement",
-    value:
-      returnStatement.value &&
-      convertProtoExpressionObjectToTs(returnStatement.value),
+    value: returnStatement.value && convertProtoExpressionObjectToTs(returnStatement.value),
   };
 }
-function convertCallExpressionToTS(
-  callExpression: proto.CallExpression
-): objects.CallExpression {
+function convertCallExpressionToTS(callExpression: proto.CallExpression): objects.CallExpression {
   return {
     id: callExpression.id,
     type: "callExpression",
     identifier: callExpression.identifier,
     idDeclaration: callExpression.idDeclaration,
-    argumentList: callExpression.argumentList.map(
-      convertProtoExpressionObjectToTs
-    ),
+    argumentList: callExpression.argumentList.map(convertProtoExpressionObjectToTs),
   };
 }
-function convertSourceFileToTS(
-  sourceFile: proto.SourceFile
-): objects.SourceFile {
+function convertSourceFileToTS(sourceFile: proto.SourceFile): objects.SourceFile {
   return {
     id: sourceFile.id,
     type: "sourceFile",
@@ -285,18 +263,14 @@ function convertAssignmentExpressionToTS(
     ) as objects.ExpressionObject,
   };
 }
-function convertNumberLiteralToTS(
-  numberLiteral: proto.NumberLiteral
-): objects.NumberLiteral {
+function convertNumberLiteralToTS(numberLiteral: proto.NumberLiteral): objects.NumberLiteral {
   return {
     id: numberLiteral.id,
     type: "numberLiteral",
     value: numberLiteral.value,
   };
 }
-function convertStringLiteralToTS(
-  stringLiteral: proto.StringLiteral
-): objects.StringLiteral {
+function convertStringLiteralToTS(stringLiteral: proto.StringLiteral): objects.StringLiteral {
   return {
     id: stringLiteral.id,
     type: "stringLiteral",
@@ -309,44 +283,26 @@ function convertBinaryExpressionToTs(
   return {
     id: binaryExpression.id,
     type: "binaryExpression",
-    left: convertProtoExpressionObjectToTs(
-      binaryExpression.left!
-    ) as objects.ExpressionObject,
+    left: convertProtoExpressionObjectToTs(binaryExpression.left!) as objects.ExpressionObject,
     operator: binaryExpression.operator,
-    right: convertProtoExpressionObjectToTs(
-      binaryExpression.right!
-    ) as objects.ExpressionObject,
+    right: convertProtoExpressionObjectToTs(binaryExpression.right!) as objects.ExpressionObject,
   };
 }
-function convertIfStatementToTs(
-  ifStatement: proto.IfStatement
-): objects.IfStatement {
+function convertIfStatementToTs(ifStatement: proto.IfStatement): objects.IfStatement {
   return {
     id: ifStatement.id,
     type: "ifStatement",
-    condition: convertProtoExpressionObjectToTs(
-      ifStatement.condition!
-    ) as objects.ExpressionObject,
-    compoundStatement: convertProtoStatementObjectToTs(
-      ifStatement.compoundStatement!
-    ),
-    elseClause: ifStatement.elseClause
-      ? convertElseClauseToTs(ifStatement.elseClause)
-      : undefined,
+    condition: convertProtoExpressionObjectToTs(ifStatement.condition!) as objects.ExpressionObject,
+    compoundStatement: convertProtoStatementObjectToTs(ifStatement.compoundStatement!),
+    elseClause: ifStatement.elseClause ? convertElseClauseToTs(ifStatement.elseClause) : undefined,
   };
 }
-function convertElseClauseToTs(
-  elseClause: proto.ElseClause
-): objects.ElseClause {
+function convertElseClauseToTs(elseClause: proto.ElseClause): objects.ElseClause {
   return {
     id: elseClause.id,
     type: "elseClause",
-    condition: convertProtoExpressionObjectToTs(
-      elseClause.condition!
-    ) as objects.ExpressionObject,
-    compoundStatement: convertProtoStatementObjectToTs(
-      elseClause.compoundStatement!
-    ),
+    condition: convertProtoExpressionObjectToTs(elseClause.condition!) as objects.ExpressionObject,
+    compoundStatement: convertProtoStatementObjectToTs(elseClause.compoundStatement!),
   };
 }
 function convertCommentToTs(comment: proto.Comment): objects.Comment {
