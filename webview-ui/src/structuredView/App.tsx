@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { NodeRender, Object, ModeIndicator } from './components/line'
-import { childInfo } from './components/childInfo';
-import { LineProvider } from './components/lineContext'
+import { NodeRender, Object, ModeIndicator } from '../components/line'
+import { childInfo } from '../components/childInfo';
+import { LineProvider } from '../components/lineContext'
+
 import { vscode } from '../vscode'
 import * as objects from '../../../src/language_objects/cNodes';
-import { DebugProvider } from './components/debugContext';
-import { ParentInfoV2 } from './components/context';
+import { DebugProvider } from '../components/debugContext';
+import { ParentInfoV2 } from '../components/context';
 
 export default function App() {
   const [sourceFile, setSourceFile] = useState<objects.SourceFile | undefined>(undefined)

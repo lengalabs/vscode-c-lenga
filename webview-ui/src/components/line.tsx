@@ -1,7 +1,7 @@
 import React from "react";
 import { useLineContext, ParentInfoV2 } from "./context";
-import * as objects from "../../../../src/language_objects/cNodes";
-import "../index.css";
+import * as objects from "../../../src/language_objects/cNodes";
+import "./index.css";
 import { childInfo } from "./childInfo";
 
 export function ModeIndicator() {

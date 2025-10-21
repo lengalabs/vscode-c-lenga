@@ -1,4 +1,4 @@
-import * as objects from '../../../../src/language_objects/cNodes';
+import * as objects from '../../../src/language_objects/cNodes';
 import { ParentInfoV2 } from './context';
 
 // Helper to create ParentInfoV2 for a child node

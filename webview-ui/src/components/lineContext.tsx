@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
-import * as objects from "../../../../src/language_objects/cNodes";
+import * as objects from "../../../src/language_objects/cNodes";
 import { buildMaps, LineContext, ParentInfoV2, EditorMode } from "./context";
+
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
