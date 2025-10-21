@@ -62,7 +62,7 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
     mode,
     setMode,
   } = useLineContext();
-  const isSelected = selectedNodeId == node.id && selectedKey && selectedKey == key;
+  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
   const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
