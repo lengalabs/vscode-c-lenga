@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+out/
+dist/
+build/
+*.js.map
+
+# Generated files
+rpc/generated/
+
+# VS Code
+.vscode/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Compiled files
+*.js
+!eslint.config.mjs
+!vite.config.ts
+!webview-ui/eslint.config.js
+
+# Lock files (optional - uncomment if you want to format them)
+# package-lock.json
+# yarn.lock
