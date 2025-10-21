@@ -15,7 +15,7 @@ import { FunctionNode, FunctionFlowNode } from './nodes/FunctionNode';
 import * as objects from '../../../src/language_objects/cNodes';
 import { LineProvider } from '../components/lineContext'
 import { vscode } from '../vscode';
-import { mapNode } from '../components/nodeMapping';
+import { visitNodes } from '../components/nodeVisiting';
 import { ParentInfoV2 } from '../components/context';
 import { childInfo } from '../components/childInfo';
 
@@ -59,18 +59,21 @@ export default function App() {
               let currentLine = 0;
               const positions: number[] = [];
 
-              function mapper(node: objects.BaseLanguageObject, parent?: objects.BaseLanguageObject, key?: string) {
-                if (parent?.type === 'CompoundStatement' && key === 'statements') {
+              function mapper(object: objects.BaseLanguageObject, parent?: objects.BaseLanguageObject, key?: string) {
+                console.log(object.type);
+
+                if (parent?.type === 'compoundStatement' && key === 'codeBlock') {
                   currentLine++;
                 }
 
-                if (node.type === "CallExpression") {
-                  const call = node as objects.CallExpression;
+                if (object.type === "callExpression") {
+                  const call = object as objects.CallExpression;
+                  console.log(call.identifier);
                   calls.push(call);
                   positions.push(currentLine);
                 }
               }
-              mapNode(object, mapper);
+              visitNodes(object, mapper);
 
               /* Setting the ReactFlow nodes data */
               const existing = nodesRef.current.find(flowNode => flowNode.id === object.id);
@@ -95,6 +98,10 @@ export default function App() {
               })
             }
           });
+
+          console.log(functionNodes);
+          console.log(edges);
+          
 
           const validEdges = edges.filter(
             e => functionNodes.some(n => n.id === e.source) && functionNodes.some(n => n.id === e.target)

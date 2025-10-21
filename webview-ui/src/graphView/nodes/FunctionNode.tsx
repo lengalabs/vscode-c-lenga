@@ -13,7 +13,7 @@ export type FunctionFlowNode = {
 export function FunctionNode({ data }: { 
   data: {func: FunctionDefinition, handlerPositions: number[], parentInfo: ParentInfoV2 }}) 
 {
-  const lineHeight = 19;
+  const lineHeight = 22;
 
   return (
     <div className='function-node'>
