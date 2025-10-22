@@ -142,12 +142,11 @@ export interface IfStatement extends BaseLanguageObject {
   type: "ifStatement";
   condition: ExpressionObject;
   compoundStatement: StatementObject;
-  elseClause?: ElseClause;
+  elseStatement?: IfStatement | ElseClause;
 }
 
 export interface ElseClause extends BaseLanguageObject {
   type: "elseClause";
-  condition: ExpressionObject;
   compoundStatement: StatementObject;
 }
 

@@ -719,7 +719,13 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
           parentInfo={childInfo(ifStatement, "compoundStatement")}
         />
       }
-      {ifStatement.elseClause && <ElseClauseRender elseClause={ifStatement.elseClause} />}
+      {ifStatement.elseStatement && 
+        (ifStatement.elseStatement.type === "elseClause" ? (
+          <ElseClauseRender elseClause={ifStatement.elseStatement} />
+        ) : (
+          <IfStatementRender ifStatement={ifStatement.elseStatement} />
+        ))
+      }
     </>
   );
 }
