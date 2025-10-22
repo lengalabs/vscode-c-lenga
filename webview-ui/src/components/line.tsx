@@ -711,14 +711,7 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
       <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
       {<NodeRender node={ifStatement.condition} parentInfo={childInfo(ifStatement, "condition")} />}
       <span className="token-keyword">{")"}</span>{" "}
-      {
-        <CompoundStatementRender
-          compoundStatement={
-            ifStatement.compoundStatement as objects.CompoundStatement /* TODO: should support different statement expr */
-          }
-          parentInfo={childInfo(ifStatement, "compoundStatement")}
-        />
-      }
+      {compoundStatementObjectRender(ifStatement.body, childInfo(ifStatement, "body"))}
       {ifStatement.elseStatement &&
         (ifStatement.elseStatement.type === "elseClause" ? (
           <ElseClauseRender elseClause={ifStatement.elseStatement} />
@@ -729,19 +722,59 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
   );
 }
 
+function compoundStatementObjectRender(
+  compoundStatementObject: objects.CompoundStatementObject,
+  parentInfo: ParentInfoV2
+) {
+  switch (compoundStatementObject.type) {
+    case "compoundStatement":
+      return (
+        <CompoundStatementRender
+          compoundStatement={compoundStatementObject}
+          parentInfo={parentInfo}
+        />
+      );
+    case "declaration":
+      return <DeclarationRender varDecl={compoundStatementObject} parentInfo={parentInfo} />;
+    case "assignmentExpression":
+      return (
+        <AssignmentExpressionRender
+          assignmentExpr={compoundStatementObject}
+          parentInfo={parentInfo}
+        />
+      );
+    case "binaryExpression":
+      return (
+        <BinaryExpressionRender
+          binaryExpression={compoundStatementObject}
+          parentInfo={parentInfo}
+        />
+      );
+    case "callExpression":
+      return <CallExpressionRender callExpr={compoundStatementObject} parentInfo={parentInfo} />;
+    case "ifStatement":
+      return <IfStatementRender ifStatement={compoundStatementObject} />;
+    case "numberLiteral":
+      return <NumberLiteralRender literalExpr={compoundStatementObject} parentInfo={parentInfo} />;
+    case "reference":
+      return <ReferenceRender reference={compoundStatementObject} parentInfo={parentInfo} />;
+    case "stringLiteral":
+      return <StringLiteralRender literalExpr={compoundStatementObject} parentInfo={parentInfo} />;
+    case "returnStatement":
+      return <ReturnStatementRender returnStmt={compoundStatementObject} parentInfo={parentInfo} />;
+    case "comment":
+      return <CommentRender comment={compoundStatementObject} parentInfo={parentInfo} />;
+    case "unknown":
+      return <UnknownRender unknown={compoundStatementObject} parentInfo={parentInfo} />;
+  }
+}
+
 function ElseClauseRender({ elseClause }: { elseClause: objects.ElseClause }): React.ReactNode {
   return (
     <>
       {" "}
-      <span className="token-keyword">else</span>{" "}
-      {
-        <CompoundStatementRender
-          compoundStatement={
-            elseClause.compoundStatement as objects.CompoundStatement /* TODO: should support different statement expr */
-          }
-          parentInfo={childInfo(elseClause, "compoundStatement")}
-        />
-      }
+      <span className="token-keyword">else</span>
+      {compoundStatementObjectRender(elseClause.body, childInfo(elseClause, "body"))}
     </>
   );
 }
@@ -883,6 +916,21 @@ function BinaryExpressionRender({
       <NodeRender node={binaryExpression.left} parentInfo={childInfo(binaryExpression, "left")} />{" "}
       {EditableField({ node: binaryExpression, key: "operator", parentInfo })}{" "}
       <NodeRender node={binaryExpression.right} parentInfo={childInfo(binaryExpression, "right")} />
+    </>
+  );
+}
+
+function CommentRender({
+  comment,
+  parentInfo,
+}: {
+  comment: objects.Comment;
+  parentInfo: ParentInfoV2;
+}): React.ReactNode {
+  return (
+    <>
+      <span className="token-comment">{"//"}</span>{" "}
+      {EditableField({ node: comment, key: "content", parentInfo, className: "token-comment" })}
     </>
   );
 }

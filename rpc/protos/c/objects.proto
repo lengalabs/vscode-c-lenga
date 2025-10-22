@@ -132,7 +132,7 @@ message Declaration {
 
 message ElseClause {
   string id = 1;
-  StatementObject compound_statement = 3;
+  CompoundStatementObject body = 3;
 }
 
 message FunctionDeclaration {
@@ -159,7 +159,7 @@ message FunctionParameter {
 message IfStatement {
   string id = 1;
   ExpressionObject condition = 2;
-  StatementObject compound_statement = 3;
+  CompoundStatementObject body = 3;
   oneof else_statement {
     IfStatement else_if = 4;
     ElseClause else_clause = 5;

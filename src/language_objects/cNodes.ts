@@ -141,13 +141,13 @@ export interface CompoundStatement extends BaseLanguageObject {
 export interface IfStatement extends BaseLanguageObject {
   type: "ifStatement";
   condition: ExpressionObject;
-  compoundStatement: StatementObject;
+  body: CompoundStatementObject;
   elseStatement?: IfStatement | ElseClause;
 }
 
 export interface ElseClause extends BaseLanguageObject {
   type: "elseClause";
-  compoundStatement: StatementObject;
+  body: CompoundStatementObject;
 }
 
 // ==========================

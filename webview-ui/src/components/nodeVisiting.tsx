@@ -68,7 +68,7 @@ export function visitNodes(
     case "ifStatement": {
       const ifStatement = object as objects.IfStatement;
       visitNodes(ifStatement.condition, visitor, ifStatement, "condition", 0);
-      visitNodes(ifStatement.compoundStatement, visitor, ifStatement, "compoundStatement", 0);
+      visitNodes(ifStatement.body, visitor, ifStatement, "body", 0);
       if (ifStatement.elseStatement) {
         visitNodes(ifStatement.elseStatement, visitor, ifStatement, "elseStatement", 0);
       }
@@ -76,7 +76,7 @@ export function visitNodes(
     }
     case "elseClause": {
       const elseClause = object as objects.ElseClause;
-      visitNodes(elseClause.compoundStatement, visitor, elseClause, "compoundStatement", 0);
+      visitNodes(elseClause.body, visitor, elseClause, "body", 0);
       break;
     }
     case "binaryExpression": {
