@@ -605,10 +605,10 @@ function ifStatementToProto(ifStmt: objects.IfStatement): proto.IfStatement {
     id: ifStmt.id,
     condition: convertTsExpressionObjectToProto(ifStmt.condition),
     compoundStatement: convertTsStatementObjectToProto(ifStmt.compoundStatement),
-    elseStatement: ifStmt.elseStatement 
-      ? ifStmt.elseStatement.type === "elseClause" 
-      ? { $case: "elseClause", elseClause: elseClauseToProto(ifStmt.elseStatement) }
-      : { $case: "elseIf", elseIf: ifStatementToProto(ifStmt.elseStatement) }
+    elseStatement: ifStmt.elseStatement
+      ? ifStmt.elseStatement.type === "elseClause"
+        ? { $case: "elseClause", elseClause: elseClauseToProto(ifStmt.elseStatement) }
+        : { $case: "elseIf", elseIf: ifStatementToProto(ifStmt.elseStatement) }
       : undefined,
   };
 }

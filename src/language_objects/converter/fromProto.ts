@@ -294,11 +294,12 @@ function convertIfStatementToTs(ifStatement: proto.IfStatement): objects.IfState
     type: "ifStatement",
     condition: convertProtoExpressionObjectToTs(ifStatement.condition!) as objects.ExpressionObject,
     compoundStatement: convertProtoStatementObjectToTs(ifStatement.compoundStatement!),
-    elseStatement: ifStatement.elseStatement?.$case === "elseClause" 
-      ? convertElseClauseToTs(ifStatement.elseStatement.elseClause) 
-      : ifStatement.elseStatement?.$case === "elseIf" 
-      ? convertIfStatementToTs(ifStatement.elseStatement.elseIf) 
-      : undefined,
+    elseStatement:
+      ifStatement.elseStatement?.$case === "elseClause"
+        ? convertElseClauseToTs(ifStatement.elseStatement.elseClause)
+        : ifStatement.elseStatement?.$case === "elseIf"
+          ? convertIfStatementToTs(ifStatement.elseStatement.elseIf)
+          : undefined,
   };
 }
 function convertElseClauseToTs(elseClause: proto.ElseClause): objects.ElseClause {
