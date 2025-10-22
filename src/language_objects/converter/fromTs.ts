@@ -513,22 +513,20 @@ function returnStatementToProto(object: objects.ReturnStatement): proto.ReturnSt
   };
 }
 
-function binaryExpressionToLanguageObjectProto(object: objects.BinaryExpression) {}
-
-function assignmentExpressionToLanguageObjectProto(object: objects.AssignmentExpression) {}
-
 function stringLiteralToProto(lit: objects.StringLiteral): proto.StringLiteral {
   return {
     id: lit.id,
     value: lit.value,
   };
 }
+
 function numberLiteralToProto(lit: objects.NumberLiteral): proto.NumberLiteral {
   return {
     id: lit.id,
     value: lit.value,
   };
 }
+
 function assignmentExpressionToProto(
   assign: objects.AssignmentExpression
 ): proto.AssignmentExpression {
@@ -539,6 +537,7 @@ function assignmentExpressionToProto(
     value: convertTsExpressionObjectToProto(assign.value),
   };
 }
+
 function callExpressionToProto(call: objects.CallExpression): proto.CallExpression {
   return {
     id: call.id,
@@ -547,6 +546,7 @@ function callExpressionToProto(call: objects.CallExpression): proto.CallExpressi
     argumentList: call.argumentList.map(convertTsExpressionObjectToProto),
   };
 }
+
 function declarationToProto(v: objects.Declaration): proto.Declaration {
   return {
     id: v.id,
@@ -555,12 +555,14 @@ function declarationToProto(v: objects.Declaration): proto.Declaration {
     value: v.value && convertTsExpressionObjectToProto(v.value),
   };
 }
+
 function compoundStatementToProto(comp: objects.CompoundStatement): proto.CompoundStatement {
   return {
     id: comp.id,
     codeBlock: comp.codeBlock.map(convertTsCompoundStatementObjectToProto),
   };
 }
+
 function functionDeclarationToProto(func: objects.FunctionDeclaration): proto.FunctionDeclaration {
   return {
     id: func.id,
@@ -569,21 +571,26 @@ function functionDeclarationToProto(func: objects.FunctionDeclaration): proto.Fu
     parameterList: func.parameterList.map(functionParameterToProto),
   };
 }
+
 function preprocIncludeToProto(incl: objects.PreprocInclude): proto.PreprocInclude {
   return {
     id: incl.id,
     content: incl.content,
   };
 }
+
 function functionParameterToProto(param: objects.FunctionParameter): proto.FunctionParameter {
   return { id: param.id, identifier: param.identifier, paramType: param.paramType };
 }
+
 function sourceFileToProto(src: objects.SourceFile): proto.SourceFile {
   return { id: src.id, code: src.code.map(convertTsDeclarationObjectToProto) };
 }
+
 function commentToProto(comment: objects.Comment): proto.Comment {
   return { id: comment.id, content: comment.content };
 }
+
 function binaryExpressionToProto(bin: objects.BinaryExpression): proto.BinaryExpression {
   return {
     id: bin.id,
@@ -592,18 +599,23 @@ function binaryExpressionToProto(bin: objects.BinaryExpression): proto.BinaryExp
     right: convertTsExpressionObjectToProto(bin.right),
   };
 }
+
 function ifStatementToProto(ifStmt: objects.IfStatement): proto.IfStatement {
   return {
     id: ifStmt.id,
     condition: convertTsExpressionObjectToProto(ifStmt.condition),
-    compoundStatement: convertTsStatementObjectToProto(ifStmt.compoundStatement),
-    elseClause: ifStmt.elseClause ? elseClauseToProto(ifStmt.elseClause) : undefined,
+    body: convertTsCompoundStatementObjectToProto(ifStmt.body),
+    elseStatement: ifStmt.elseStatement
+      ? ifStmt.elseStatement.type === "elseClause"
+        ? { $case: "elseClause", elseClause: elseClauseToProto(ifStmt.elseStatement) }
+        : { $case: "elseIf", elseIf: ifStatementToProto(ifStmt.elseStatement) }
+      : undefined,
   };
 }
+
 function elseClauseToProto(elseClause: objects.ElseClause): proto.ElseClause {
   return {
     id: elseClause.id,
-    condition: convertTsExpressionObjectToProto(elseClause.condition),
-    compoundStatement: convertTsStatementObjectToProto(elseClause.compoundStatement),
+    body: convertTsCompoundStatementObjectToProto(elseClause.body),
   };
 }

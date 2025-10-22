@@ -132,8 +132,7 @@ export interface Declaration {
 
 export interface ElseClause {
   id: string;
-  condition?: ExpressionObject | undefined;
-  compoundStatement?: StatementObject | undefined;
+  body?: CompoundStatementObject | undefined;
 }
 
 export interface FunctionDeclaration {
@@ -163,8 +162,11 @@ export interface FunctionParameter {
 export interface IfStatement {
   id: string;
   condition?: ExpressionObject | undefined;
-  compoundStatement?: StatementObject | undefined;
-  elseClause?: ElseClause | undefined;
+  body?: CompoundStatementObject | undefined;
+  elseStatement?:
+    | { $case: "elseIf"; elseIf: IfStatement }
+    | { $case: "elseClause"; elseClause: ElseClause }
+    | undefined;
 }
 
 export interface NumberLiteral {
@@ -2479,7 +2481,7 @@ export const Declaration: MessageFns<Declaration> = {
 };
 
 function createBaseElseClause(): ElseClause {
-  return { id: "", condition: undefined, compoundStatement: undefined };
+  return { id: "", body: undefined };
 }
 
 export const ElseClause: MessageFns<ElseClause> = {
@@ -2487,11 +2489,8 @@ export const ElseClause: MessageFns<ElseClause> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.condition !== undefined) {
-      ExpressionObject.encode(message.condition, writer.uint32(18).fork()).join();
-    }
-    if (message.compoundStatement !== undefined) {
-      StatementObject.encode(message.compoundStatement, writer.uint32(26).fork()).join();
+    if (message.body !== undefined) {
+      CompoundStatementObject.encode(message.body, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -2511,20 +2510,12 @@ export const ElseClause: MessageFns<ElseClause> = {
           message.id = reader.string();
           continue;
         }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.condition = ExpressionObject.decode(reader, reader.uint32());
-          continue;
-        }
         case 3: {
           if (tag !== 26) {
             break;
           }
 
-          message.compoundStatement = StatementObject.decode(reader, reader.uint32());
+          message.body = CompoundStatementObject.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -2539,10 +2530,7 @@ export const ElseClause: MessageFns<ElseClause> = {
   fromJSON(object: any): ElseClause {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
-      condition: isSet(object.condition) ? ExpressionObject.fromJSON(object.condition) : undefined,
-      compoundStatement: isSet(object.compoundStatement)
-        ? StatementObject.fromJSON(object.compoundStatement)
-        : undefined,
+      body: isSet(object.body) ? CompoundStatementObject.fromJSON(object.body) : undefined,
     };
   },
 
@@ -2551,11 +2539,8 @@ export const ElseClause: MessageFns<ElseClause> = {
     if (message.id !== "") {
       obj.id = message.id;
     }
-    if (message.condition !== undefined) {
-      obj.condition = ExpressionObject.toJSON(message.condition);
-    }
-    if (message.compoundStatement !== undefined) {
-      obj.compoundStatement = StatementObject.toJSON(message.compoundStatement);
+    if (message.body !== undefined) {
+      obj.body = CompoundStatementObject.toJSON(message.body);
     }
     return obj;
   },
@@ -2566,11 +2551,8 @@ export const ElseClause: MessageFns<ElseClause> = {
   fromPartial<I extends Exact<DeepPartial<ElseClause>, I>>(object: I): ElseClause {
     const message = createBaseElseClause();
     message.id = object.id ?? "";
-    message.condition = (object.condition !== undefined && object.condition !== null)
-      ? ExpressionObject.fromPartial(object.condition)
-      : undefined;
-    message.compoundStatement = (object.compoundStatement !== undefined && object.compoundStatement !== null)
-      ? StatementObject.fromPartial(object.compoundStatement)
+    message.body = (object.body !== undefined && object.body !== null)
+      ? CompoundStatementObject.fromPartial(object.body)
       : undefined;
     return message;
   },
@@ -2909,7 +2891,7 @@ export const FunctionParameter: MessageFns<FunctionParameter> = {
 };
 
 function createBaseIfStatement(): IfStatement {
-  return { id: "", condition: undefined, compoundStatement: undefined, elseClause: undefined };
+  return { id: "", condition: undefined, body: undefined, elseStatement: undefined };
 }
 
 export const IfStatement: MessageFns<IfStatement> = {
@@ -2920,11 +2902,16 @@ export const IfStatement: MessageFns<IfStatement> = {
     if (message.condition !== undefined) {
       ExpressionObject.encode(message.condition, writer.uint32(18).fork()).join();
     }
-    if (message.compoundStatement !== undefined) {
-      StatementObject.encode(message.compoundStatement, writer.uint32(26).fork()).join();
+    if (message.body !== undefined) {
+      CompoundStatementObject.encode(message.body, writer.uint32(26).fork()).join();
     }
-    if (message.elseClause !== undefined) {
-      ElseClause.encode(message.elseClause, writer.uint32(34).fork()).join();
+    switch (message.elseStatement?.$case) {
+      case "elseIf":
+        IfStatement.encode(message.elseStatement.elseIf, writer.uint32(34).fork()).join();
+        break;
+      case "elseClause":
+        ElseClause.encode(message.elseStatement.elseClause, writer.uint32(42).fork()).join();
+        break;
     }
     return writer;
   },
@@ -2957,7 +2944,7 @@ export const IfStatement: MessageFns<IfStatement> = {
             break;
           }
 
-          message.compoundStatement = StatementObject.decode(reader, reader.uint32());
+          message.body = CompoundStatementObject.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
@@ -2965,7 +2952,15 @@ export const IfStatement: MessageFns<IfStatement> = {
             break;
           }
 
-          message.elseClause = ElseClause.decode(reader, reader.uint32());
+          message.elseStatement = { $case: "elseIf", elseIf: IfStatement.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.elseStatement = { $case: "elseClause", elseClause: ElseClause.decode(reader, reader.uint32()) };
           continue;
         }
       }
@@ -2981,10 +2976,12 @@ export const IfStatement: MessageFns<IfStatement> = {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       condition: isSet(object.condition) ? ExpressionObject.fromJSON(object.condition) : undefined,
-      compoundStatement: isSet(object.compoundStatement)
-        ? StatementObject.fromJSON(object.compoundStatement)
+      body: isSet(object.body) ? CompoundStatementObject.fromJSON(object.body) : undefined,
+      elseStatement: isSet(object.elseIf)
+        ? { $case: "elseIf", elseIf: IfStatement.fromJSON(object.elseIf) }
+        : isSet(object.elseClause)
+        ? { $case: "elseClause", elseClause: ElseClause.fromJSON(object.elseClause) }
         : undefined,
-      elseClause: isSet(object.elseClause) ? ElseClause.fromJSON(object.elseClause) : undefined,
     };
   },
 
@@ -2996,11 +2993,13 @@ export const IfStatement: MessageFns<IfStatement> = {
     if (message.condition !== undefined) {
       obj.condition = ExpressionObject.toJSON(message.condition);
     }
-    if (message.compoundStatement !== undefined) {
-      obj.compoundStatement = StatementObject.toJSON(message.compoundStatement);
+    if (message.body !== undefined) {
+      obj.body = CompoundStatementObject.toJSON(message.body);
     }
-    if (message.elseClause !== undefined) {
-      obj.elseClause = ElseClause.toJSON(message.elseClause);
+    if (message.elseStatement?.$case === "elseIf") {
+      obj.elseIf = IfStatement.toJSON(message.elseStatement.elseIf);
+    } else if (message.elseStatement?.$case === "elseClause") {
+      obj.elseClause = ElseClause.toJSON(message.elseStatement.elseClause);
     }
     return obj;
   },
@@ -3014,12 +3013,26 @@ export const IfStatement: MessageFns<IfStatement> = {
     message.condition = (object.condition !== undefined && object.condition !== null)
       ? ExpressionObject.fromPartial(object.condition)
       : undefined;
-    message.compoundStatement = (object.compoundStatement !== undefined && object.compoundStatement !== null)
-      ? StatementObject.fromPartial(object.compoundStatement)
+    message.body = (object.body !== undefined && object.body !== null)
+      ? CompoundStatementObject.fromPartial(object.body)
       : undefined;
-    message.elseClause = (object.elseClause !== undefined && object.elseClause !== null)
-      ? ElseClause.fromPartial(object.elseClause)
-      : undefined;
+    switch (object.elseStatement?.$case) {
+      case "elseIf": {
+        if (object.elseStatement?.elseIf !== undefined && object.elseStatement?.elseIf !== null) {
+          message.elseStatement = { $case: "elseIf", elseIf: IfStatement.fromPartial(object.elseStatement.elseIf) };
+        }
+        break;
+      }
+      case "elseClause": {
+        if (object.elseStatement?.elseClause !== undefined && object.elseStatement?.elseClause !== null) {
+          message.elseStatement = {
+            $case: "elseClause",
+            elseClause: ElseClause.fromPartial(object.elseStatement.elseClause),
+          };
+        }
+        break;
+      }
+    }
     return message;
   },
 };

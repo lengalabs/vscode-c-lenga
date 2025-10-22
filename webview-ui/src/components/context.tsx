@@ -125,6 +125,20 @@ export function buildMaps(ast: objects.LanguageObject[]): {
         traverse(assignmentExpr.value, node, "value", 0);
         break;
       }
+      case "ifStatement": {
+        const ifStmt = node as objects.IfStatement;
+        traverse(ifStmt.condition, ifStmt, "condition", 0);
+        traverse(ifStmt.body, ifStmt, "body", 0);
+        if (ifStmt.elseStatement) {
+          traverse(ifStmt.elseStatement, ifStmt, "elseStatement", 0);
+        }
+        break;
+      }
+      case "elseClause": {
+        const elseClause = node as objects.ElseClause;
+        traverse(elseClause.body, elseClause, "body", 0);
+        break;
+      }
       default:
         break; // leaf nodes
     }

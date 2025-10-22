@@ -132,8 +132,7 @@ message Declaration {
 
 message ElseClause {
   string id = 1;
-  optional ExpressionObject condition = 2;
-  StatementObject compound_statement = 3;
+  CompoundStatementObject body = 3;
 }
 
 message FunctionDeclaration {
@@ -160,8 +159,11 @@ message FunctionParameter {
 message IfStatement {
   string id = 1;
   ExpressionObject condition = 2;
-  StatementObject compound_statement = 3;
-  optional ElseClause else_clause = 4;
+  CompoundStatementObject body = 3;
+  oneof else_statement {
+    IfStatement else_if = 4;
+    ElseClause else_clause = 5;
+  }
 }
 
 message NumberLiteral {
@@ -182,7 +184,7 @@ message Reference {
 
 message ReturnStatement {
   string id = 1;
-  ExpressionObject value = 2;
+  optional ExpressionObject value = 2;
 }
 
 message StringLiteral {

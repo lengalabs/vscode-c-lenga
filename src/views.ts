@@ -175,7 +175,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
   }
   private postMessage(panel: vscode.WebviewPanel, type: string, contents: any): void {
     console.log("sending:\n", JSON.stringify(contents, null, 2));
-    panel.webview.postMessage({ type, contents });
+    const res = panel.webview.postMessage({ type, contents });
   }
 
   private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<
