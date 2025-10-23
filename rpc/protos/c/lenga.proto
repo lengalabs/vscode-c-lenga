@@ -26,11 +26,12 @@ message SessionId {
 }
 
 message OpenRequest {
-    string path = 1;
+    string id = 1;
+    string path = 2;
 }
 
 message EditRequest {
-    string path = 1;
+    string id = 1;
     LanguageObject editedObject = 2;
 }
 
@@ -40,16 +41,16 @@ message EditResponse {
 }
 
 message SaveRequest {
-    string path = 1;
+    string id = 1;
     string writePath = 2;
 }
 
 message CloseRequest {
-    string path = 1;
+    string id = 1;
 }
 
 message AvailableInsertsRequest {
-    string path = 1;
+    string id = 1;
     string nodeId = 2;
     string nodeKey = 3;
 }

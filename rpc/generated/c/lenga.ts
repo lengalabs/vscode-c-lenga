@@ -36,11 +36,12 @@ export interface SessionId {
 }
 
 export interface OpenRequest {
+  id: string;
   path: string;
 }
 
 export interface EditRequest {
-  path: string;
+  id: string;
   editedObject?: LanguageObject | undefined;
 }
 
@@ -50,16 +51,16 @@ export interface EditResponse {
 }
 
 export interface SaveRequest {
-  path: string;
+  id: string;
   writePath: string;
 }
 
 export interface CloseRequest {
-  path: string;
+  id: string;
 }
 
 export interface AvailableInsertsRequest {
-  path: string;
+  id: string;
   nodeId: string;
   nodeKey: string;
 }
@@ -264,13 +265,16 @@ export const SessionId: MessageFns<SessionId> = {
 };
 
 function createBaseOpenRequest(): OpenRequest {
-  return { path: "" };
+  return { id: "", path: "" };
 }
 
 export const OpenRequest: MessageFns<OpenRequest> = {
   encode(message: OpenRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+      writer.uint32(18).string(message.path);
     }
     return writer;
   },
@@ -287,6 +291,14 @@ export const OpenRequest: MessageFns<OpenRequest> = {
             break;
           }
 
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
           message.path = reader.string();
           continue;
         }
@@ -300,11 +312,17 @@ export const OpenRequest: MessageFns<OpenRequest> = {
   },
 
   fromJSON(object: any): OpenRequest {
-    return { path: isSet(object.path) ? globalThis.String(object.path) : "" };
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      path: isSet(object.path) ? globalThis.String(object.path) : "",
+    };
   },
 
   toJSON(message: OpenRequest): unknown {
     const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
     if (message.path !== "") {
       obj.path = message.path;
     }
@@ -316,19 +334,20 @@ export const OpenRequest: MessageFns<OpenRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<OpenRequest>, I>>(object: I): OpenRequest {
     const message = createBaseOpenRequest();
+    message.id = object.id ?? "";
     message.path = object.path ?? "";
     return message;
   },
 };
 
 function createBaseEditRequest(): EditRequest {
-  return { path: "", editedObject: undefined };
+  return { id: "", editedObject: undefined };
 }
 
 export const EditRequest: MessageFns<EditRequest> = {
   encode(message: EditRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     if (message.editedObject !== undefined) {
       LanguageObject.encode(message.editedObject, writer.uint32(18).fork()).join();
@@ -348,7 +367,7 @@ export const EditRequest: MessageFns<EditRequest> = {
             break;
           }
 
-          message.path = reader.string();
+          message.id = reader.string();
           continue;
         }
         case 2: {
@@ -370,15 +389,15 @@ export const EditRequest: MessageFns<EditRequest> = {
 
   fromJSON(object: any): EditRequest {
     return {
-      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       editedObject: isSet(object.editedObject) ? LanguageObject.fromJSON(object.editedObject) : undefined,
     };
   },
 
   toJSON(message: EditRequest): unknown {
     const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
     if (message.editedObject !== undefined) {
       obj.editedObject = LanguageObject.toJSON(message.editedObject);
@@ -391,7 +410,7 @@ export const EditRequest: MessageFns<EditRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<EditRequest>, I>>(object: I): EditRequest {
     const message = createBaseEditRequest();
-    message.path = object.path ?? "";
+    message.id = object.id ?? "";
     message.editedObject = (object.editedObject !== undefined && object.editedObject !== null)
       ? LanguageObject.fromPartial(object.editedObject)
       : undefined;
@@ -480,13 +499,13 @@ export const EditResponse: MessageFns<EditResponse> = {
 };
 
 function createBaseSaveRequest(): SaveRequest {
-  return { path: "", writePath: "" };
+  return { id: "", writePath: "" };
 }
 
 export const SaveRequest: MessageFns<SaveRequest> = {
   encode(message: SaveRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     if (message.writePath !== "") {
       writer.uint32(18).string(message.writePath);
@@ -506,7 +525,7 @@ export const SaveRequest: MessageFns<SaveRequest> = {
             break;
           }
 
-          message.path = reader.string();
+          message.id = reader.string();
           continue;
         }
         case 2: {
@@ -528,15 +547,15 @@ export const SaveRequest: MessageFns<SaveRequest> = {
 
   fromJSON(object: any): SaveRequest {
     return {
-      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       writePath: isSet(object.writePath) ? globalThis.String(object.writePath) : "",
     };
   },
 
   toJSON(message: SaveRequest): unknown {
     const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
     if (message.writePath !== "") {
       obj.writePath = message.writePath;
@@ -549,20 +568,20 @@ export const SaveRequest: MessageFns<SaveRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<SaveRequest>, I>>(object: I): SaveRequest {
     const message = createBaseSaveRequest();
-    message.path = object.path ?? "";
+    message.id = object.id ?? "";
     message.writePath = object.writePath ?? "";
     return message;
   },
 };
 
 function createBaseCloseRequest(): CloseRequest {
-  return { path: "" };
+  return { id: "" };
 }
 
 export const CloseRequest: MessageFns<CloseRequest> = {
   encode(message: CloseRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     return writer;
   },
@@ -579,7 +598,7 @@ export const CloseRequest: MessageFns<CloseRequest> = {
             break;
           }
 
-          message.path = reader.string();
+          message.id = reader.string();
           continue;
         }
       }
@@ -592,13 +611,13 @@ export const CloseRequest: MessageFns<CloseRequest> = {
   },
 
   fromJSON(object: any): CloseRequest {
-    return { path: isSet(object.path) ? globalThis.String(object.path) : "" };
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
   },
 
   toJSON(message: CloseRequest): unknown {
     const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
     return obj;
   },
@@ -608,19 +627,19 @@ export const CloseRequest: MessageFns<CloseRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<CloseRequest>, I>>(object: I): CloseRequest {
     const message = createBaseCloseRequest();
-    message.path = object.path ?? "";
+    message.id = object.id ?? "";
     return message;
   },
 };
 
 function createBaseAvailableInsertsRequest(): AvailableInsertsRequest {
-  return { path: "", nodeId: "", nodeKey: "" };
+  return { id: "", nodeId: "", nodeKey: "" };
 }
 
 export const AvailableInsertsRequest: MessageFns<AvailableInsertsRequest> = {
   encode(message: AvailableInsertsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     if (message.nodeId !== "") {
       writer.uint32(18).string(message.nodeId);
@@ -643,7 +662,7 @@ export const AvailableInsertsRequest: MessageFns<AvailableInsertsRequest> = {
             break;
           }
 
-          message.path = reader.string();
+          message.id = reader.string();
           continue;
         }
         case 2: {
@@ -673,7 +692,7 @@ export const AvailableInsertsRequest: MessageFns<AvailableInsertsRequest> = {
 
   fromJSON(object: any): AvailableInsertsRequest {
     return {
-      path: isSet(object.path) ? globalThis.String(object.path) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       nodeId: isSet(object.nodeId) ? globalThis.String(object.nodeId) : "",
       nodeKey: isSet(object.nodeKey) ? globalThis.String(object.nodeKey) : "",
     };
@@ -681,8 +700,8 @@ export const AvailableInsertsRequest: MessageFns<AvailableInsertsRequest> = {
 
   toJSON(message: AvailableInsertsRequest): unknown {
     const obj: any = {};
-    if (message.path !== "") {
-      obj.path = message.path;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
     if (message.nodeId !== "") {
       obj.nodeId = message.nodeId;
@@ -698,7 +717,7 @@ export const AvailableInsertsRequest: MessageFns<AvailableInsertsRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<AvailableInsertsRequest>, I>>(object: I): AvailableInsertsRequest {
     const message = createBaseAvailableInsertsRequest();
-    message.path = object.path ?? "";
+    message.id = object.id ?? "";
     message.nodeId = object.nodeId ?? "";
     message.nodeKey = object.nodeKey ?? "";
     return message;
