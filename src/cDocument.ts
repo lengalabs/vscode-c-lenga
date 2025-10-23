@@ -67,6 +67,10 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
     return this._uri;
   }
 
+  public get id() {
+    return this._id;
+  }
+
   public get documentData(): object.SourceFile {
     return this._documentData;
   }

@@ -163,7 +163,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
           break;
         case "requestAvailableInserts":
           this.lengaClient
-            .availableInserts(document.uri.fsPath, e.nodeId, e.nodeKey)
+            .availableInserts(document.id, e.nodeId, e.nodeKey)
             .then((options) => {
               this.postMessage(webviewPanel, "availableInserts", options);
             })
