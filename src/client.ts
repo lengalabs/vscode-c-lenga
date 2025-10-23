@@ -123,4 +123,20 @@ export class Client {
       });
     });
   }
+
+  closeFile(path: string): Promise<void> {
+    var request: clenga.CloseRequest = {
+      path,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.clenga_stub.closeFile(request, (err: ServiceError, objects: clenga.Void) => {
+        if (err) {
+          reject(new Error(`${err}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
 }

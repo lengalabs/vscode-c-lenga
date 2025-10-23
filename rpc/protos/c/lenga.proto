@@ -9,6 +9,7 @@ service CLenga {
     rpc OpenFile(OpenRequest) returns (SourceFile);
     rpc Edit(EditRequest) returns (EditResponse);
     rpc Save(SaveRequest) returns (Void);
+    rpc CloseFile(CloseRequest) returns (Void);
     rpc AvailableInserts(AvailableInsertsRequest) returns (InsertOptions);
 }
 
@@ -41,6 +42,10 @@ message EditResponse {
 message SaveRequest {
     string path = 1;
     string writePath = 2;
+}
+
+message CloseRequest {
+    string path = 1;
 }
 
 message AvailableInsertsRequest {

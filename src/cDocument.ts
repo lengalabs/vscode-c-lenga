@@ -9,6 +9,7 @@ interface CLengaDocumentDelegate {
     edit: object.LanguageObject
   ): Promise<[object.SourceFile, object.LanguageObject]>;
   saveData(uri: string, name: string): Promise<void>;
+  closeFile(uri: string): Promise<void>;
 }
 
 export interface CLengaEdit {
@@ -102,6 +103,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
    * This happens when all editors for it have been closed.
    */
   dispose(): void {
+    this._delegate.closeFile(this.uri.fsPath.toString());
     this._onDidDispose.fire();
     super.dispose();
   }

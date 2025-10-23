@@ -54,6 +54,10 @@ export interface SaveRequest {
   writePath: string;
 }
 
+export interface CloseRequest {
+  path: string;
+}
+
 export interface AvailableInsertsRequest {
   path: string;
   nodeId: string;
@@ -551,6 +555,64 @@ export const SaveRequest: MessageFns<SaveRequest> = {
   },
 };
 
+function createBaseCloseRequest(): CloseRequest {
+  return { path: "" };
+}
+
+export const CloseRequest: MessageFns<CloseRequest> = {
+  encode(message: CloseRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.path !== "") {
+      writer.uint32(10).string(message.path);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CloseRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCloseRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.path = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CloseRequest {
+    return { path: isSet(object.path) ? globalThis.String(object.path) : "" };
+  },
+
+  toJSON(message: CloseRequest): unknown {
+    const obj: any = {};
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CloseRequest>, I>>(base?: I): CloseRequest {
+    return CloseRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CloseRequest>, I>>(object: I): CloseRequest {
+    const message = createBaseCloseRequest();
+    message.path = object.path ?? "";
+    return message;
+  },
+};
+
 function createBaseAvailableInsertsRequest(): AvailableInsertsRequest {
   return { path: "", nodeId: "", nodeKey: "" };
 }
@@ -743,6 +805,15 @@ export const CLengaService = {
     responseSerialize: (value: Void): Buffer => Buffer.from(Void.encode(value).finish()),
     responseDeserialize: (value: Buffer): Void => Void.decode(value),
   },
+  closeFile: {
+    path: "/c.lenga.CLenga/CloseFile",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CloseRequest): Buffer => Buffer.from(CloseRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CloseRequest => CloseRequest.decode(value),
+    responseSerialize: (value: Void): Buffer => Buffer.from(Void.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Void => Void.decode(value),
+  },
   availableInserts: {
     path: "/c.lenga.CLenga/AvailableInserts",
     requestStream: false,
@@ -760,6 +831,7 @@ export interface CLengaServer extends UntypedServiceImplementation {
   openFile: handleUnaryCall<OpenRequest, SourceFile>;
   edit: handleUnaryCall<EditRequest, EditResponse>;
   save: handleUnaryCall<SaveRequest, Void>;
+  closeFile: handleUnaryCall<CloseRequest, Void>;
   availableInserts: handleUnaryCall<AvailableInsertsRequest, InsertOptions>;
 }
 
@@ -811,6 +883,18 @@ export interface CLengaClient extends Client {
   ): ClientUnaryCall;
   save(
     request: SaveRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Void) => void,
+  ): ClientUnaryCall;
+  closeFile(request: CloseRequest, callback: (error: ServiceError | null, response: Void) => void): ClientUnaryCall;
+  closeFile(
+    request: CloseRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Void) => void,
+  ): ClientUnaryCall;
+  closeFile(
+    request: CloseRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Void) => void,

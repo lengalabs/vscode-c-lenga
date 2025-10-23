@@ -56,6 +56,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
       getFileData: this.lengaClient.openFile.bind(this.lengaClient),
       getEditedData: this.lengaClient.edit.bind(this.lengaClient),
       saveData: this.lengaClient.save.bind(this.lengaClient),
+      closeFile: this.lengaClient.closeFile.bind(this.lengaClient),
     });
 
     const listeners: vscode.Disposable[] = [];
