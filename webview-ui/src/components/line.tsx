@@ -4,39 +4,6 @@ import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";
 
-export function ModeIndicator() {
-  const { mode } = useLineContext();
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: "10px",
-        right: "10px",
-        padding: "5px 10px",
-        backgroundColor:
-          mode === "view"
-            ? "var(--vscode-editorInfo-background)"
-            : "var(--vscode-editorWarning-background)",
-        color:
-          mode === "view"
-            ? "var(--vscode-editorInfo-foreground)"
-            : "var(--vscode-editorWarning-foreground)",
-        border:
-          "1px solid " +
-          (mode === "view"
-            ? "var(--vscode-editorInfo-border)"
-            : "var(--vscode-editorWarning-border)"),
-        borderRadius: "3px",
-        fontSize: "12px",
-        fontWeight: "bold",
-        zIndex: 1000,
-      }}
-    >
-      MODE: {mode.toUpperCase()}
-    </div>
-  );
-}
-
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;

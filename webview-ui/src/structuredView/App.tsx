@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { NodeRender, Object, ModeIndicator } from "../components/line";
+import { NodeRender, Object } from "../components/line";
+import ModeIndicator from "../components/ModeIndicator";
 import { childInfo } from "../components/childInfo";
 import { LineProvider } from "../components/lineContext";
 
