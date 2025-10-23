@@ -56,6 +56,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
       getFileData: this.lengaClient.openFile.bind(this.lengaClient),
       getEditedData: this.lengaClient.edit.bind(this.lengaClient),
       saveData: this.lengaClient.save.bind(this.lengaClient),
+      closeFile: this.lengaClient.closeFile.bind(this.lengaClient),
     });
 
     const listeners: vscode.Disposable[] = [];
@@ -162,7 +163,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
           break;
         case "requestAvailableInserts":
           this.lengaClient
-            .availableInserts(document.uri.fsPath, e.nodeId, e.nodeKey)
+            .availableInserts(document.id, e.nodeId, e.nodeKey)
             .then((options) => {
               this.postMessage(webviewPanel, "availableInserts", options);
             })

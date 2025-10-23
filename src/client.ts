@@ -19,8 +19,8 @@ export class Client {
 
   initialize(workspace: string, configUri: string): Promise<void> {
     var request: clenga.InitRequest = {
-      workspace: workspace,
-      configUri: configUri,
+      workspace,
+      configUri,
     };
 
     return new Promise((resolve, reject) => {
@@ -34,8 +34,9 @@ export class Client {
     });
   }
 
-  openFile(path: string): Promise<cNodes.SourceFile> {
+  openFile(id: string, path: string): Promise<cNodes.SourceFile> {
     var request: clenga.OpenRequest = {
+      id,
       path: path,
     };
 
@@ -55,11 +56,11 @@ export class Client {
   }
 
   edit(
-    path: string,
+    id: string,
     editedNode: cNodes.LanguageObject
   ): Promise<[cNodes.SourceFile, cNodes.LanguageObject]> {
     var request: clenga.EditRequest = {
-      path: path,
+      id,
       editedObject: this.converter.objectToProto(editedNode),
     };
 
@@ -81,14 +82,10 @@ export class Client {
     });
   }
 
-  availableInserts(
-    path: string,
-    nodeId: string,
-    nodeKey: string
-  ): Promise<cNodes.LanguageObject[]> {
+  availableInserts(id: string, nodeId: string, nodeKey: string): Promise<cNodes.LanguageObject[]> {
     var request: clenga.AvailableInsertsRequest = {
-      path: path,
-      nodeId: nodeId,
+      id,
+      nodeId,
       nodeKey: snakeCase(nodeKey),
     };
 
@@ -107,14 +104,30 @@ export class Client {
     });
   }
 
-  save(path: string, writePath: string): Promise<void> {
+  save(id: string, writePath: string): Promise<void> {
     var request: clenga.SaveRequest = {
-      path,
+      id,
       writePath,
     };
 
     return new Promise((resolve, reject) => {
       this.clenga_stub.save(request, (err: ServiceError, objects: clenga.Void) => {
+        if (err) {
+          reject(new Error(`${err}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  closeFile(id: string): Promise<void> {
+    var request: clenga.CloseRequest = {
+      id,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.clenga_stub.closeFile(request, (err: ServiceError, objects: clenga.Void) => {
         if (err) {
           reject(new Error(`${err}`));
         } else {

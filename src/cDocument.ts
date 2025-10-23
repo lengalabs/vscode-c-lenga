@@ -3,12 +3,13 @@ import * as object from "./language_objects/cNodes";
 import { Disposable } from "./disposable";
 
 interface CLengaDocumentDelegate {
-  getFileData(uri: string): Promise<object.SourceFile>;
+  getFileData(id: string, uri: string): Promise<object.SourceFile>;
   getEditedData(
-    uri: string,
+    id: string,
     edit: object.LanguageObject
   ): Promise<[object.SourceFile, object.LanguageObject]>;
-  saveData(uri: string, name: string): Promise<void>;
+  saveData(id: string, path: string): Promise<void>;
+  closeFile(id: string): Promise<void>;
 }
 
 export interface CLengaEdit {
@@ -17,6 +18,7 @@ export interface CLengaEdit {
 }
 
 export class CLengaDocument extends Disposable implements vscode.CustomDocument {
+  private readonly _id: string;
   private readonly _uri: vscode.Uri;
 
   private _documentData: object.SourceFile;
@@ -30,28 +32,32 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
     backupId: string | undefined,
     delegate: CLengaDocumentDelegate
   ): Promise<CLengaDocument | PromiseLike<CLengaDocument>> {
+    const id = crypto.randomUUID();
     // If we have a backup, read that. Otherwise read the resource from the workspace
     const dataFile = typeof backupId === "string" ? vscode.Uri.parse(backupId) : uri;
-    const fileData = await CLengaDocument.readFile(dataFile, delegate);
-    return new CLengaDocument(uri, fileData, delegate);
+    const fileData = await CLengaDocument.readFile(id, dataFile, delegate);
+    return new CLengaDocument(id, uri, fileData, delegate);
   }
 
   private static async readFile(
+    id: string,
     uri: vscode.Uri,
     delegate: CLengaDocumentDelegate
   ): Promise<object.SourceFile> {
     if (uri.scheme === "untitled") {
       return { type: "sourceFile", id: crypto.randomUUID(), code: [] };
     }
-    return await delegate.getFileData(uri.fsPath.toString());
+    return await delegate.getFileData(id, uri.fsPath.toString());
   }
 
   private constructor(
+    id: string,
     uri: vscode.Uri,
     initialContent: object.SourceFile,
     delegate: CLengaDocumentDelegate
   ) {
     super();
+    this._id = id;
     this._uri = uri;
     this._documentData = initialContent;
     this._delegate = delegate;
@@ -59,6 +65,10 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
 
   public get uri() {
     return this._uri;
+  }
+
+  public get id() {
+    return this._id;
   }
 
   public get documentData(): object.SourceFile {
@@ -102,6 +112,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
    * This happens when all editors for it have been closed.
    */
   dispose(): void {
+    this._delegate.closeFile(this._id);
     this._onDidDispose.fire();
     super.dispose();
   }
@@ -113,7 +124,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
    */
   makeEdit(edit: CLengaEdit) {
     this._delegate
-      .getEditedData(this.uri.fsPath.toString(), edit.new_node)
+      .getEditedData(this._id, edit.new_node)
       .then((response) => {
         this._documentData = response[0];
         edit.old_node = response[1];
@@ -126,7 +137,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
             this._edits.pop();
             // revert to old node
             this._documentData = await this._delegate
-              .getEditedData(this.uri.fsPath.toString(), edit.old_node)
+              .getEditedData(this._id, edit.old_node)
               .then((res) => res[0]);
             this._onDidChangeDocument.fire({
               content: this._documentData,
@@ -136,7 +147,7 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
           redo: async () => {
             // redo new node
             this._documentData = await this._delegate
-              .getEditedData(this.uri.fsPath.toString(), edit.new_node)
+              .getEditedData(this._id, edit.new_node)
               .then((res) => res[0]);
             this._edits.push(edit);
             this._onDidChangeDocument.fire({
@@ -171,14 +182,14 @@ export class CLengaDocument extends Disposable implements vscode.CustomDocument 
     if (cancellation.isCancellationRequested) {
       return;
     }
-    await this._delegate.saveData(this._uri.fsPath.toString(), targetResource.fsPath.toString());
+    await this._delegate.saveData(this._id, targetResource.fsPath.toString());
   }
 
   /**
    * Called by VS Code when the user calls `revert` on a document.
    */
   async revert(_cancellation: vscode.CancellationToken): Promise<void> {
-    const diskContent = await CLengaDocument.readFile(this.uri, this._delegate);
+    const diskContent = await CLengaDocument.readFile(this._id, this.uri, this._delegate);
     this._documentData = diskContent;
     this._edits = this._savedEdits;
     this._onDidChangeDocument.fire({
