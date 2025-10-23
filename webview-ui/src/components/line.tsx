@@ -60,7 +60,6 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
     focusRequest,
     clearFocusRequest,
     mode,
-    setMode,
   } = useLineContext();
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
@@ -93,16 +92,6 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
     }
   }, [focusRequest, node.id, key, clearFocusRequest]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "i" && mode === "view") {
-      e.preventDefault();
-      setMode("edit");
-    } else if (e.key === "Escape" && mode === "edit") {
-      e.preventDefault();
-      setMode("view");
-    }
-  };
-
   // width in ch units, at least 1ch
   const width = Math.max(1, inputValue.length) + "ch";
 
@@ -121,7 +110,6 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
       }}
       value={inputValue}
       onChange={(e) => setInputValue(e.target.value)}
-      onKeyDown={handleKeyDown}
       onFocus={() => {
         setSelectedKey(key);
         setSelectedNodeId(node.id);
@@ -180,6 +168,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       // Remove the node from the array
       const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = newArray;
 
       // Remove from maps
@@ -212,6 +201,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
     } else if (typeof field === "object") {
       console.log("Parent field is single-valued, setting to null");
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = null;
       nodeMap.delete(node.id);
       parentMap.delete(node.id);
@@ -247,6 +237,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
 
     const newArray = [...field.slice(0, index + 1), newObject, ...field.slice(index + 1)];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (parent as any)[key] = newArray; // Runtime assignment - type safety maintained by ParentInfoV2
 
     nodeMap.set(newObject.id, newObject);
@@ -438,6 +429,7 @@ function UnknownRender({
         const newArray = [...field];
         newArray[index] = selectedOption;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (parent as any)[key] = newArray;
         console.log("Parent after insert:", parent);
         // Notify of the edit
@@ -445,6 +437,7 @@ function UnknownRender({
       } else if (typeof parent[key] === "object") {
         console.log("Parent field is single-valued, replacing directly");
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (parent as any)[key] = selectedOption;
         console.log("Parent after insert:", parent);
         onEdit(parent, key);
