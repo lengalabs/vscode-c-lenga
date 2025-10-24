@@ -22,3 +22,74 @@ export function transpileFile(path: vscode.Uri) {
     }
   });
 }
+
+export async function pickFileFromWorkspace(): Promise<vscode.Uri | undefined> {
+  const { workspace, window, Uri } = vscode;
+
+  // No workspace? Offer a file picker as a fallback.
+  if (!workspace.workspaceFolders?.length) {
+    const picked = await window.showOpenDialog({
+      canSelectFiles: true,
+      canSelectFolders: false,
+      canSelectMany: false,
+      openLabel: "Select file to transpile",
+    });
+    return picked?.[0];
+  }
+
+  // Build candidate list
+  const excludeGlobs = [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/.venv/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/.cache/**",
+  ].join(",");
+
+  const uris = await vscode.workspace.findFiles("**/*", `{${excludeGlobs}}`, 5000);
+
+  type FileItem = vscode.QuickPickItem & { uri: vscode.Uri };
+  const items: FileItem[] = uris.map((uri) => {
+    const rel = workspace.asRelativePath(uri, false);
+    const basename = rel.split(/[\\/]/).pop() ?? rel;
+    const dir = rel.slice(0, Math.max(0, rel.length - basename.length)).replace(/[\\/]$/, "");
+    return {
+      label: basename,
+      description: dir || undefined,
+      detail: uri.fsPath,
+      uri,
+    };
+  });
+
+  // Optional browse menu alternative
+  const browseItem: FileItem = {
+    label: "Browse…",
+    description: "Pick from filesystem",
+    uri: Uri.file(""),
+  };
+
+  const choice = await window.showQuickPick<FileItem>([browseItem, ...items], {
+    title: "Transpile file",
+    placeHolder: "Type to filter files (fuzzy match on name, folder, or full path)",
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
+
+  if (!choice) {
+    return;
+  }
+
+  if (choice === browseItem) {
+    const picked = await window.showOpenDialog({
+      canSelectFiles: true,
+      canSelectFolders: false,
+      canSelectMany: false,
+      openLabel: "Select file to transpile",
+    });
+    return picked?.[0];
+  }
+
+  return choice.uri;
+}
