@@ -1,8 +1,89 @@
 import React from "react";
-import { useLineContext, ParentInfoV2 } from "./context";
+import { useLineContext, ParentInfoV2, NodeCallbacks } from "./context";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";
+
+// Helper to create callbacks for array fields (supports insert & delete)
+function createArrayFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
+  parent: T,
+  key: K,
+  index: number,
+  nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (nodeId: string, fieldKey: string) => void
+): NodeCallbacks {
+  return {
+    onInsertSibling: (node: objects.LanguageObject) => {
+      console.log("Inserting sibling after node:", node.id, " at index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      const newArray = [...field.slice(0, index + 1), newUnknown, ...field.slice(index + 1)];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(parent, key);
+      requestFocus(newUnknown.id, "content");
+    },
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Deleting node:", node.id, " at index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.delete(node.id);
+      onEdit(parent, key);
+    },
+  };
+}
+
+// Helper to create callbacks for optional single-value fields (delete sets to null)
+function createOptionalFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
+  parent: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void
+): NodeCallbacks {
+  return {
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Deleting optional field:", key, " node:", node.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = null;
+      nodeMap.delete(node.id);
+      onEdit(parent, key);
+    },
+  };
+}
+
+// Helper to create callbacks for required single-value fields (delete replaces with unknown)
+function createRequiredFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
+  parent: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (nodeId: string, fieldKey: string) => void
+): NodeCallbacks {
+  return {
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Replacing required field:", key, " node:", node.id, " with unknown");
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newUnknown;
+      nodeMap.delete(node.id);
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(parent, key);
+      requestFocus(newUnknown.id, "content");
+    },
+  };
+}
 
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
@@ -97,24 +178,13 @@ interface ObjectProps {
   parentInfo: ParentInfoV2;
   children: React.ReactNode;
   display?: "inline" | "block";
+  callbacks?: NodeCallbacks;
 }
 
-export function Object({ node, parentInfo, children, display = "block" }: ObjectProps) {
-  const {
-    selectedNodeId,
-    setSelectedNodeId,
-    setParentNodeInfo,
-    setSelectedKey,
-    onEdit,
-    nodeMap,
-    parentMap,
-    requestFocus,
-    mode,
-  } = useLineContext();
+export function Object({ node, parentInfo, children, display = "block", callbacks }: ObjectProps) {
+  const { selectedNodeId, setSelectedNodeId, setParentNodeInfo, setSelectedKey, mode } =
+    useLineContext();
   const isSelected = selectedNodeId === node.id;
-
-  // const selectable =
-  //   node.type === "compoundStatement" || node.type === "ifStatement" || node.type === "elseClause";
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("Object ", node.type, " handleKeyDown:", e.key);
@@ -122,131 +192,17 @@ export function Object({ node, parentInfo, children, display = "block" }: Object
       return;
     }
 
-    // Only allow inserting unknown nodes in view mode for block elements
-    if (e.key === "Enter" && mode === "view") {
+    // Only allow inserting/deleting nodes in view mode via callbacks
+    if (e.key === "Enter" && mode === "view" && callbacks?.onInsertSibling) {
       e.preventDefault();
       e.stopPropagation();
-      insertUnknown();
-    } else if (e.key === "Delete" && mode === "view") {
+      callbacks.onInsertSibling(node);
+    } else if (e.key === "Delete" && mode === "view" && callbacks?.onDelete) {
       console.log("Delete key pressed on node:", node);
       e.preventDefault();
       e.stopPropagation();
-      deleteNode();
+      callbacks.onDelete(node);
     }
-  };
-
-  const deleteNode = () => {
-    console.log("Deleting node:", node);
-    const parentInfo = parentMap.get(node.id);
-    if (!parentInfo) {
-      return;
-    }
-    const { parent, key, index } = parentInfo;
-    if (!parent || !(key in parent)) {
-      return;
-    }
-
-    // Check if it's an array field
-    const field = parent[key];
-    if (Array.isArray(field)) {
-      console.log("Parent field is an array, removing from array");
-      // Remove the node from the array
-      const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = newArray;
-
-      // Remove from maps
-      nodeMap.delete(node.id);
-      parentMap.delete(node.id);
-
-      // Update parent indices for nodes that came after this one
-      for (let i = 0; i < newArray.length - index; i++) {
-        const siblingNode = newArray[index + i];
-        if (siblingNode && typeof siblingNode === "object" && "id" in siblingNode) {
-          parentMap.set((siblingNode as objects.LanguageObject).id, {
-            parent,
-            key,
-            index: index + i,
-          } as ParentInfoV2);
-        }
-      }
-
-      onEdit(parent, key);
-      console.log(
-        "Deleted node:",
-        node.id,
-        " from parent:",
-        parent,
-        " at key:",
-        key,
-        " index:",
-        index
-      );
-    } else if (typeof field === "object") {
-      console.log("Parent field is single-valued, setting to null");
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = null;
-      nodeMap.delete(node.id);
-      parentMap.delete(node.id);
-      onEdit(parent, key);
-      console.log("Deleted node:", node.id, " from parent:", parent, " at key:", key);
-    } else {
-      console.error("Parent field is neither array nor object, cannot delete");
-    }
-  };
-
-  const insertUnknown = () => {
-    const newObject: objects.Unknown = {
-      id: crypto.randomUUID(),
-      type: "unknown",
-      content: "",
-    };
-    // insert logic: e.g., in CompoundStatement
-    const parentInfo = parentMap.get(node.id);
-    if (!parentInfo) {
-      return;
-    }
-    const { parent, key, index } = parentInfo;
-    if (!parent || !(key in parent)) {
-      return;
-    }
-
-    // Now TypeScript knows key is valid for parent!
-    // We need to check if it's an array field
-    const field = parent[key];
-    if (!Array.isArray(field)) {
-      return;
-    }
-
-    const newArray = [...field.slice(0, index + 1), newObject, ...field.slice(index + 1)];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (parent as any)[key] = newArray; // Runtime assignment - type safety maintained by ParentInfoV2
-
-    nodeMap.set(newObject.id, newObject);
-    parentMap.set(newObject.id, {
-      parent,
-      key,
-      index: index + 1,
-    } as ParentInfoV2);
-
-    onEdit(parent, key);
-    console.log(
-      "Inserted new unknown node:",
-      newObject,
-      " in parent:",
-      parent,
-      " at key:",
-      key,
-      " index:",
-      index
-    );
-
-    // Request focus on the new node's content field - React will handle it when rendered
-    requestFocus(newObject.id, "content");
-    console.log("Requested focus for new node:", newObject.id);
   };
 
   const Element = display === "inline" ? "span" : "div";
@@ -515,7 +471,7 @@ function FunctionDeclarationRender({
   functionDeclaration: objects.FunctionDeclaration;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { nodeMap } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(functionDeclaration.id, functionDeclaration);
 
   return (
@@ -537,7 +493,18 @@ function FunctionDeclarationRender({
       {functionDeclaration.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
-          <Object node={param} parentInfo={childInfo(functionDeclaration, "parameterList", i)}>
+          <Object
+            node={param}
+            parentInfo={childInfo(functionDeclaration, "parameterList", i)}
+            callbacks={createArrayFieldCallbacks(
+              functionDeclaration,
+              "parameterList",
+              i,
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
+          >
             <FunctionParameterRender
               paramDecl={param}
               parentInfo={childInfo(functionDeclaration, "parameterList", i)}
@@ -557,7 +524,7 @@ function FunctionDefinitionRender({
   funcDef: objects.FunctionDefinition;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { nodeMap } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(funcDef.id, funcDef);
 
   return (
@@ -573,10 +540,24 @@ function FunctionDefinitionRender({
       {funcDef.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
-          <FunctionParameterRender
-            paramDecl={param}
+          <Object
+            node={param}
             parentInfo={childInfo(funcDef, "parameterList", i)}
-          />
+            display="inline"
+            callbacks={createArrayFieldCallbacks(
+              funcDef,
+              "parameterList",
+              i,
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
+          >
+            <FunctionParameterRender
+              paramDecl={param}
+              parentInfo={childInfo(funcDef, "parameterList", i)}
+            />
+          </Object>
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
@@ -584,6 +565,7 @@ function FunctionDefinitionRender({
         <Object
           node={funcDef.compoundStatement}
           parentInfo={childInfo(funcDef, "compoundStatement")}
+          callbacks={createOptionalFieldCallbacks(funcDef, "compoundStatement", nodeMap, onEdit)}
         >
           <CompoundStatementRender
             compoundStatement={funcDef.compoundStatement}
@@ -602,7 +584,7 @@ function DeclarationRender({
   varDecl: objects.Declaration;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { nodeMap, onEdit, mode } = useLineContext();
+  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
   nodeMap.set(varDecl.id, varDecl);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -624,6 +606,7 @@ function DeclarationRender({
       varDecl.value = newUnknown;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(varDecl, null);
+      requestFocus(newUnknown.id, "content");
       console.log("Inserted unknown node as value for declaration:", varDecl.id);
     }
   };
@@ -636,7 +619,12 @@ function DeclarationRender({
         <>
           {" "}
           {"="}{" "}
-          <Object node={varDecl.value} display="inline" parentInfo={childInfo(varDecl, "value")}>
+          <Object
+            node={varDecl.value}
+            display="inline"
+            parentInfo={childInfo(varDecl, "value")}
+            callbacks={createOptionalFieldCallbacks(varDecl, "value", nodeMap, onEdit)}
+          >
             <NodeRender node={varDecl.value} parentInfo={childInfo(varDecl, "value")} />
           </Object>
         </>
@@ -680,7 +668,8 @@ function CompoundStatementRender({
   compoundStatement: objects.CompoundStatement;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { onEdit, nodeMap, mode, selectedNodeId } = useLineContext();
+  const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("CompoundStatementRender handleKeyDown:", e.key);
     if (e.key === "Enter" && mode === "edit" && selectedNodeId === compoundStatement.id) {
@@ -699,6 +688,7 @@ function CompoundStatementRender({
       onEdit(compoundStatement, "codeBlock");
     }
   };
+
   return (
     <span onKeyDown={handleKeyDown} tabIndex={0}>
       <span className="token-delimiter">{"{"}</span>
@@ -714,6 +704,14 @@ function CompoundStatementRender({
             key={node.id}
             node={node}
             parentInfo={childInfo(compoundStatement, "codeBlock", i)}
+            callbacks={createArrayFieldCallbacks(
+              compoundStatement,
+              "codeBlock",
+              i,
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
           >
             <NodeRender node={node} parentInfo={childInfo(compoundStatement, "codeBlock", i)} />
           </Object>
@@ -726,6 +724,7 @@ function CompoundStatementRender({
 
 function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }): React.ReactNode {
   const { mode, onEdit, nodeMap, selectedNodeId } = useLineContext();
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("IfStatementRender handleKeyDown:", e.key);
     // Enter on edit mode should insert else clause if not present
@@ -752,6 +751,7 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
       }
     }
   };
+
   return (
     <span tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
@@ -766,6 +766,7 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
             node={ifStatement.elseStatement}
             parentInfo={childInfo(ifStatement, "elseStatement")}
             display="inline"
+            callbacks={createOptionalFieldCallbacks(ifStatement, "elseStatement", nodeMap, onEdit)}
           >
             <ElseClauseRender elseClause={ifStatement.elseStatement} />
           </Object>
@@ -776,6 +777,12 @@ function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }
               node={ifStatement.elseStatement}
               parentInfo={childInfo(ifStatement, "elseStatement")}
               display="inline"
+              callbacks={createOptionalFieldCallbacks(
+                ifStatement,
+                "elseStatement",
+                nodeMap,
+                onEdit
+              )}
             >
               <IfStatementRender ifStatement={ifStatement.elseStatement} />
             </Object>
@@ -835,6 +842,7 @@ function compoundStatementObjectRender(
 function ElseClauseRender({ elseClause }: { elseClause: objects.ElseClause }): React.ReactNode {
   // handle enter to convert to ifStatement
   const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo } = useLineContext();
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("ElseClauseRender handleKeyDown:", e.key);
     if (e.key === "Enter" && mode === "edit" && selectedNodeId === elseClause.id) {
@@ -864,12 +872,34 @@ function ElseClauseRender({ elseClause }: { elseClause: objects.ElseClause }): R
       onEdit(parentNodeInfo.parent, parentNodeInfo.key);
     }
   };
+
+  // Special callback for body - replaces with empty compound statement instead of null
+  const bodyCallbacks: NodeCallbacks = {
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Deleting else clause body:", node.id);
+      const emptyBody: objects.CompoundStatement = {
+        id: crypto.randomUUID(),
+        type: "compoundStatement",
+        codeBlock: [],
+      };
+      elseClause.body = emptyBody;
+      nodeMap.delete(node.id);
+      nodeMap.set(emptyBody.id, emptyBody);
+      onEdit(elseClause, "body");
+    },
+  };
+
   return (
     <>
       <span className="token-keyword" onKeyDown={handleKeyDown} tabIndex={0}>
         {" else "}
       </span>
-      <Object node={elseClause.body} parentInfo={childInfo(elseClause, "body")} display="inline">
+      <Object
+        node={elseClause.body}
+        parentInfo={childInfo(elseClause, "body")}
+        display="inline"
+        callbacks={bodyCallbacks}
+      >
         {compoundStatementObjectRender(elseClause.body, childInfo(elseClause, "body"))}
       </Object>
     </>
@@ -882,13 +912,22 @@ function ReturnStatementRender({
   returnStmt: objects.ReturnStatement;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
+  const { nodeMap, onEdit } = useLineContext();
+
   return (
     <div tabIndex={0}>
       <span className="token-keyword">return</span>
       {returnStmt.value && (
         <>
           {" "}
-          <NodeRender node={returnStmt.value} parentInfo={childInfo(returnStmt, "value")} />
+          <Object
+            node={returnStmt.value}
+            parentInfo={childInfo(returnStmt, "value")}
+            display="inline"
+            callbacks={createOptionalFieldCallbacks(returnStmt, "value", nodeMap, onEdit)}
+          >
+            <NodeRender node={returnStmt.value} parentInfo={childInfo(returnStmt, "value")} />
+          </Object>
         </>
       )}
       {";"}
@@ -903,6 +942,8 @@ function CallExpressionRender({
   callExpr: objects.CallExpression;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
+
   return (
     <>
       {EditableField({
@@ -915,7 +956,21 @@ function CallExpressionRender({
       {callExpr.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
           {i > 0 && ", "}
-          <NodeRender node={arg} parentInfo={childInfo(callExpr, "argumentList", i)} />
+          <Object
+            node={arg}
+            parentInfo={childInfo(callExpr, "argumentList", i)}
+            display="inline"
+            callbacks={createArrayFieldCallbacks(
+              callExpr,
+              "argumentList",
+              i,
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
+          >
+            <NodeRender node={arg} parentInfo={childInfo(callExpr, "argumentList", i)} />
+          </Object>
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
@@ -946,7 +1001,7 @@ function AssignmentExpressionRender({
   assignmentExpr: objects.AssignmentExpression;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
-  const { nodeMap } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   const targetNode = nodeMap.get(assignmentExpr.idDeclaration);
 
   if (!targetNode || !("identifier" in targetNode)) {
@@ -956,7 +1011,20 @@ function AssignmentExpressionRender({
   return (
     <>
       <span className="token-variable">{String(targetNode.identifier)}</span> {"="}{" "}
-      <NodeRender node={assignmentExpr.value} parentInfo={childInfo(assignmentExpr, "value")} />
+      <Object
+        node={assignmentExpr.value}
+        parentInfo={childInfo(assignmentExpr, "value")}
+        display="inline"
+        callbacks={createRequiredFieldCallbacks(
+          assignmentExpr,
+          "value",
+          nodeMap,
+          onEdit,
+          requestFocus
+        )}
+      >
+        <NodeRender node={assignmentExpr.value} parentInfo={childInfo(assignmentExpr, "value")} />
+      </Object>
     </>
   );
 }
@@ -1008,11 +1076,42 @@ function BinaryExpressionRender({
   binaryExpression: objects.BinaryExpression;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
+
   return (
     <>
-      <NodeRender node={binaryExpression.left} parentInfo={childInfo(binaryExpression, "left")} />{" "}
+      <Object
+        node={binaryExpression.left}
+        parentInfo={childInfo(binaryExpression, "left")}
+        display="inline"
+        callbacks={createRequiredFieldCallbacks(
+          binaryExpression,
+          "left",
+          nodeMap,
+          onEdit,
+          requestFocus
+        )}
+      >
+        <NodeRender node={binaryExpression.left} parentInfo={childInfo(binaryExpression, "left")} />
+      </Object>{" "}
       {EditableField({ node: binaryExpression, key: "operator", parentInfo })}{" "}
-      <NodeRender node={binaryExpression.right} parentInfo={childInfo(binaryExpression, "right")} />
+      <Object
+        node={binaryExpression.right}
+        parentInfo={childInfo(binaryExpression, "right")}
+        display="inline"
+        callbacks={createRequiredFieldCallbacks(
+          binaryExpression,
+          "right",
+          nodeMap,
+          onEdit,
+          requestFocus
+        )}
+      >
+        <NodeRender
+          node={binaryExpression.right}
+          parentInfo={childInfo(binaryExpression, "right")}
+        />
+      </Object>
     </>
   );
 }

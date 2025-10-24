@@ -28,6 +28,11 @@ export function createParentInfo<T extends objects.LanguageObject, K extends str
 
 export type EditorMode = "view" | "edit";
 
+export interface NodeCallbacks {
+  onInsertSibling?: (node: objects.LanguageObject) => void;
+  onDelete?: (node: objects.LanguageObject) => void;
+}
+
 export interface LineContextType {
   onEdit: <T extends objects.LanguageObject, K extends string & keyof T>(
     node: T,
