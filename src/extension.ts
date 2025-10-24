@@ -31,6 +31,24 @@ export function activate(context: vscode.ExtensionContext) {
       }
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("lengalab.setStructuredView", () => {
+      const provider = ClengaEditorProvider.getInstance();
+      if (provider) {
+        provider.setStructuredView();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("lengalab.setGraphView", () => {
+      const provider = ClengaEditorProvider.getInstance();
+      if (provider) {
+        provider.setGraphView();
+      }
+    })
+  );
 }
 
 export function deactivate() {

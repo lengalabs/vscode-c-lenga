@@ -10,8 +10,6 @@ export enum View {
   Graph = "graphView",
 }
 
-const keyForFile = (uri: vscode.Uri) => `lastView:${uri.toString()}`;
-
 export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaDocument> {
   private static readonly viewType = "lengalab.c";
   private readonly webviews = new WebviewCollection();
@@ -47,6 +45,24 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     }
   }
 
+  public setStructuredView() {
+    if (this.activeWebviewPanel) {
+      this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
+        this.activeWebviewPanel.webview,
+        View.Structured
+      );
+    }
+  }
+
+  public setGraphView() {
+    if (this.activeWebviewPanel) {
+      this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
+        this.activeWebviewPanel.webview,
+        View.Graph
+      );
+    }
+  }
+
   async openCustomDocument(
     uri: vscode.Uri,
     openContext: { backupId?: string },
@@ -76,30 +92,6 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
         // Update all webviews when the document changes
         for (const webviewPanel of this.webviews.get(document.uri)) {
           this.postMessage(webviewPanel, "update", e.content);
-        }
-      })
-    );
-
-    listeners.push(
-      vscode.commands.registerCommand("lengalab.setStructuredView", (uri: vscode.Uri) => {
-        this.context.workspaceState.update(keyForFile(uri), View.Structured);
-        if (this.activeWebviewPanel) {
-          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
-            this.activeWebviewPanel.webview,
-            View.Structured
-          );
-        }
-      })
-    );
-
-    listeners.push(
-      vscode.commands.registerCommand("lengalab.setGraphView", (uri: vscode.Uri) => {
-        this.context.workspaceState.update(keyForFile(uri), View.Graph);
-        if (this.activeWebviewPanel) {
-          this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
-            this.activeWebviewPanel.webview,
-            View.Graph
-          );
         }
       })
     );
@@ -140,10 +132,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     webviewPanel.webview.options = {
       enableScripts: true,
     };
-    const lastView = this.context.workspaceState.get<View>(
-      keyForFile(document.uri),
-      View.Structured
-    );
+
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, View.Structured);
 
     webviewPanel.webview.onDidReceiveMessage((e) => {
