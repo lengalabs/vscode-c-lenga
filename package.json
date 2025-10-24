@@ -69,6 +69,18 @@
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
         "when": "activeCustomEditorId == lengalab.c"
+      },
+      {
+        "command": "lengalab.setStructuredView",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "activeCustomEditorId == lengalab.c"
+      },
+      {
+        "command": "lengalab.setGraphView",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g",
+        "when": "activeCustomEditorId == lengalab.c"
       }
     ],
     "menus": {
