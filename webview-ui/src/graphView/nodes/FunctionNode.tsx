@@ -19,7 +19,7 @@ export function FunctionNode({
 
   return (
     <div className="function-node">
-      <Object node={data.func}>
+      <Object node={data.func} parentInfo={data.parentInfo}>
         <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
       </Object>
 

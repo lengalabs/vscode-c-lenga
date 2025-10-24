@@ -45,6 +45,7 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
       focusRequest.fieldKey === key &&
       !hasFocusedRef.current
     ) {
+      console.log("Focusing input for node:", node.id, " key:", key);
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.select();
@@ -93,16 +94,30 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
 
 interface ObjectProps {
   node: objects.LanguageObject;
+  parentInfo: ParentInfoV2;
   children: React.ReactNode;
   display?: "inline" | "block";
 }
 
-export function Object({ node, children, display = "block" }: ObjectProps) {
-  const { selectedNodeId, setSelectedNodeId, onEdit, nodeMap, parentMap, requestFocus, mode } =
-    useLineContext();
+export function Object({ node, parentInfo, children, display = "block" }: ObjectProps) {
+  const {
+    selectedNodeId,
+    setSelectedNodeId,
+    setParentNodeInfo,
+    setSelectedKey,
+    onEdit,
+    nodeMap,
+    parentMap,
+    requestFocus,
+    mode,
+  } = useLineContext();
   const isSelected = selectedNodeId === node.id;
 
+  // const selectable =
+  //   node.type === "compoundStatement" || node.type === "ifStatement" || node.type === "elseClause";
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("Object ", node.type, " handleKeyDown:", e.key);
     if (!isSelected) {
       return;
     }
@@ -110,9 +125,12 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
     // Only allow inserting unknown nodes in view mode for block elements
     if (e.key === "Enter" && mode === "view") {
       e.preventDefault();
+      e.stopPropagation();
       insertUnknown();
     } else if (e.key === "Delete" && mode === "view") {
+      console.log("Delete key pressed on node:", node);
       e.preventDefault();
+      e.stopPropagation();
       deleteNode();
     }
   };
@@ -228,6 +246,7 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
 
     // Request focus on the new node's content field - React will handle it when rendered
     requestFocus(newObject.id, "content");
+    console.log("Requested focus for new node:", newObject.id);
   };
 
   const Element = display === "inline" ? "span" : "div";
@@ -238,11 +257,16 @@ export function Object({ node, children, display = "block" }: ObjectProps) {
       className={`object-container object-container-${display} ${
         isSelected ? "object-selected" : ""
       }`}
+      onFocus={(e) => {
+        e.stopPropagation();
+        setSelectedNodeId(node.id);
+        setSelectedKey(parentInfo.key);
+        setParentNodeInfo(parentInfo);
+      }}
       onClick={(e) => {
         e.stopPropagation();
         setSelectedNodeId(node.id);
       }}
-      tabIndex={0}
     >
       {children}
     </Element>
@@ -255,8 +279,6 @@ interface NodeRenderProps {
 }
 
 export function NodeRender({ node, parentInfo }: NodeRenderProps): React.ReactNode {
-  //console.log(node.type);
-
   switch (node.type) {
     case "preprocInclude":
       return (
@@ -352,7 +374,9 @@ function UnknownRender({
 
   // When in edit mode and Enter is pressed, request available inserts
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("Unknown handleKeyDown:", e.key);
     if (e.key === "Enter" && mode === "edit") {
+      e.stopPropagation();
       e.preventDefault();
       console.log("Requesting available inserts for unknown node:", unknown);
       // Get parent info from the map
@@ -361,6 +385,7 @@ function UnknownRender({
       onRequestAvailableInserts(parent.id, key);
       setShowDropdown(true);
     } else if (e.key === "Escape" && showDropdown) {
+      e.stopPropagation();
       e.preventDefault();
       setShowDropdown(false);
     }
@@ -422,6 +447,7 @@ function UnknownRender({
       e.stopPropagation();
       commitSelection();
     } else if (e.key === "Escape") {
+      e.stopPropagation();
       e.preventDefault();
       setShowDropdown(false);
     }
@@ -511,10 +537,12 @@ function FunctionDeclarationRender({
       {functionDeclaration.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
-          <FunctionParameterRender
-            paramDecl={param}
-            parentInfo={childInfo(functionDeclaration, "parameterList", i)}
-          />
+          <Object node={param} parentInfo={childInfo(functionDeclaration, "parameterList", i)}>
+            <FunctionParameterRender
+              paramDecl={param}
+              parentInfo={childInfo(functionDeclaration, "parameterList", i)}
+            />
+          </Object>
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
@@ -553,10 +581,15 @@ function FunctionDefinitionRender({
       ))}
       <span className="token-delimiter">{")"}</span>
       {funcDef.compoundStatement && (
-        <CompoundStatementRender
-          compoundStatement={funcDef.compoundStatement}
+        <Object
+          node={funcDef.compoundStatement}
           parentInfo={childInfo(funcDef, "compoundStatement")}
-        />
+        >
+          <CompoundStatementRender
+            compoundStatement={funcDef.compoundStatement}
+            parentInfo={childInfo(funcDef, "compoundStatement")}
+          />
+        </Object>
       )}
     </>
   );
@@ -573,12 +606,15 @@ function DeclarationRender({
   nodeMap.set(varDecl.id, varDecl);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("DeclarationRender handleKeyDown:", e.key);
+
     if (mode !== "edit") {
       return;
     }
 
     if (e.key === "Enter" && !varDecl.value) {
       e.preventDefault();
+      e.stopPropagation();
       // Insert an unknown node as the value
       const newUnknown: objects.Unknown = {
         id: crypto.randomUUID(),
@@ -600,7 +636,7 @@ function DeclarationRender({
         <>
           {" "}
           {"="}{" "}
-          <Object node={varDecl.value} display="inline">
+          <Object node={varDecl.value} display="inline" parentInfo={childInfo(varDecl, "value")}>
             <NodeRender node={varDecl.value} parentInfo={childInfo(varDecl, "value")} />
           </Object>
         </>
@@ -639,13 +675,32 @@ function FunctionParameterRender({
 }
 
 function CompoundStatementRender({
-  compoundStatement: compStmt,
+  compoundStatement,
 }: {
   compoundStatement: objects.CompoundStatement;
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
+  const { onEdit, nodeMap, mode, selectedNodeId } = useLineContext();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("CompoundStatementRender handleKeyDown:", e.key);
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === compoundStatement.id) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Insert unknown node in compound statement
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      compoundStatement.codeBlock.unshift(newUnknown);
+      nodeMap.set(newUnknown.id, newUnknown);
+      // Notify of the edit
+      onEdit(compoundStatement, "codeBlock");
+    }
+  };
   return (
-    <>
+    <span onKeyDown={handleKeyDown} tabIndex={0}>
       <span className="token-delimiter">{"{"}</span>
       <div
         style={{
@@ -654,31 +709,79 @@ function CompoundStatementRender({
           paddingLeft: "20px",
         }}
       >
-        {compStmt.codeBlock.map((node, i) => (
-          <Object key={node.id} node={node}>
-            <NodeRender node={node} parentInfo={childInfo(compStmt, "codeBlock", i)} />
+        {compoundStatement.codeBlock.map((node, i) => (
+          <Object
+            key={node.id}
+            node={node}
+            parentInfo={childInfo(compoundStatement, "codeBlock", i)}
+          >
+            <NodeRender node={node} parentInfo={childInfo(compoundStatement, "codeBlock", i)} />
           </Object>
         ))}
       </div>
       <span className="token-delimiter">{"}"}</span>
-    </>
+    </span>
   );
 }
 
 function IfStatementRender({ ifStatement }: { ifStatement: objects.IfStatement }): React.ReactNode {
+  const { mode, onEdit, nodeMap, selectedNodeId } = useLineContext();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("IfStatementRender handleKeyDown:", e.key);
+    // Enter on edit mode should insert else clause if not present
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === ifStatement.id) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (!ifStatement.elseStatement) {
+        const newElseClause: objects.ElseClause = {
+          id: crypto.randomUUID(),
+          type: "elseClause",
+          body: {
+            id: crypto.randomUUID(),
+            type: "compoundStatement",
+            codeBlock: [],
+          },
+        };
+        ifStatement.elseStatement = newElseClause;
+        nodeMap.set(newElseClause.id, newElseClause);
+        nodeMap.set(newElseClause.body.id, newElseClause.body);
+        // Notify of the edit
+        onEdit(ifStatement, "elseStatement");
+        console.log("Inserted else clause for if statement:", ifStatement.id);
+      }
+    }
+  };
   return (
-    <>
+    <span tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
       {<NodeRender node={ifStatement.condition} parentInfo={childInfo(ifStatement, "condition")} />}
       <span className="token-keyword">{")"}</span>{" "}
-      {compoundStatementObjectRender(ifStatement.body, childInfo(ifStatement, "body"))}
+      <Object node={ifStatement.body} parentInfo={childInfo(ifStatement, "body")} display="inline">
+        {compoundStatementObjectRender(ifStatement.body, childInfo(ifStatement, "body"))}
+      </Object>
       {ifStatement.elseStatement &&
         (ifStatement.elseStatement.type === "elseClause" ? (
-          <ElseClauseRender elseClause={ifStatement.elseStatement} />
+          <Object
+            node={ifStatement.elseStatement}
+            parentInfo={childInfo(ifStatement, "elseStatement")}
+            display="inline"
+          >
+            <ElseClauseRender elseClause={ifStatement.elseStatement} />
+          </Object>
         ) : (
-          <IfStatementRender ifStatement={ifStatement.elseStatement} />
+          <>
+            <span className="token-keyword"> else </span>
+            <Object
+              node={ifStatement.elseStatement}
+              parentInfo={childInfo(ifStatement, "elseStatement")}
+              display="inline"
+            >
+              <IfStatementRender ifStatement={ifStatement.elseStatement} />
+            </Object>
+          </>
         ))}
-    </>
+    </span>
   );
 }
 
@@ -730,11 +833,45 @@ function compoundStatementObjectRender(
 }
 
 function ElseClauseRender({ elseClause }: { elseClause: objects.ElseClause }): React.ReactNode {
+  // handle enter to convert to ifStatement
+  const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo } = useLineContext();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("ElseClauseRender handleKeyDown:", e.key);
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === elseClause.id) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Convert to ifStatement
+      const newIfStatement: objects.IfStatement = {
+        id: crypto.randomUUID(),
+        type: "ifStatement",
+        condition: {
+          id: crypto.randomUUID(),
+          type: "unknown",
+          content: "",
+        },
+        body: elseClause.body,
+      };
+      nodeMap.set(newIfStatement.id, newIfStatement);
+      nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
+
+      if (!parentNodeInfo) {
+        console.error("Parent node info is undefined for else clause:", elseClause.id);
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
+      onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+    }
+  };
   return (
     <>
-      {" "}
-      <span className="token-keyword">else</span>
-      {compoundStatementObjectRender(elseClause.body, childInfo(elseClause, "body"))}
+      <span className="token-keyword" onKeyDown={handleKeyDown} tabIndex={0}>
+        {" else "}
+      </span>
+      <Object node={elseClause.body} parentInfo={childInfo(elseClause, "body")} display="inline">
+        {compoundStatementObjectRender(elseClause.body, childInfo(elseClause, "body"))}
+      </Object>
     </>
   );
 }
@@ -746,7 +883,7 @@ function ReturnStatementRender({
   parentInfo: ParentInfoV2;
 }): React.ReactNode {
   return (
-    <>
+    <div tabIndex={0}>
       <span className="token-keyword">return</span>
       {returnStmt.value && (
         <>
@@ -755,7 +892,7 @@ function ReturnStatementRender({
         </>
       )}
       {";"}
-    </>
+    </div>
   );
 }
 
