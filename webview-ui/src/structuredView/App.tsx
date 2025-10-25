@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SourceFileRender } from "../components/line";
 import ModeIndicator from "../components/ModeIndicator";
 import { LineProvider } from "../components/lineContext";
@@ -6,8 +6,29 @@ import { LineProvider } from "../components/lineContext";
 import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
 import { DebugProvider } from "../components/debugContext";
-import { ParentInfoV2 } from "../components/context";
+import { ParentInfoV2, useLineContext } from "../components/context";
 import DebugMenu from "../components/DebugMenu";
+import { getFirstEditableField } from "../lib/editionHelpers";
+
+// Component that handles initial focus request
+function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile }) {
+  const { requestFocus } = useLineContext();
+  const hasRequestedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasRequestedRef.current && sourceFile.code.length > 0) {
+      const firstNode = sourceFile.code[0];
+      const firstField = getFirstEditableField(firstNode);
+      if (firstField !== null) {
+        console.log("Requesting initial focus on first node:", firstNode.id, "field:", firstField);
+        requestFocus(firstNode.id, firstField);
+        hasRequestedRef.current = true;
+      }
+    }
+  }, [sourceFile, requestFocus]);
+
+  return null;
+}
 
 export default function App() {
   const [sourceFile, setSourceFile] = useState<objects.SourceFile | undefined>(undefined);
@@ -75,6 +96,7 @@ export default function App() {
             setSelectedKey={setSelectedKey}
             setParentNodeInfo={setParentNodeInfo}
           >
+            <InitialFocusHandler sourceFile={sourceFile} />
             <ModeIndicator />
             <SourceFileRender node={sourceFile} />
             <DebugMenu />
