@@ -1,213 +1,16 @@
 import React from "react";
-import { useLineContext, ParentInfoV2, NodeCallbacks, EditorMode } from "./context";
+import { useLineContext, ParentInfoV2, NodeCallbacks } from "./context";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";
-
-/**
- * Keyboard command abstraction for structured editing
- *
- * This provides a higher-level interface for handling keyboard interactions in the editor.
- * Instead of dealing with raw key events, render functions specify named commands they support.
- *
- * Available commands:
- * - View mode:
- *   - insertSibling: Create a sibling node (mapped to Enter key)
- *   - delete: Remove the current node (mapped to Delete key)
- *
- * - Edit mode:
- *   - insert: Insert new content/child nodes (mapped to Enter key)
- *   - delete: Remove content (mapped to Delete key)
- *   - convert: Convert node type (mapped to Escape key)
- *
- * The abstraction automatically handles:
- * - Event propagation (stopPropagation)
- * - Default behavior prevention (preventDefault)
- * - Mode-specific command routing
- *
- * Usage:
- *   const handleKeyDown = createKeyDownHandler(mode, {
- *     edit: {
- *       insert: () => { ... }
- *     }
- *   });
- */
-
-// Command types that render functions can use
-type CommandHandler = () => void;
-
-interface CommandHandlers {
-  view?: {
-    insertSibling?: CommandHandler;
-    delete?: CommandHandler;
-  };
-  edit?: {
-    insert?: CommandHandler;
-    delete?: CommandHandler;
-    convert?: CommandHandler;
-  };
-}
-
-// Key mapping for each mode
-const KEY_MAPPINGS = {
-  view: {
-    Enter: "insertSibling",
-    Delete: "delete",
-  },
-  edit: {
-    Enter: "insert",
-    Delete: "delete",
-    Escape: "convert",
-  },
-} as const;
-
-// Helper to create structured keydown handlers with automatic event management
-function createKeyDownHandler(
-  mode: EditorMode,
-  commands: CommandHandlers
-): (e: React.KeyboardEvent) => void {
-  return (e: React.KeyboardEvent) => {
-    const modeCommands = commands[mode];
-    if (!modeCommands) {
-      return;
-    }
-
-    const keyMapping = KEY_MAPPINGS[mode];
-    const commandName = keyMapping[e.key as keyof typeof keyMapping];
-    if (!commandName) {
-      return;
-    }
-
-    const command = modeCommands[commandName as keyof typeof modeCommands];
-    if (command) {
-      e.preventDefault();
-      e.stopPropagation();
-      command();
-    }
-  };
-}
-
-// Helper to create a new unknown node
-function createUnknownNode(): objects.Unknown {
-  return {
-    id: crypto.randomUUID(),
-    type: "unknown",
-    content: "",
-  };
-}
-
-// Helper for common insert pattern: insert unknown node into optional field
-function insertUnknownIntoField<T extends objects.LanguageObject, K extends string & keyof T>(
-  node: T,
-  key: K,
-  nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K | null) => void,
-  requestFocus?: (nodeId: string, fieldKey: string) => void
-): void {
-  const newUnknown = createUnknownNode();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (node as any)[key] = newUnknown;
-  nodeMap.set(newUnknown.id, newUnknown);
-  onEdit(node, key);
-  if (requestFocus) {
-    requestFocus(newUnknown.id, "content");
-  }
-}
-
-// Helper to prepend an unknown node to an array field
-function prependUnknownToArray<T extends objects.LanguageObject, K extends string & keyof T>(
-  node: T,
-  key: K,
-  nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K) => void
-): void {
-  const newUnknown = createUnknownNode();
-  const array = node[key] as unknown as objects.LanguageObject[];
-  array.unshift(newUnknown);
-  nodeMap.set(newUnknown.id, newUnknown);
-  onEdit(node, key);
-}
-
-// Helper to create callbacks for array fields (supports insert & delete)
-function createArrayFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
-  parent: T,
-  key: K,
-  index: number,
-  nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
-  onEdit: (node: T, key: K) => void,
-  requestFocus: (nodeId: string, fieldKey: string) => void
-): NodeCallbacks {
-  return {
-    onInsertSibling: (node: objects.LanguageObject) => {
-      console.log("Inserting sibling after node:", node.id, " at index:", index);
-      const field = parent[key] as unknown as objects.LanguageObject[];
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
-      const newArray = [...field.slice(0, index + 1), newUnknown, ...field.slice(index + 1)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = newArray;
-      nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(parent, key);
-      requestFocus(newUnknown.id, "content");
-    },
-    onDelete: (node: objects.LanguageObject) => {
-      console.log("Deleting node:", node.id, " at index:", index);
-      const field = parent[key] as unknown as objects.LanguageObject[];
-      const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = newArray;
-      nodeMap.delete(node.id);
-      onEdit(parent, key);
-    },
-  };
-}
-
-// Helper to create callbacks for optional single-value fields (delete sets to null)
-function createOptionalFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
-  parent: T,
-  key: K,
-  nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K) => void
-): NodeCallbacks {
-  return {
-    onDelete: (node: objects.LanguageObject) => {
-      console.log("Deleting optional field:", key, " node:", node.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = null;
-      nodeMap.delete(node.id);
-      onEdit(parent, key);
-    },
-  };
-}
-
-// Helper to create callbacks for required single-value fields (delete replaces with unknown)
-function createRequiredFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
-  parent: T,
-  key: K,
-  nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K) => void,
-  requestFocus: (nodeId: string, fieldKey: string) => void
-): NodeCallbacks {
-  return {
-    onDelete: (node: objects.LanguageObject) => {
-      console.log("Replacing required field:", key, " node:", node.id, " with unknown");
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parent as any)[key] = newUnknown;
-      nodeMap.delete(node.id);
-      nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(parent, key);
-      requestFocus(newUnknown.id, "content");
-    },
-  };
-}
+import { createKeyDownHandler } from "../lib/keyBinds";
+import {
+  createArrayFieldCallbacks,
+  createOptionalFieldCallbacks,
+  insertUnknownIntoField,
+  prependUnknownToArray,
+  createRequiredFieldCallbacks,
+} from "../lib/editionHelpers";
 
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
@@ -422,11 +225,6 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
         const key = props.parentInfo.key;
         onRequestAvailableInserts(parent.id, key);
         setShowDropdown(true);
-      },
-      convert: () => {
-        if (showDropdown) {
-          setShowDropdown(false);
-        }
       },
     },
   });
@@ -848,7 +646,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      convert: () => {
+      insert: () => {
         if (selectedNodeId === props.node.id) {
           console.log("ElseClauseRender: Converting to ifStatement");
           // Convert to ifStatement

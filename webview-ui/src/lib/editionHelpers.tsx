@@ -1,0 +1,131 @@
+import * as objects from "../../../src/language_objects/cNodes";
+import { NodeCallbacks } from "../components/context";
+
+// Helper to create a new unknown node
+function createUnknownNode(): objects.Unknown {
+  return {
+    id: crypto.randomUUID(),
+    type: "unknown",
+    content: "",
+  };
+}
+// Helper for common insert pattern: insert unknown node into optional field
+export function insertUnknownIntoField<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  node: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K | null) => void,
+  requestFocus?: (nodeId: string, fieldKey: string) => void
+): void {
+  const newUnknown = createUnknownNode();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (node as any)[key] = newUnknown;
+  nodeMap.set(newUnknown.id, newUnknown);
+  onEdit(node, key);
+  if (requestFocus) {
+    requestFocus(newUnknown.id, "content");
+  }
+}
+// Helper to prepend an unknown node to an array field
+export function prependUnknownToArray<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void
+): void {
+  const newUnknown = createUnknownNode();
+  const array = node[key] as unknown as objects.LanguageObject[];
+  array.unshift(newUnknown);
+  nodeMap.set(newUnknown.id, newUnknown);
+  onEdit(node, key);
+}
+// Helper to create callbacks for array fields (supports insert & delete)
+export function createArrayFieldCallbacks<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  parent: T,
+  key: K,
+  index: number,
+  nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (nodeId: string, fieldKey: string) => void
+): NodeCallbacks {
+  return {
+    onInsertSibling: (node: objects.LanguageObject) => {
+      console.log("Inserting sibling after node:", node.id, " at index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      const newArray = [...field.slice(0, index + 1), newUnknown, ...field.slice(index + 1)];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(parent, key);
+      requestFocus(newUnknown.id, "content");
+    },
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Deleting node:", node.id, " at index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.delete(node.id);
+      onEdit(parent, key);
+    },
+  };
+}
+// Helper to create callbacks for optional single-value fields (delete sets to null)
+export function createOptionalFieldCallbacks<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  parent: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void
+): NodeCallbacks {
+  return {
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Deleting optional field:", key, " node:", node.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = null;
+      nodeMap.delete(node.id);
+      onEdit(parent, key);
+    },
+  };
+}
+// Helper to create callbacks for required single-value fields (delete replaces with unknown)
+export function createRequiredFieldCallbacks<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  parent: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (nodeId: string, fieldKey: string) => void
+): NodeCallbacks {
+  return {
+    onDelete: (node: objects.LanguageObject) => {
+      console.log("Replacing required field:", key, " node:", node.id, " with unknown");
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newUnknown;
+      nodeMap.delete(node.id);
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(parent, key);
+      requestFocus(newUnknown.id, "content");
+    },
+  };
+}
