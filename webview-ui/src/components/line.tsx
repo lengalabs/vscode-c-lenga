@@ -49,6 +49,7 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
   key: K;
   parentInfo: ParentInfoV2;
   className?: string;
+  placeholder: string;
 }
 
 function EditableField<T extends objects.LanguageObject, K extends string & keyof T>({
@@ -56,6 +57,7 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
   key,
   parentInfo,
   className,
+  placeholder,
 }: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
@@ -101,7 +103,8 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
   }, [focusRequest, node.id, key, clearFocusRequest]);
 
   // width in ch units, at least 1ch
-  const width = Math.max(1, inputValue.length) + "ch";
+  const width =
+    (inputValue.length === 0 ? placeholder.length : Math.max(1, inputValue.length)) + "ch";
 
   return (
     <input
@@ -117,6 +120,7 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
         width, // dynamically set width in ch
       }}
       value={inputValue}
+      placeholder={placeholder}
       onChange={(e) => setInputValue(e.target.value)}
       onFocus={() => {
         setSelectedKey(key);
@@ -309,7 +313,12 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({ node: props.node, key: "content", parentInfo: props.parentInfo })}
+      {EditableField({
+        node: props.node,
+        key: "content",
+        parentInfo: props.parentInfo,
+        placeholder: "value",
+      })}
       {showDropdown && availableInserts && availableInserts.length > 0 && (
         <select
           ref={dropdownRef}
@@ -353,6 +362,7 @@ function PreprocIncludeRender({
         key: "content",
         parentInfo,
         className: "token-string",
+        placeholder: "file.h",
       })}
     </>
   );
@@ -395,12 +405,14 @@ function FunctionDeclarationRender(
         key: "returnType",
         parentInfo: props.parentInfo,
         className: "token-type",
+        placeholder: "type",
       })}
       {EditableField({
         node: props.node,
         key: "identifier",
         parentInfo: props.parentInfo,
         className: "token-function",
+        placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
 
@@ -454,7 +466,6 @@ function FunctionDefinitionRender(
     },
   });
 
-  // TODO why not Object?
   const content = (
     <span onKeyDown={handleKeyDown}>
       {EditableField({
@@ -462,12 +473,14 @@ function FunctionDefinitionRender(
         key: "returnType",
         parentInfo: props.parentInfo,
         className: "token-type",
+        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
         key: "identifier",
         parentInfo: props.parentInfo,
         className: "token-function",
+        placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
       {props.node.parameterList.map((param, i) => (
@@ -525,12 +538,14 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
         key: "primitiveType",
         parentInfo: props.parentInfo,
         className: "token-type",
+        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
         key: "identifier",
         parentInfo: props.parentInfo,
         className: "token-variable",
+        placeholder: "name",
       })}
       {props.node.value && (
         <>
@@ -562,12 +577,14 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
         key: "paramType",
         parentInfo: props.parentInfo,
         className: "token-type",
+        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
         key: "identifier",
         parentInfo: props.parentInfo,
         className: "token-variable",
+        placeholder: "name",
       })}
     </>
   );
@@ -932,6 +949,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
         key: "identifier",
         parentInfo: props.parentInfo,
         className: "token-function",
+        placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
       {props.node.argumentList.map((arg, i) => (
@@ -1007,6 +1025,7 @@ function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.
         key: "value",
         parentInfo: props.parentInfo,
         className: "token-number",
+        placeholder: "0",
       })}
     </>
   );
@@ -1023,6 +1042,7 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
         key: "value",
         parentInfo: props.parentInfo,
         className: "token-string",
+        placeholder: "text",
       })}
       <span className="token-string">{'"'}</span>
     </>
@@ -1042,7 +1062,12 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "left", nodeMap, onEdit, requestFocus)}
       />{" "}
-      {EditableField({ node: props.node, key: "operator", parentInfo: props.parentInfo })}{" "}
+      {EditableField({
+        node: props.node,
+        key: "operator",
+        parentInfo: props.parentInfo,
+        placeholder: "op",
+      })}{" "}
       <NodeRender
         node={props.node.right}
         parentInfo={childInfo(props.node, "right")}
@@ -1064,6 +1089,7 @@ function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
         key: "content",
         parentInfo: props.parentInfo,
         className: "token-comment",
+        placeholder: "comment",
       })}
     </>
   );
