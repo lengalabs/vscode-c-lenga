@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NodeRender, Object } from "../components/line";
+import { NodeRender } from "../components/line";
 import ModeIndicator from "../components/ModeIndicator";
 import { childInfo } from "../components/childInfo";
 import { LineProvider } from "../components/lineContext";
@@ -79,9 +79,11 @@ export default function App() {
             <ModeIndicator />
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {sourceFile?.code.map((node, i) => (
-                <Object key={node.id} node={node} parentInfo={childInfo(sourceFile, "code", i)}>
-                  <NodeRender node={node} parentInfo={childInfo(sourceFile, "code", i)} />
-                </Object>
+                <NodeRender
+                  key={node.id}
+                  node={node}
+                  parentInfo={childInfo(sourceFile, "code", i)}
+                />
               ))}
             </div>
             <DebugMenu />

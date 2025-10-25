@@ -1,5 +1,5 @@
 import { FunctionDefinition } from "../../../../src/language_objects/cNodes";
-import { Object, NodeRender } from "../../components/line";
+import { NodeRender } from "../../components/line";
 import { ParentInfoV2 } from "../../components/context";
 import { Position, Handle } from "@xyflow/react";
 
@@ -19,9 +19,7 @@ export function FunctionNode({
 
   return (
     <div className="function-node">
-      <Object node={data.func} parentInfo={data.parentInfo}>
-        <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
-      </Object>
+      <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
 
       <Handle
         type="target"
