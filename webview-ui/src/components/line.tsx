@@ -10,6 +10,9 @@ import {
   insertUnknownIntoField,
   prependUnknownToArray,
   createRequiredFieldCallbacks,
+  createParameter,
+  appendToArray,
+  createUnknown,
 } from "../lib/editionHelpers";
 
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
@@ -356,11 +359,29 @@ function PreprocIncludeRender({
 function FunctionDeclarationRender(
   props: XRenderProps<objects.FunctionDeclaration>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("FunctionDeclarationRender: Appending parameter");
+          appendToArray(
+            props.node,
+            "parameterList",
+            createParameter,
+            nodeMap,
+            onEdit,
+            requestFocus
+          );
+        }
+      },
+    },
+  });
+
   const content = (
-    <>
+    <span onKeyDown={handleKeyDown}>
       {EditableField({
         node: props.node,
         key: "returnType",
@@ -385,6 +406,7 @@ function FunctionDeclarationRender(
               props.node,
               "parameterList",
               i,
+              createParameter,
               nodeMap,
               onEdit,
               requestFocus
@@ -394,7 +416,7 @@ function FunctionDeclarationRender(
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
-    </>
+    </span>
   );
 
   return <Object {...props}>{content}</Object>;
@@ -403,11 +425,30 @@ function FunctionDeclarationRender(
 function FunctionDefinitionRender(
   props: XRenderProps<objects.FunctionDefinition>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("FunctionDefinitionRender: Appending parameter");
+          appendToArray(
+            props.node,
+            "parameterList",
+            createParameter,
+            nodeMap,
+            onEdit,
+            requestFocus
+          );
+        }
+      },
+    },
+  });
+
+  // TODO why not Object?
   const content = (
-    <>
+    <span onKeyDown={handleKeyDown}>
       {EditableField({
         node: props.node,
         key: "returnType",
@@ -432,6 +473,7 @@ function FunctionDefinitionRender(
               props.node,
               "parameterList",
               i,
+              createParameter,
               nodeMap,
               onEdit,
               requestFocus
@@ -447,7 +489,7 @@ function FunctionDefinitionRender(
           callbacks={createOptionalFieldCallbacks(props.node, "compoundStatement", nodeMap, onEdit)}
         />
       )}
-    </>
+    </span>
   );
 
   return <Object {...props}>{content}</Object>;
@@ -579,6 +621,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
                 props.node,
                 "code",
                 i,
+                createUnknown,
                 nodeMap,
                 onEdit,
                 requestFocus
@@ -626,6 +669,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
               props.node,
               "codeBlock",
               i,
+              createUnknown,
               nodeMap,
               onEdit,
               requestFocus
@@ -854,10 +898,21 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
 }
 
 function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
+
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("CallExpressionRender: Appending argument");
+          appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
+        }
+      },
+    },
+  });
 
   const content = (
-    <>
+    <span onKeyDown={handleKeyDown}>
       {EditableField({
         node: props.node,
         key: "identifier",
@@ -876,6 +931,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
               props.node,
               "argumentList",
               i,
+              createUnknown,
               nodeMap,
               onEdit,
               requestFocus
@@ -885,7 +941,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
       ))}
       <span className="token-delimiter">{")"}</span>
       {";"}
-    </>
+    </span>
   );
 
   return <Object {...props}>{content}</Object>;

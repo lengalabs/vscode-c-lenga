@@ -42,6 +42,25 @@ export function prependUnknownToArray<T extends objects.LanguageObject, K extend
   nodeMap.set(newUnknown.id, newUnknown);
   onEdit(node, key);
 }
+
+// Helper to append an unknown node to an array field
+export function appendToArray<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: T,
+  key: K,
+  constructor: (
+    requestFocus?: (nodeId: string, fieldKey: string) => void
+  ) => objects.LanguageObject,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus?: (nodeId: string, fieldKey: string) => void
+): void {
+  const newNode = constructor(requestFocus);
+  const array = node[key] as unknown as objects.LanguageObject[];
+  array.push(newNode);
+  nodeMap.set(newNode.id, newNode);
+  onEdit(node, key);
+}
+
 // Helper to create callbacks for array fields (supports insert & delete)
 export function createArrayFieldCallbacks<
   T extends objects.LanguageObject,
@@ -50,6 +69,9 @@ export function createArrayFieldCallbacks<
   parent: T,
   key: K,
   index: number,
+  constructor: (
+    requestFocus?: (nodeId: string, fieldKey: string) => void
+  ) => objects.LanguageObject,
   nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
   onEdit: (node: T, key: K) => void,
   requestFocus: (nodeId: string, fieldKey: string) => void
@@ -58,11 +80,7 @@ export function createArrayFieldCallbacks<
     onInsertSibling: (node: objects.LanguageObject) => {
       console.log("Inserting sibling after node:", node.id, " at index:", index);
       const field = parent[key] as unknown as objects.LanguageObject[];
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
+      const newUnknown = constructor(requestFocus);
       const newArray = [...field.slice(0, index + 1), newUnknown, ...field.slice(index + 1)];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = newArray;
@@ -128,4 +146,33 @@ export function createRequiredFieldCallbacks<
       requestFocus(newUnknown.id, "content");
     },
   };
+}
+
+export function createUnknown(
+  requestFocus?: (nodeId: string, fieldKey: string) => void
+): objects.Unknown {
+  const newUnknown: objects.Unknown = {
+    id: crypto.randomUUID(),
+    type: "unknown",
+    content: "",
+  };
+  if (requestFocus) {
+    requestFocus(newUnknown.id, "content");
+  }
+  return newUnknown;
+}
+
+export function createParameter(
+  requestFocus?: (nodeId: string, fieldKey: string) => void
+): objects.FunctionParameter {
+  const newParameter: objects.FunctionParameter = {
+    id: crypto.randomUUID(),
+    type: "functionParameter",
+    paramType: "void",
+    identifier: "",
+  };
+  if (requestFocus) {
+    requestFocus(newParameter.id, "paramType");
+  }
+  return newParameter;
 }
