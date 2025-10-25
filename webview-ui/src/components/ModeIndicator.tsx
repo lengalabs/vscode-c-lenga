@@ -38,7 +38,6 @@ export default function ModeIndicator() {
         onBlur={() => setIsHovered(false)}
         onKeyDown={handleKeyDown}
         role="button"
-        tabIndex={0}
         aria-describedby={isHovered ? keyHintId : undefined}
         style={{
           padding: "5px 10px",
