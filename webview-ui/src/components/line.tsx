@@ -214,7 +214,7 @@ export function NodeRender(props: NodeRenderProps): React.ReactNode {
 }
 
 function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
-  const { mode, onRequestAvailableInserts, availableInserts, onEdit } = useLineContext();
+  const { mode, onRequestAvailableInserts, availableInserts } = useLineContext();
   const [showDropdown, setShowDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLSelectElement>(null);
 
@@ -248,34 +248,13 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
     const selectedIndex = parseInt(dropdownRef.current.value);
     if (availableInserts && selectedIndex >= 0) {
       const selectedOption = availableInserts[selectedIndex];
-
-      // Replace the unknown node with the selected option
-      const parent = props.parentInfo.parent;
-      const key = props.parentInfo.key;
-      const index = props.parentInfo.index;
-      console.log("Parent before insert:", parent, " key:", key, " index:", index);
       console.log("Selected option to insert:", selectedOption);
 
-      if (Array.isArray(parent[key])) {
-        console.log("Inserting into array field");
-        const field = parent[key] as objects.LanguageObject[];
-        const newArray = [...field];
-        newArray[index] = selectedOption;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (parent as any)[key] = newArray;
-        console.log("Parent after insert:", parent);
-        // Notify of the edit
-        onEdit(parent, key);
-      } else if (typeof parent[key] === "object") {
-        console.log("Parent field is single-valued, replacing directly");
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (parent as any)[key] = selectedOption;
-        console.log("Parent after insert:", parent);
-        onEdit(parent, key);
+      // Use the replace callback if provided
+      if (props.callbacks?.onReplace) {
+        props.callbacks.onReplace(props.node, selectedOption);
       } else {
-        console.error("Parent field is neither array nor object, cannot insert");
+        console.warn("No onReplace callback provided for UnknownRender");
       }
 
       setShowDropdown(false);

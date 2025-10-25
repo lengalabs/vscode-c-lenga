@@ -31,6 +31,7 @@ export type EditorMode = "view" | "edit";
 export interface NodeCallbacks {
   onInsertSibling?: (node: objects.LanguageObject) => void;
   onDelete?: (node: objects.LanguageObject) => void;
+  onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
 }
 
 export interface LineContextType {

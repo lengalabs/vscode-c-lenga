@@ -97,6 +97,17 @@ export function createArrayFieldCallbacks<
       nodeMap.delete(node.id);
       onEdit(parent, key);
     },
+    onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
+      console.log("Replacing node:", oldNode.id, " at index:", index, " with:", newNode.id);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newArray = [...field];
+      newArray[index] = newNode;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.delete(oldNode.id);
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
+    },
   };
 }
 // Helper to create callbacks for optional single-value fields (delete sets to null)
@@ -115,6 +126,14 @@ export function createOptionalFieldCallbacks<
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = null;
       nodeMap.delete(node.id);
+      onEdit(parent, key);
+    },
+    onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
+      console.log("Replacing optional field:", key, " old node:", oldNode.id, " with:", newNode.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newNode;
+      nodeMap.delete(oldNode.id);
+      nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
     },
   };
@@ -144,6 +163,14 @@ export function createRequiredFieldCallbacks<
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
       requestFocus(newUnknown.id, "content");
+    },
+    onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
+      console.log("Replacing required field:", key, " old node:", oldNode.id, " with:", newNode.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newNode;
+      nodeMap.delete(oldNode.id);
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
     },
   };
 }
