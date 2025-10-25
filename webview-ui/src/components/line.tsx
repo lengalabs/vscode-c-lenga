@@ -1,8 +1,132 @@
 import React from "react";
-import { useLineContext, ParentInfoV2, NodeCallbacks } from "./context";
+import { useLineContext, ParentInfoV2, NodeCallbacks, EditorMode } from "./context";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";
+
+/**
+ * Keyboard command abstraction for structured editing
+ *
+ * This provides a higher-level interface for handling keyboard interactions in the editor.
+ * Instead of dealing with raw key events, render functions specify named commands they support.
+ *
+ * Available commands:
+ * - View mode:
+ *   - insertSibling: Create a sibling node (mapped to Enter key)
+ *   - delete: Remove the current node (mapped to Delete key)
+ *
+ * - Edit mode:
+ *   - insert: Insert new content/child nodes (mapped to Enter key)
+ *   - delete: Remove content (mapped to Delete key)
+ *   - convert: Convert node type (mapped to Escape key)
+ *
+ * The abstraction automatically handles:
+ * - Event propagation (stopPropagation)
+ * - Default behavior prevention (preventDefault)
+ * - Mode-specific command routing
+ *
+ * Usage:
+ *   const handleKeyDown = createKeyDownHandler(mode, {
+ *     edit: {
+ *       insert: () => { ... }
+ *     }
+ *   });
+ */
+
+// Command types that render functions can use
+type CommandHandler = () => void;
+
+interface CommandHandlers {
+  view?: {
+    insertSibling?: CommandHandler;
+    delete?: CommandHandler;
+  };
+  edit?: {
+    insert?: CommandHandler;
+    delete?: CommandHandler;
+    convert?: CommandHandler;
+  };
+}
+
+// Key mapping for each mode
+const KEY_MAPPINGS = {
+  view: {
+    Enter: "insertSibling",
+    Delete: "delete",
+  },
+  edit: {
+    Enter: "insert",
+    Delete: "delete",
+    Escape: "convert",
+  },
+} as const;
+
+// Helper to create structured keydown handlers with automatic event management
+function createKeyDownHandler(
+  mode: EditorMode,
+  commands: CommandHandlers
+): (e: React.KeyboardEvent) => void {
+  return (e: React.KeyboardEvent) => {
+    const modeCommands = commands[mode];
+    if (!modeCommands) {
+      return;
+    }
+
+    const keyMapping = KEY_MAPPINGS[mode];
+    const commandName = keyMapping[e.key as keyof typeof keyMapping];
+    if (!commandName) {
+      return;
+    }
+
+    const command = modeCommands[commandName as keyof typeof modeCommands];
+    if (command) {
+      e.preventDefault();
+      e.stopPropagation();
+      command();
+    }
+  };
+}
+
+// Helper to create a new unknown node
+function createUnknownNode(): objects.Unknown {
+  return {
+    id: crypto.randomUUID(),
+    type: "unknown",
+    content: "",
+  };
+}
+
+// Helper for common insert pattern: insert unknown node into optional field
+function insertUnknownIntoField<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K | null) => void,
+  requestFocus?: (nodeId: string, fieldKey: string) => void
+): void {
+  const newUnknown = createUnknownNode();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (node as any)[key] = newUnknown;
+  nodeMap.set(newUnknown.id, newUnknown);
+  onEdit(node, key);
+  if (requestFocus) {
+    requestFocus(newUnknown.id, "content");
+  }
+}
+
+// Helper to prepend an unknown node to an array field
+function prependUnknownToArray<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: T,
+  key: K,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void
+): void {
+  const newUnknown = createUnknownNode();
+  const array = node[key] as unknown as objects.LanguageObject[];
+  array.unshift(newUnknown);
+  nodeMap.set(newUnknown.id, newUnknown);
+  onEdit(node, key);
+}
 
 // Helper to create callbacks for array fields (supports insert & delete)
 function createArrayFieldCallbacks<T extends objects.LanguageObject, K extends string & keyof T>(
@@ -186,24 +310,22 @@ export function Object({ node, parentInfo, children, display = "block", callback
     useLineContext();
   const isSelected = selectedNodeId === node.id;
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("Object ", node.type, " handleKeyDown:", e.key);
-    if (!isSelected) {
-      return;
-    }
-
-    // Only allow inserting/deleting nodes in view mode via callbacks
-    if (e.key === "Enter" && mode === "view" && callbacks?.onInsertSibling) {
-      e.preventDefault();
-      e.stopPropagation();
-      callbacks.onInsertSibling(node);
-    } else if (e.key === "Delete" && mode === "view" && callbacks?.onDelete) {
-      console.log("Delete key pressed on node:", node);
-      e.preventDefault();
-      e.stopPropagation();
-      callbacks.onDelete(node);
-    }
-  };
+  const handleKeyDown = createKeyDownHandler(mode, {
+    view: {
+      insertSibling: () => {
+        if (isSelected && callbacks?.onInsertSibling) {
+          console.log("Object: Inserting sibling for", node.type);
+          callbacks.onInsertSibling(node);
+        }
+      },
+      delete: () => {
+        if (isSelected && callbacks?.onDelete) {
+          console.log("Object: Deleting", node.type);
+          callbacks.onDelete(node);
+        }
+      },
+    },
+  });
 
   const Element = display === "inline" ? "span" : "div";
 
@@ -291,23 +413,23 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   const dropdownRef = React.useRef<HTMLSelectElement>(null);
 
   // When in edit mode and Enter is pressed, request available inserts
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("Unknown handleKeyDown:", e.key);
-    if (e.key === "Enter" && mode === "edit") {
-      e.stopPropagation();
-      e.preventDefault();
-      console.log("Requesting available inserts for unknown node:", props.node);
-      // Get parent info from the map
-      const parent = props.parentInfo.parent;
-      const key = props.parentInfo.key;
-      onRequestAvailableInserts(parent.id, key);
-      setShowDropdown(true);
-    } else if (e.key === "Escape" && showDropdown) {
-      e.stopPropagation();
-      e.preventDefault();
-      setShowDropdown(false);
-    }
-  };
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        console.log("UnknownRender: Requesting available inserts");
+        // Get parent info from the map
+        const parent = props.parentInfo.parent;
+        const key = props.parentInfo.key;
+        onRequestAvailableInserts(parent.id, key);
+        setShowDropdown(true);
+      },
+      convert: () => {
+        if (showDropdown) {
+          setShowDropdown(false);
+        }
+      },
+    },
+  });
 
   // Focus the dropdown when it appears and options are loaded
   React.useEffect(() => {
@@ -537,29 +659,16 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
   const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("DeclarationRender handleKeyDown:", e.key);
-
-    if (mode !== "edit") {
-      return;
-    }
-
-    if (e.key === "Enter" && !props.node.value) {
-      e.preventDefault();
-      e.stopPropagation();
-      // Insert an unknown node as the value
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
-      props.node.value = newUnknown;
-      nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(props.node, null);
-      requestFocus(newUnknown.id, "content");
-      console.log("Inserted unknown node as value for declaration:", props.node.id);
-    }
-  };
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (!props.node.value) {
+          console.log("DeclarationRender: Inserting unknown node as value");
+          insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
+        }
+      },
+    },
+  });
 
   const content = (
     <span onKeyDown={handleKeyDown}>
@@ -621,24 +730,16 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
   const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("CompoundStatementRender handleKeyDown:", e.key);
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
-      e.stopPropagation();
-      e.preventDefault();
-
-      // Insert unknown node in compound statement
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
-      props.node.codeBlock.unshift(newUnknown);
-      nodeMap.set(newUnknown.id, newUnknown);
-      // Notify of the edit
-      onEdit(props.node, "codeBlock");
-    }
-  };
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("CompoundStatementRender: Inserting unknown node");
+          prependUnknownToArray(props.node, "codeBlock", nodeMap, onEdit);
+        }
+      },
+    },
+  });
 
   const content = (
     <span onKeyDown={handleKeyDown} tabIndex={0}>
@@ -676,32 +777,28 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
   const { mode, onEdit, nodeMap, selectedNodeId } = useLineContext();
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("IfStatementRender handleKeyDown:", e.key);
-    // Enter on edit mode should insert else clause if not present
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
-      e.stopPropagation();
-      e.preventDefault();
-
-      if (!props.node.elseStatement) {
-        const newElseClause: objects.ElseClause = {
-          id: crypto.randomUUID(),
-          type: "elseClause",
-          body: {
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id && !props.node.elseStatement) {
+          console.log("IfStatementRender: Inserting else clause");
+          const newElseClause: objects.ElseClause = {
             id: crypto.randomUUID(),
-            type: "compoundStatement",
-            codeBlock: [],
-          },
-        };
-        props.node.elseStatement = newElseClause;
-        nodeMap.set(newElseClause.id, newElseClause);
-        nodeMap.set(newElseClause.body.id, newElseClause.body);
-        // Notify of the edit
-        onEdit(props.node, "elseStatement");
-        console.log("Inserted else clause for if statement:", props.node.id);
-      }
-    }
-  };
+            type: "elseClause",
+            body: {
+              id: crypto.randomUUID(),
+              type: "compoundStatement",
+              codeBlock: [],
+            },
+          };
+          props.node.elseStatement = newElseClause;
+          nodeMap.set(newElseClause.id, newElseClause);
+          nodeMap.set(newElseClause.body.id, newElseClause.body);
+          onEdit(props.node, "elseStatement");
+        }
+      },
+    },
+  });
 
   const content = (
     <span tabIndex={0} onKeyDown={handleKeyDown}>
@@ -749,35 +846,36 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
   // handle enter to convert to ifStatement
   const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo } = useLineContext();
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("ElseClauseRender handleKeyDown:", e.key);
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
-      e.stopPropagation();
-      e.preventDefault();
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      convert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("ElseClauseRender: Converting to ifStatement");
+          // Convert to ifStatement
+          const newIfStatement: objects.IfStatement = {
+            id: crypto.randomUUID(),
+            type: "ifStatement",
+            condition: {
+              id: crypto.randomUUID(),
+              type: "unknown",
+              content: "",
+            },
+            body: props.node.body,
+          };
+          nodeMap.set(newIfStatement.id, newIfStatement);
+          nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
 
-      // Convert to ifStatement
-      const newIfStatement: objects.IfStatement = {
-        id: crypto.randomUUID(),
-        type: "ifStatement",
-        condition: {
-          id: crypto.randomUUID(),
-          type: "unknown",
-          content: "",
-        },
-        body: props.node.body,
-      };
-      nodeMap.set(newIfStatement.id, newIfStatement);
-      nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
-
-      if (!parentNodeInfo) {
-        console.error("Parent node info is undefined for else clause:", props.node.id);
-        return;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
-      onEdit(parentNodeInfo.parent, parentNodeInfo.key);
-    }
-  };
+          if (!parentNodeInfo) {
+            console.error("Parent node info is undefined for else clause:", props.node.id);
+            return;
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
+          onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+        }
+      },
+    },
+  });
 
   // Special callback for body - replaces with empty compound statement instead of null
   const bodyCallbacks: NodeCallbacks = {
@@ -820,24 +918,18 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 }
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
-  const { nodeMap, onEdit } = useLineContext();
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log("ReturnStatementRender handleKeyDown:", e.key);
-    // In edit mode, Enter should insert unknown node if value is null
-    if (e.key === "Enter" && !props.node.value) {
-      e.preventDefault();
-      e.stopPropagation();
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
-      props.node.value = newUnknown;
-      nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(props.node, "value");
-      console.log("Inserted unknown node as return value for return statement:", props.node.id);
-    }
-  };
+  const { nodeMap, onEdit, mode } = useLineContext();
+
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (!props.node.value) {
+          console.log("ReturnStatementRender: Inserting unknown node as return value");
+          insertUnknownIntoField(props.node, "value", nodeMap, onEdit);
+        }
+      },
+    },
+  });
 
   const content = (
     <div tabIndex={0} onKeyDown={handleKeyDown}>
