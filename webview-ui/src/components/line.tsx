@@ -157,6 +157,12 @@ export function Object({ node, parentInfo, children, display = "block", callback
           callbacks.onInsertSibling(node);
         }
       },
+      insertSiblingBefore: () => {
+        if (isSelected && callbacks?.onInsertSiblingBefore) {
+          console.log("Object: Inserting sibling before", node.type);
+          callbacks.onInsertSiblingBefore(node);
+        }
+      },
       delete: () => {
         if (isSelected && callbacks?.onDelete) {
           console.log("Object: Deleting", node.type);

@@ -9,7 +9,8 @@ import { EditorMode } from "../components/context";
  *
  * Available commands:
  * - View mode:
- *   - insertSibling: Create a sibling node (mapped to Enter key)
+ *   - insertSibling: Create a sibling node after (mapped to Enter key)
+ *   - insertSiblingBefore: Create a sibling node before (mapped to Shift+Enter)
  *   - delete: Remove the current node (mapped to Delete key)
  *
  * - Edit mode:
@@ -33,6 +34,7 @@ type CommandHandler = () => void;
 interface CommandHandlers {
   view?: {
     insertSibling?: CommandHandler;
+    insertSiblingBefore?: CommandHandler;
     delete?: CommandHandler;
   };
   edit?: {
@@ -40,17 +42,34 @@ interface CommandHandlers {
     delete?: CommandHandler;
   };
 }
-// Key mapping for each mode
-const KEY_MAPPINGS = {
+// Key combination to command name mapping
+type KeyMapping = {
+  [key: string]: string; // serialized combo -> command name
+};
+
+const KEY_MAPPINGS: Record<EditorMode, KeyMapping> = {
   view: {
     Enter: "insertSibling",
+    "Shift+Enter": "insertSiblingBefore",
     Delete: "delete",
   },
   edit: {
     Enter: "insert",
     Delete: "delete",
   },
-} as const;
+};
+
+// Helper to serialize key event to string for lookup
+// Modifiers are always in alphabetical order: Alt+Ctrl+Shift+Key
+function getKeyComboString(e: React.KeyboardEvent): string {
+  const parts: string[] = [];
+  if (e.altKey) parts.push("Alt");
+  if (e.ctrlKey) parts.push("Ctrl");
+  if (e.shiftKey) parts.push("Shift");
+  parts.push(e.key);
+  return parts.join("+");
+}
+
 // Helper to create structured keydown handlers with automatic event management
 export function createKeyDownHandler(
   mode: EditorMode,
@@ -63,7 +82,9 @@ export function createKeyDownHandler(
     }
 
     const keyMapping = KEY_MAPPINGS[mode];
-    const commandName = keyMapping[e.key as keyof typeof keyMapping];
+    const comboString = getKeyComboString(e);
+    const commandName = keyMapping[comboString];
+
     if (!commandName) {
       return;
     }

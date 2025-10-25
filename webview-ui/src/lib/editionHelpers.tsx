@@ -92,6 +92,17 @@ export function createArrayFieldCallbacks<
       onEdit(parent, key);
       requestFocus(newUnknown.id, "content");
     },
+    onInsertSiblingBefore: (node: objects.LanguageObject) => {
+      console.log("Inserting sibling before node:", node.id, " at index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newUnknown = constructor(requestFocus);
+      const newArray = [...field.slice(0, index), newUnknown, ...field.slice(index)];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(parent, key);
+      requestFocus(newUnknown.id, "content");
+    },
     onDelete: (node: objects.LanguageObject) => {
       console.log("Deleting node:", node.id, " at index:", index);
       const field = parent[key] as unknown as objects.LanguageObject[];
