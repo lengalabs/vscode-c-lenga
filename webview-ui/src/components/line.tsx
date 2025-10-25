@@ -553,29 +553,40 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 
   const content = (
     <span onKeyDown={handleKeyDown} tabIndex={0}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        {props.node.code.map((node, i) => (
-          <NodeRender
-            key={node.id}
-            node={node}
-            parentInfo={childInfo(props.node, "code", i)}
-            callbacks={createArrayFieldCallbacks(
-              props.node,
-              "code",
-              i,
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-          />
-        ))}
-      </div>
+      {props.node.code.length === 0 ? (
+        <UnknownRender
+          node={{
+            id: crypto.randomUUID(),
+            type: "unknown",
+            content: "",
+          }}
+          parentInfo={childInfo(props.node, "code")}
+        />
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
+        >
+          {props.node.code.map((node, i) => (
+            <NodeRender
+              key={node.id}
+              node={node}
+              parentInfo={childInfo(props.node, "code", i)}
+              callbacks={createArrayFieldCallbacks(
+                props.node,
+                "code",
+                i,
+                nodeMap,
+                onEdit,
+                requestFocus
+              )}
+            />
+          ))}
+        </div>
+      )}
     </span>
   );
 
