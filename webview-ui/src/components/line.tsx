@@ -903,7 +903,11 @@ function IfStatementRender({
   const content = (
     <span tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
-      <NodeRender node={ifStatement.condition} parentInfo={childInfo(ifStatement, "condition")} />
+      <NodeRender
+        node={ifStatement.condition}
+        parentInfo={childInfo(ifStatement, "condition")}
+        display="inline"
+      />
       <span className="token-keyword">{")"}</span>{" "}
       <Object node={ifStatement.body} parentInfo={childInfo(ifStatement, "body")} display="inline">
         {compoundStatementObjectRender(ifStatement.body, childInfo(ifStatement, "body"))}
@@ -1084,9 +1088,26 @@ function ReturnStatementRender({
   display?: "inline" | "block";
 }): React.ReactNode {
   const { nodeMap, onEdit } = useLineContext();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("ReturnStatementRender handleKeyDown:", e.key);
+    // In edit mode, Enter should insert unknown node if value is null
+    if (e.key === "Enter" && !returnStmt.value) {
+      e.preventDefault();
+      e.stopPropagation();
+      const newUnknown: objects.Unknown = {
+        id: crypto.randomUUID(),
+        type: "unknown",
+        content: "",
+      };
+      returnStmt.value = newUnknown;
+      nodeMap.set(newUnknown.id, newUnknown);
+      onEdit(returnStmt, "value");
+      console.log("Inserted unknown node as return value for return statement:", returnStmt.id);
+    }
+  };
 
   const content = (
-    <div tabIndex={0}>
+    <div tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">return</span>
       {returnStmt.value && (
         <>
