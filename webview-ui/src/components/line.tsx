@@ -236,173 +236,56 @@ interface NodeRenderProps {
   display?: "inline" | "block";
 }
 
-export function NodeRender({
-  node,
-  parentInfo,
-  callbacks,
-  display = "block",
-}: NodeRenderProps): React.ReactNode {
-  switch (node.type) {
+interface XRenderProps<T extends objects.LanguageObject> extends NodeRenderProps {
+  node: T;
+}
+
+export function NodeRender(props: NodeRenderProps): React.ReactNode {
+  switch (props.node.type) {
     case "preprocInclude":
-      return (
-        <PreprocIncludeRender
-          includeDecl={node as objects.PreprocInclude}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <PreprocIncludeRender {...(props as XRenderProps<objects.PreprocInclude>)} />;
     case "functionParameter":
-      return (
-        <FunctionParameterRender
-          paramDecl={node as objects.FunctionParameter}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <FunctionParameterRender {...(props as XRenderProps<objects.FunctionParameter>)} />;
     case "functionDeclaration":
       return (
-        <FunctionDeclarationRender
-          functionDeclaration={node as objects.FunctionDeclaration}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
+        <FunctionDeclarationRender {...(props as XRenderProps<objects.FunctionDeclaration>)} />
       );
     case "functionDefinition":
-      return (
-        <FunctionDefinitionRender
-          funcDef={node as objects.FunctionDefinition}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <FunctionDefinitionRender {...(props as XRenderProps<objects.FunctionDefinition>)} />;
     case "declaration":
-      return (
-        <DeclarationRender
-          varDecl={node as objects.Declaration}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <DeclarationRender {...(props as XRenderProps<objects.Declaration>)} />;
     case "returnStatement":
-      return (
-        <ReturnStatementRender
-          returnStmt={node as objects.ReturnStatement}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <ReturnStatementRender {...(props as XRenderProps<objects.ReturnStatement>)} />;
     case "compoundStatement":
-      return (
-        <CompoundStatementRender
-          compoundStatement={node as objects.CompoundStatement}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <CompoundStatementRender {...(props as XRenderProps<objects.CompoundStatement>)} />;
     case "callExpression":
-      return (
-        <CallExpressionRender
-          callExpr={node as objects.CallExpression}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <CallExpressionRender {...(props as XRenderProps<objects.CallExpression>)} />;
     case "reference":
-      return (
-        <ReferenceRender
-          reference={node as objects.Reference}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <ReferenceRender {...(props as XRenderProps<objects.Reference>)} />;
     case "assignmentExpression":
       return (
-        <AssignmentExpressionRender
-          assignmentExpr={node as objects.AssignmentExpression}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
+        <AssignmentExpressionRender {...(props as XRenderProps<objects.AssignmentExpression>)} />
       );
     case "numberLiteral":
-      return (
-        <NumberLiteralRender
-          literalExpr={node as objects.NumberLiteral}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <NumberLiteralRender {...(props as XRenderProps<objects.NumberLiteral>)} />;
     case "stringLiteral":
-      return (
-        <StringLiteralRender
-          literalExpr={node as objects.StringLiteral}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <StringLiteralRender {...(props as XRenderProps<objects.StringLiteral>)} />;
     case "binaryExpression":
-      return (
-        <BinaryExpressionRender
-          binaryExpression={node as objects.BinaryExpression}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <BinaryExpressionRender {...(props as XRenderProps<objects.BinaryExpression>)} />;
     case "ifStatement":
-      return (
-        <IfStatementRender
-          ifStatement={node as objects.IfStatement}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <IfStatementRender {...(props as XRenderProps<objects.IfStatement>)} />;
     case "elseClause":
-      return (
-        <ElseClauseRender
-          elseClause={node as objects.ElseClause}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <ElseClauseRender {...(props as XRenderProps<objects.ElseClause>)} />;
     case "unknown":
-      return (
-        <UnknownRender
-          unknown={node as objects.Unknown}
-          parentInfo={parentInfo}
-          callbacks={callbacks}
-          display={display}
-        />
-      );
+      return <UnknownRender {...(props as XRenderProps<objects.Unknown>)} />;
+    case "comment":
+      return <CommentRender {...(props as XRenderProps<objects.Comment>)} />;
     default:
       return "WIP";
   }
 }
 
-function UnknownRender({
-  unknown,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  unknown: objects.Unknown;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   const { mode, onRequestAvailableInserts, availableInserts, onEdit } = useLineContext();
   const [showDropdown, setShowDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLSelectElement>(null);
@@ -413,10 +296,10 @@ function UnknownRender({
     if (e.key === "Enter" && mode === "edit") {
       e.stopPropagation();
       e.preventDefault();
-      console.log("Requesting available inserts for unknown node:", unknown);
+      console.log("Requesting available inserts for unknown node:", props.node);
       // Get parent info from the map
-      const parent = parentInfo.parent;
-      const key = parentInfo.key;
+      const parent = props.parentInfo.parent;
+      const key = props.parentInfo.key;
       onRequestAvailableInserts(parent.id, key);
       setShowDropdown(true);
     } else if (e.key === "Escape" && showDropdown) {
@@ -444,9 +327,9 @@ function UnknownRender({
       const selectedOption = availableInserts[selectedIndex];
 
       // Replace the unknown node with the selected option
-      const parent = parentInfo.parent;
-      const key = parentInfo.key;
-      const index = parentInfo.index;
+      const parent = props.parentInfo.parent;
+      const key = props.parentInfo.key;
+      const index = props.parentInfo.index;
       console.log("Parent before insert:", parent, " key:", key, " index:", index);
       console.log("Selected option to insert:", selectedOption);
 
@@ -495,7 +378,7 @@ function UnknownRender({
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({ node: unknown, key: "content", parentInfo })}
+      {EditableField({ node: props.node, key: "content", parentInfo: props.parentInfo })}
       {showDropdown && availableInserts && availableInserts.length > 0 && (
         <select
           ref={dropdownRef}
@@ -522,29 +405,20 @@ function UnknownRender({
     </span>
   );
 
-  return (
-    <Object node={unknown} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
 function PreprocIncludeRender({
-  includeDecl,
+  node,
   parentInfo,
   callbacks,
   display = "block",
-}: {
-  includeDecl: objects.PreprocInclude;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+}: XRenderProps<objects.PreprocInclude>): React.ReactNode {
   const content = (
     <>
       <span className="token-keyword">#include</span>{" "}
       {EditableField({
-        node: includeDecl,
+        node,
         key: "content",
         parentInfo,
         className: "token-string",
@@ -553,50 +427,42 @@ function PreprocIncludeRender({
   );
 
   return (
-    <Object node={includeDecl} parentInfo={parentInfo} callbacks={callbacks} display={display}>
+    <Object node={node} parentInfo={parentInfo} callbacks={callbacks} display={display}>
       {content}
     </Object>
   );
 }
 
-function FunctionDeclarationRender({
-  functionDeclaration,
-  parentInfo,
-  callbacks,
-  display = "block",
-}: {
-  functionDeclaration: objects.FunctionDeclaration;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function FunctionDeclarationRender(
+  props: XRenderProps<objects.FunctionDeclaration>
+): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  nodeMap.set(functionDeclaration.id, functionDeclaration);
+  nodeMap.set(props.node.id, props.node);
 
   const content = (
     <>
       {EditableField({
-        node: functionDeclaration,
+        node: props.node,
         key: "returnType",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-type",
       })}
       {EditableField({
-        node: functionDeclaration,
+        node: props.node,
         key: "identifier",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-function",
       })}
       <span className="token-delimiter">{"("}</span>
 
-      {functionDeclaration.parameterList.map((param, i) => (
+      {props.node.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(functionDeclaration, "parameterList", i)}
+            parentInfo={childInfo(props.node, "parameterList", i)}
             callbacks={createArrayFieldCallbacks(
-              functionDeclaration,
+              props.node,
               "parameterList",
               i,
               nodeMap,
@@ -611,51 +477,39 @@ function FunctionDeclarationRender({
     </>
   );
 
-  return (
-    <Object
-      node={functionDeclaration}
-      parentInfo={parentInfo}
-      callbacks={callbacks}
-      display={display}
-    >
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function FunctionDefinitionRender({
-  funcDef,
-  parentInfo,
-  callbacks,
-  display = "block",
-}: {
-  funcDef: objects.FunctionDefinition;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function FunctionDefinitionRender(
+  props: XRenderProps<objects.FunctionDefinition>
+): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  nodeMap.set(funcDef.id, funcDef);
+  nodeMap.set(props.node.id, props.node);
 
   const content = (
     <>
       {EditableField({
-        node: funcDef,
+        node: props.node,
         key: "returnType",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-type",
       })}{" "}
-      {EditableField({ node: funcDef, key: "identifier", parentInfo, className: "token-function" })}
+      {EditableField({
+        node: props.node,
+        key: "identifier",
+        parentInfo: props.parentInfo,
+        className: "token-function",
+      })}
       <span className="token-delimiter">{"("}</span>
-      {funcDef.parameterList.map((param, i) => (
+      {props.node.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(funcDef, "parameterList", i)}
+            parentInfo={childInfo(props.node, "parameterList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
-              funcDef,
+              props.node,
               "parameterList",
               i,
               nodeMap,
@@ -666,36 +520,22 @@ function FunctionDefinitionRender({
         </React.Fragment>
       ))}
       <span className="token-delimiter">{")"}</span>
-      {funcDef.compoundStatement && (
+      {props.node.compoundStatement && (
         <NodeRender
-          node={funcDef.compoundStatement}
-          parentInfo={childInfo(funcDef, "compoundStatement")}
-          callbacks={createOptionalFieldCallbacks(funcDef, "compoundStatement", nodeMap, onEdit)}
+          node={props.node.compoundStatement}
+          parentInfo={childInfo(props.node, "compoundStatement")}
+          callbacks={createOptionalFieldCallbacks(props.node, "compoundStatement", nodeMap, onEdit)}
         />
       )}
     </>
   );
 
-  return (
-    <Object node={funcDef} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function DeclarationRender({
-  varDecl,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  varDecl: objects.Declaration;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function DeclarationRender(props: XRenderProps<objects.Declaration>): React.ReactNode {
   const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
-  nodeMap.set(varDecl.id, varDecl);
+  nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("DeclarationRender handleKeyDown:", e.key);
@@ -704,7 +544,7 @@ function DeclarationRender({
       return;
     }
 
-    if (e.key === "Enter" && !varDecl.value) {
+    if (e.key === "Enter" && !props.node.value) {
       e.preventDefault();
       e.stopPropagation();
       // Insert an unknown node as the value
@@ -713,27 +553,37 @@ function DeclarationRender({
         type: "unknown",
         content: "",
       };
-      varDecl.value = newUnknown;
+      props.node.value = newUnknown;
       nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(varDecl, null);
+      onEdit(props.node, null);
       requestFocus(newUnknown.id, "content");
-      console.log("Inserted unknown node as value for declaration:", varDecl.id);
+      console.log("Inserted unknown node as value for declaration:", props.node.id);
     }
   };
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({ node: varDecl, key: "primitiveType", parentInfo, className: "token-type" })}{" "}
-      {EditableField({ node: varDecl, key: "identifier", parentInfo, className: "token-variable" })}
-      {varDecl.value && (
+      {EditableField({
+        node: props.node,
+        key: "primitiveType",
+        parentInfo: props.parentInfo,
+        className: "token-type",
+      })}{" "}
+      {EditableField({
+        node: props.node,
+        key: "identifier",
+        parentInfo: props.parentInfo,
+        className: "token-variable",
+      })}
+      {props.node.value && (
         <>
           {" "}
           {"="}{" "}
           <NodeRender
-            node={varDecl.value}
+            node={props.node.value}
             display="inline"
-            parentInfo={childInfo(varDecl, "value")}
-            callbacks={createOptionalFieldCallbacks(varDecl, "value", nodeMap, onEdit)}
+            parentInfo={childInfo(props.node, "value")}
+            callbacks={createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit)}
           />
         </>
       )}
@@ -741,67 +591,39 @@ function DeclarationRender({
     </span>
   );
 
-  return (
-    <Object node={varDecl} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function FunctionParameterRender({
-  paramDecl,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  paramDecl: objects.FunctionParameter;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>): React.ReactNode {
   const { nodeMap } = useLineContext();
-  nodeMap.set(paramDecl.id, paramDecl);
+  nodeMap.set(props.node.id, props.node);
 
   const content = (
     <>
       {EditableField({
-        node: paramDecl,
+        node: props.node,
         key: "paramType",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-type",
       })}{" "}
       {EditableField({
-        node: paramDecl,
+        node: props.node,
         key: "identifier",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-variable",
       })}
     </>
   );
 
-  return (
-    <Object node={paramDecl} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function CompoundStatementRender({
-  compoundStatement,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  compoundStatement: objects.CompoundStatement;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
   const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("CompoundStatementRender handleKeyDown:", e.key);
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === compoundStatement.id) {
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
       e.stopPropagation();
       e.preventDefault();
 
@@ -811,10 +633,10 @@ function CompoundStatementRender({
         type: "unknown",
         content: "",
       };
-      compoundStatement.codeBlock.unshift(newUnknown);
+      props.node.codeBlock.unshift(newUnknown);
       nodeMap.set(newUnknown.id, newUnknown);
       // Notify of the edit
-      onEdit(compoundStatement, "codeBlock");
+      onEdit(props.node, "codeBlock");
     }
   };
 
@@ -828,13 +650,13 @@ function CompoundStatementRender({
           paddingLeft: "20px",
         }}
       >
-        {compoundStatement.codeBlock.map((node, i) => (
+        {props.node.codeBlock.map((node, i) => (
           <NodeRender
             key={node.id}
             node={node}
-            parentInfo={childInfo(compoundStatement, "codeBlock", i)}
+            parentInfo={childInfo(props.node, "codeBlock", i)}
             callbacks={createArrayFieldCallbacks(
-              compoundStatement,
+              props.node,
               "codeBlock",
               i,
               nodeMap,
@@ -848,39 +670,20 @@ function CompoundStatementRender({
     </span>
   );
 
-  return (
-    <Object
-      node={compoundStatement}
-      parentInfo={parentInfo}
-      callbacks={callbacks}
-      display={display}
-    >
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function IfStatementRender({
-  ifStatement,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  ifStatement: objects.IfStatement;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
   const { mode, onEdit, nodeMap, selectedNodeId } = useLineContext();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("IfStatementRender handleKeyDown:", e.key);
     // Enter on edit mode should insert else clause if not present
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === ifStatement.id) {
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
       e.stopPropagation();
       e.preventDefault();
 
-      if (!ifStatement.elseStatement) {
+      if (!props.node.elseStatement) {
         const newElseClause: objects.ElseClause = {
           id: crypto.randomUUID(),
           type: "elseClause",
@@ -890,12 +693,12 @@ function IfStatementRender({
             codeBlock: [],
           },
         };
-        ifStatement.elseStatement = newElseClause;
+        props.node.elseStatement = newElseClause;
         nodeMap.set(newElseClause.id, newElseClause);
         nodeMap.set(newElseClause.body.id, newElseClause.body);
         // Notify of the edit
-        onEdit(ifStatement, "elseStatement");
-        console.log("Inserted else clause for if statement:", ifStatement.id);
+        onEdit(props.node, "elseStatement");
+        console.log("Inserted else clause for if statement:", props.node.id);
       }
     }
   };
@@ -904,112 +707,51 @@ function IfStatementRender({
     <span tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
       <NodeRender
-        node={ifStatement.condition}
-        parentInfo={childInfo(ifStatement, "condition")}
+        node={props.node.condition}
+        parentInfo={childInfo(props.node, "condition")}
         display="inline"
       />
       <span className="token-keyword">{")"}</span>{" "}
-      <Object node={ifStatement.body} parentInfo={childInfo(ifStatement, "body")} display="inline">
-        {compoundStatementObjectRender(ifStatement.body, childInfo(ifStatement, "body"))}
-      </Object>
-      {ifStatement.elseStatement &&
-        (ifStatement.elseStatement.type === "elseClause" ? (
+      {/* <Object node={props.node.body} parentInfo={childInfo(props.node, "body")} display="inline"> */}
+      {/* {compoundStatementObjectRender(props.node.body, childInfo(props.node, "body"))} */}
+      <NodeRender
+        node={props.node.body}
+        parentInfo={childInfo(props.node, "body")}
+        display="inline"
+      />
+      {/* </Object> */}
+      {props.node.elseStatement &&
+        (props.node.elseStatement.type === "elseClause" ? (
           <NodeRender
-            node={ifStatement.elseStatement}
-            parentInfo={childInfo(ifStatement, "elseStatement")}
+            node={props.node.elseStatement}
+            parentInfo={childInfo(props.node, "elseStatement")}
             display="inline"
-            callbacks={createOptionalFieldCallbacks(ifStatement, "elseStatement", nodeMap, onEdit)}
+            callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
           />
         ) : (
           <>
             <span className="token-keyword"> else </span>
             <NodeRender
-              node={ifStatement.elseStatement}
-              parentInfo={childInfo(ifStatement, "elseStatement")}
+              node={props.node.elseStatement}
+              parentInfo={childInfo(props.node, "elseStatement")}
               display="inline"
-              callbacks={createOptionalFieldCallbacks(
-                ifStatement,
-                "elseStatement",
-                nodeMap,
-                onEdit
-              )}
+              callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
             />
           </>
         ))}
     </span>
   );
 
-  return (
-    <Object node={ifStatement} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function compoundStatementObjectRender(
-  compoundStatementObject: objects.CompoundStatementObject,
-  parentInfo: ParentInfoV2
-) {
-  switch (compoundStatementObject.type) {
-    case "compoundStatement":
-      return (
-        <CompoundStatementRender
-          compoundStatement={compoundStatementObject}
-          parentInfo={parentInfo}
-        />
-      );
-    case "declaration":
-      return <DeclarationRender varDecl={compoundStatementObject} parentInfo={parentInfo} />;
-    case "assignmentExpression":
-      return (
-        <AssignmentExpressionRender
-          assignmentExpr={compoundStatementObject}
-          parentInfo={parentInfo}
-        />
-      );
-    case "binaryExpression":
-      return (
-        <BinaryExpressionRender
-          binaryExpression={compoundStatementObject}
-          parentInfo={parentInfo}
-        />
-      );
-    case "callExpression":
-      return <CallExpressionRender callExpr={compoundStatementObject} parentInfo={parentInfo} />;
-    case "ifStatement":
-      return <IfStatementRender ifStatement={compoundStatementObject} parentInfo={parentInfo} />;
-    case "numberLiteral":
-      return <NumberLiteralRender literalExpr={compoundStatementObject} parentInfo={parentInfo} />;
-    case "reference":
-      return <ReferenceRender reference={compoundStatementObject} parentInfo={parentInfo} />;
-    case "stringLiteral":
-      return <StringLiteralRender literalExpr={compoundStatementObject} parentInfo={parentInfo} />;
-    case "returnStatement":
-      return <ReturnStatementRender returnStmt={compoundStatementObject} parentInfo={parentInfo} />;
-    case "comment":
-      return <CommentRender comment={compoundStatementObject} parentInfo={parentInfo} />;
-    case "unknown":
-      return <UnknownRender unknown={compoundStatementObject} parentInfo={parentInfo} />;
-  }
-}
-
-function ElseClauseRender({
-  elseClause,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  elseClause: objects.ElseClause;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
   const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo } = useLineContext();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("ElseClauseRender handleKeyDown:", e.key);
-    if (e.key === "Enter" && mode === "edit" && selectedNodeId === elseClause.id) {
+    if (e.key === "Enter" && mode === "edit" && selectedNodeId === props.node.id) {
       e.stopPropagation();
       e.preventDefault();
 
@@ -1022,13 +764,13 @@ function ElseClauseRender({
           type: "unknown",
           content: "",
         },
-        body: elseClause.body,
+        body: props.node.body,
       };
       nodeMap.set(newIfStatement.id, newIfStatement);
       nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
 
       if (!parentNodeInfo) {
-        console.error("Parent node info is undefined for else clause:", elseClause.id);
+        console.error("Parent node info is undefined for else clause:", props.node.id);
         return;
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1046,10 +788,10 @@ function ElseClauseRender({
         type: "compoundStatement",
         codeBlock: [],
       };
-      elseClause.body = emptyBody;
+      props.node.body = emptyBody;
       nodeMap.delete(node.id);
       nodeMap.set(emptyBody.id, emptyBody);
-      onEdit(elseClause, "body");
+      onEdit(props.node, "body");
     },
   };
 
@@ -1058,40 +800,31 @@ function ElseClauseRender({
       <span className="token-keyword" onKeyDown={handleKeyDown} tabIndex={0}>
         {" else "}
       </span>
-      <Object
-        node={elseClause.body}
-        parentInfo={childInfo(elseClause, "body")}
+      {/* <Object // TODO wrapp in 
+        node={props.node.body}
+        parentInfo={childInfo(props.node, "body")}
         display="inline"
         callbacks={bodyCallbacks}
-      >
-        {compoundStatementObjectRender(elseClause.body, childInfo(elseClause, "body"))}
-      </Object>
+      > */}
+      <NodeRender
+        node={props.node.body}
+        parentInfo={childInfo(props.node, "body")}
+        display="inline"
+        callbacks={bodyCallbacks}
+      />
+      {/* </Object> */}
     </>
   );
 
-  return (
-    <Object node={elseClause} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function ReturnStatementRender({
-  returnStmt,
-  parentInfo,
-  callbacks,
-  display = "block",
-}: {
-  returnStmt: objects.ReturnStatement;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
   const { nodeMap, onEdit } = useLineContext();
   const handleKeyDown = (e: React.KeyboardEvent) => {
     console.log("ReturnStatementRender handleKeyDown:", e.key);
     // In edit mode, Enter should insert unknown node if value is null
-    if (e.key === "Enter" && !returnStmt.value) {
+    if (e.key === "Enter" && !props.node.value) {
       e.preventDefault();
       e.stopPropagation();
       const newUnknown: objects.Unknown = {
@@ -1099,24 +832,24 @@ function ReturnStatementRender({
         type: "unknown",
         content: "",
       };
-      returnStmt.value = newUnknown;
+      props.node.value = newUnknown;
       nodeMap.set(newUnknown.id, newUnknown);
-      onEdit(returnStmt, "value");
-      console.log("Inserted unknown node as return value for return statement:", returnStmt.id);
+      onEdit(props.node, "value");
+      console.log("Inserted unknown node as return value for return statement:", props.node.id);
     }
   };
 
   const content = (
     <div tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">return</span>
-      {returnStmt.value && (
+      {props.node.value && (
         <>
           {" "}
           <NodeRender
-            node={returnStmt.value}
-            parentInfo={childInfo(returnStmt, "value")}
+            node={props.node.value}
+            parentInfo={childInfo(props.node, "value")}
             display="inline"
-            callbacks={createOptionalFieldCallbacks(returnStmt, "value", nodeMap, onEdit)}
+            callbacks={createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit)}
           />
         </>
       )}
@@ -1125,43 +858,33 @@ function ReturnStatementRender({
   );
 
   return (
-    <Object node={returnStmt} parentInfo={parentInfo} callbacks={callbacks} display={display}>
+    <Object {...props} display="inline">
       {content}
     </Object>
   );
 }
 
-function CallExpressionRender({
-  callExpr,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  callExpr: objects.CallExpression;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
 
   const content = (
     <>
       {EditableField({
-        node: callExpr,
+        node: props.node,
         key: "identifier",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-function",
       })}
       <span className="token-delimiter">{"("}</span>
-      {callExpr.argumentList.map((arg, i) => (
+      {props.node.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
           {i > 0 && ", "}
           <NodeRender
             node={arg}
-            parentInfo={childInfo(callExpr, "argumentList", i)}
+            parentInfo={childInfo(props.node, "argumentList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
-              callExpr,
+              props.node,
               "argumentList",
               i,
               nodeMap,
@@ -1176,214 +899,115 @@ function CallExpressionRender({
     </>
   );
 
-  return (
-    <Object node={callExpr} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function ReferenceRender({
-  reference,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  reference: objects.Reference;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
   const { nodeMap } = useLineContext();
-  const targetNode = nodeMap.get(reference.declarationId);
+  const targetNode = nodeMap.get(props.node.declarationId);
 
   if (!targetNode || !("identifier" in targetNode)) {
-    return <>{reference.declarationId}</>;
+    return <>{props.node.declarationId}</>;
   }
 
   const content = <span className="token-variable">{String(targetNode.identifier)}</span>;
 
-  return (
-    <Object node={reference} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function AssignmentExpressionRender({
-  assignmentExpr,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  assignmentExpr: objects.AssignmentExpression;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function AssignmentExpressionRender(
+  props: XRenderProps<objects.AssignmentExpression>
+): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  const targetNode = nodeMap.get(assignmentExpr.idDeclaration);
+  const targetNode = nodeMap.get(props.node.idDeclaration);
 
   if (!targetNode || !("identifier" in targetNode)) {
-    return <>{assignmentExpr.idDeclaration}</>;
+    return <>{props.node.idDeclaration}</>;
   }
 
   const content = (
     <>
       <span className="token-variable">{String(targetNode.identifier)}</span> {"="}{" "}
       <NodeRender
-        node={assignmentExpr.value}
-        parentInfo={childInfo(assignmentExpr, "value")}
+        node={props.node.value}
+        parentInfo={childInfo(props.node, "value")}
         display="inline"
-        callbacks={createRequiredFieldCallbacks(
-          assignmentExpr,
-          "value",
-          nodeMap,
-          onEdit,
-          requestFocus
-        )}
+        callbacks={createRequiredFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus)}
       />
     </>
   );
 
-  return (
-    <Object node={assignmentExpr} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function NumberLiteralRender({
-  literalExpr,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  literalExpr: objects.NumberLiteral;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.ReactNode {
   const content = (
     <>
       {EditableField({
-        node: literalExpr,
+        node: props.node,
         key: "value",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-number",
       })}
     </>
   );
 
-  return (
-    <Object node={literalExpr} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function StringLiteralRender({
-  literalExpr,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  literalExpr: objects.StringLiteral;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.ReactNode {
   const content = (
     <>
       <span className="token-string">{'"'}</span>
       {EditableField({
-        node: literalExpr,
+        node: props.node,
         key: "value",
-        parentInfo,
+        parentInfo: props.parentInfo,
         className: "token-string",
       })}
       <span className="token-string">{'"'}</span>
     </>
   );
 
-  return (
-    <Object node={literalExpr} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function BinaryExpressionRender({
-  binaryExpression,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  binaryExpression: objects.BinaryExpression;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
 
   const content = (
     <>
       <NodeRender
-        node={binaryExpression.left}
-        parentInfo={childInfo(binaryExpression, "left")}
+        node={props.node.left}
+        parentInfo={childInfo(props.node, "left")}
         display="inline"
-        callbacks={createRequiredFieldCallbacks(
-          binaryExpression,
-          "left",
-          nodeMap,
-          onEdit,
-          requestFocus
-        )}
+        callbacks={createRequiredFieldCallbacks(props.node, "left", nodeMap, onEdit, requestFocus)}
       />{" "}
-      {EditableField({ node: binaryExpression, key: "operator", parentInfo })}{" "}
+      {EditableField({ node: props.node, key: "operator", parentInfo: props.parentInfo })}{" "}
       <NodeRender
-        node={binaryExpression.right}
-        parentInfo={childInfo(binaryExpression, "right")}
+        node={props.node.right}
+        parentInfo={childInfo(props.node, "right")}
         display="inline"
-        callbacks={createRequiredFieldCallbacks(
-          binaryExpression,
-          "right",
-          nodeMap,
-          onEdit,
-          requestFocus
-        )}
+        callbacks={createRequiredFieldCallbacks(props.node, "right", nodeMap, onEdit, requestFocus)}
       />
     </>
   );
 
-  return (
-    <Object node={binaryExpression} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
-function CommentRender({
-  comment,
-  parentInfo,
-  callbacks,
-  display = "inline",
-}: {
-  comment: objects.Comment;
-  parentInfo: ParentInfoV2;
-  callbacks?: NodeCallbacks;
-  display?: "inline" | "block";
-}): React.ReactNode {
+function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
   const content = (
     <>
       <span className="token-comment">{"//"}</span>{" "}
-      {EditableField({ node: comment, key: "content", parentInfo, className: "token-comment" })}
+      {EditableField({
+        node: props.node,
+        key: "content",
+        parentInfo: props.parentInfo,
+        className: "token-comment",
+      })}
     </>
   );
 
-  return (
-    <Object node={comment} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
