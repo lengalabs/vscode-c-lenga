@@ -15,6 +15,35 @@ import {
   createUnknown,
 } from "../lib/editionHelpers";
 
+// Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
+function useFocusStructuralNode(nodeId: string) {
+  const { focusRequest, clearFocusRequest } = useLineContext();
+  const nodeRef = React.useRef<HTMLElement>(null);
+  const hasFocusedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === nodeId &&
+      focusRequest.fieldKey === "" && // Empty string means focus the node itself
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing structural node:", nodeId);
+      if (nodeRef.current) {
+        nodeRef.current.focus();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    // Reset the flag when focus request changes
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, nodeId, clearFocusRequest]);
+
+  return nodeRef;
+}
+
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
@@ -465,7 +494,7 @@ function FunctionDefinitionRender(
         <NodeRender
           node={props.node.compoundStatement}
           parentInfo={childInfo(props.node, "compoundStatement")}
-          callbacks={createOptionalFieldCallbacks(props.node, "compoundStatement", nodeMap, onEdit)}
+          // callbacks={} TODO: transform into FunctionDeclaration on delete
         />
       )}
     </span>
@@ -546,34 +575,23 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   return <Object {...props}>{content}</Object>;
 }
 
-{
-  /* <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {sourceFile?.code.map((node, i) => (
-                <NodeRender
-                  key={node.id}
-                  node={node}
-                  parentInfo={childInfo(sourceFile, "code", i)}
-                />
-              ))}
-            </div> */
-}
-
 export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
-  const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, mode, selectedNodeId, requestFocus } = useLineContext();
+  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insert: () => {
         if (selectedNodeId === props.node.id) {
           console.log("CompoundStatementRender: Inserting unknown node");
-          prependUnknownToArray(props.node, "code", nodeMap, onEdit);
+          prependUnknownToArray(props.node, "code", nodeMap, onEdit, requestFocus);
         }
       },
     },
   });
 
   const content = (
-    <span onKeyDown={handleKeyDown} tabIndex={0}>
+    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
       {props.node.code.length === 0 ? (
         <UnknownRender
           node={{
@@ -617,20 +635,21 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
   const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
+  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insert: () => {
         if (selectedNodeId === props.node.id) {
           console.log("CompoundStatementRender: Inserting unknown node");
-          prependUnknownToArray(props.node, "codeBlock", nodeMap, onEdit);
+          prependUnknownToArray(props.node, "codeBlock", nodeMap, onEdit, requestFocus);
         }
       },
     },
   });
 
   const content = (
-    <span onKeyDown={handleKeyDown} tabIndex={0}>
+    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
       <span className="token-delimiter">{"{"}</span>
       <div
         style={{
@@ -664,7 +683,8 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
 }
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
-  const { mode, onEdit, nodeMap, selectedNodeId } = useLineContext();
+  const { mode, onEdit, nodeMap, selectedNodeId, requestFocus } = useLineContext();
+  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
@@ -684,6 +704,8 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
           nodeMap.set(newElseClause.id, newElseClause);
           nodeMap.set(newElseClause.body.id, newElseClause.body);
           onEdit(props.node, "elseStatement");
+          // Focus the newly created else clause
+          requestFocus(newElseClause.id, "");
         }
       },
     },
@@ -741,7 +763,11 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     ));
   const content = (
     <span>
-      <span tabIndex={0} onKeyDown={handleKeyDown}>
+      <span
+        ref={nodeRef as React.RefObject<HTMLSpanElement>}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
           node={props.node.condition}
@@ -764,7 +790,8 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
-  const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo } = useLineContext();
+  const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo, requestFocus } = useLineContext();
+  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
@@ -792,6 +819,8 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
           onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+          // Focus the condition (unknown node)
+          requestFocus(newIfStatement.condition.id, "content");
         }
       },
     },
@@ -815,7 +844,12 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
   const content = (
     <>
-      <span className="token-keyword" onKeyDown={handleKeyDown} tabIndex={0}>
+      <span
+        ref={nodeRef as React.RefObject<HTMLSpanElement>}
+        className="token-keyword"
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+      >
         {" else "}
       </span>
       {/* <Object // TODO wrapp in 
@@ -838,21 +872,22 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 }
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
-  const { nodeMap, onEdit, mode } = useLineContext();
+  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
+  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insert: () => {
         if (!props.node.value) {
           console.log("ReturnStatementRender: Inserting unknown node as return value");
-          insertUnknownIntoField(props.node, "value", nodeMap, onEdit);
+          insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
         }
       },
     },
   });
 
   const content = (
-    <div tabIndex={0} onKeyDown={handleKeyDown}>
+    <div ref={nodeRef as React.RefObject<HTMLDivElement>} tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">return</span>
       {props.node.value && (
         <>

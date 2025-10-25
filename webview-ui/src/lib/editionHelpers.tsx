@@ -34,13 +34,17 @@ export function prependUnknownToArray<T extends objects.LanguageObject, K extend
   node: T,
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K) => void
+  onEdit: (node: T, key: K) => void,
+  requestFocus?: (nodeId: string, fieldKey: string) => void
 ): void {
   const newUnknown = createUnknownNode();
   const array = node[key] as unknown as objects.LanguageObject[];
   array.unshift(newUnknown);
   nodeMap.set(newUnknown.id, newUnknown);
   onEdit(node, key);
+  if (requestFocus) {
+    requestFocus(newUnknown.id, "content");
+  }
 }
 
 // Helper to append an unknown node to an array field
@@ -107,6 +111,12 @@ export function createArrayFieldCallbacks<
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
+
+      // Auto-focus on the first editable field of the new node
+      const firstField = getFirstEditableField(newNode);
+      if (firstField !== null) {
+        requestFocus(newNode.id, firstField);
+      }
     },
   };
 }
@@ -118,7 +128,8 @@ export function createOptionalFieldCallbacks<
   parent: T,
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
-  onEdit: (node: T, key: K) => void
+  onEdit: (node: T, key: K) => void,
+  requestFocus?: (nodeId: string, fieldKey: string) => void
 ): NodeCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
@@ -135,6 +146,14 @@ export function createOptionalFieldCallbacks<
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
+
+      // Auto-focus on the first editable field of the new node
+      if (requestFocus) {
+        const firstField = getFirstEditableField(newNode);
+        if (firstField !== null) {
+          requestFocus(newNode.id, firstField);
+        }
+      }
     },
   };
 }
@@ -171,6 +190,12 @@ export function createRequiredFieldCallbacks<
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
+
+      // Auto-focus on the first editable field of the new node
+      const firstField = getFirstEditableField(newNode);
+      if (firstField !== null) {
+        requestFocus(newNode.id, firstField);
+      }
     },
   };
 }
@@ -202,4 +227,40 @@ export function createParameter(
     requestFocus(newParameter.id, "paramType");
   }
   return newParameter;
+}
+
+// Helper to get the first editable field for a given node type
+export function getFirstEditableField(node: objects.LanguageObject): string | null {
+  switch (node.type) {
+    case "unknown":
+      return "content";
+    case "functionParameter":
+      return "paramType";
+    case "functionDeclaration":
+    case "functionDefinition":
+      return "returnType";
+    case "declaration":
+      return "primitiveType";
+    case "callExpression":
+      return "identifier";
+    case "numberLiteral":
+    case "stringLiteral":
+      return "value";
+    case "binaryExpression":
+      return "operator";
+    case "preprocInclude":
+    case "comment":
+      return "content";
+    // For structural nodes without direct editable fields, use empty string to focus the node itself
+    case "compoundStatement":
+    case "ifStatement":
+    case "elseClause":
+    case "returnStatement":
+      return ""; // Empty string signals to focus the node itself (not a specific field)
+    // These nodes don't support focus
+    case "assignmentExpression":
+    case "reference":
+    default:
+      return null;
+  }
 }
