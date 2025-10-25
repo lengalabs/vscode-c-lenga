@@ -67,12 +67,8 @@ export function LineProvider({
 
       if (event.key === "Escape" && mode === "edit") {
         event.preventDefault();
+        event.stopPropagation();
         setMode("view");
-
-        const activeElement = document.activeElement;
-        if (activeElement instanceof HTMLElement) {
-          activeElement.blur();
-        }
       }
     };
 
