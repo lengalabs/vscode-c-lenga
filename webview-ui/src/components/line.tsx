@@ -525,6 +525,63 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   return <Object {...props}>{content}</Object>;
 }
 
+{
+  /* <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {sourceFile?.code.map((node, i) => (
+                <NodeRender
+                  key={node.id}
+                  node={node}
+                  parentInfo={childInfo(sourceFile, "code", i)}
+                />
+              ))}
+            </div> */
+}
+
+export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
+  const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
+
+  const handleKeyDown = createKeyDownHandler(mode, {
+    edit: {
+      insert: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("CompoundStatementRender: Inserting unknown node");
+          prependUnknownToArray(props.node, "code", nodeMap, onEdit);
+        }
+      },
+    },
+  });
+
+  const content = (
+    <span onKeyDown={handleKeyDown} tabIndex={0}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
+        {props.node.code.map((node, i) => (
+          <NodeRender
+            key={node.id}
+            node={node}
+            parentInfo={childInfo(props.node, "code", i)}
+            callbacks={createArrayFieldCallbacks(
+              props.node,
+              "code",
+              i,
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
+          />
+        ))}
+      </div>
+    </span>
+  );
+
+  return content;
+}
+
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
   const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
 

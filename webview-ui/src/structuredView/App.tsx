@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { NodeRender } from "../components/line";
+import { SourceFileRender } from "../components/line";
 import ModeIndicator from "../components/ModeIndicator";
-import { childInfo } from "../components/childInfo";
 import { LineProvider } from "../components/lineContext";
 
 import { vscode } from "../vscode";
@@ -77,15 +76,7 @@ export default function App() {
             setParentNodeInfo={setParentNodeInfo}
           >
             <ModeIndicator />
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {sourceFile?.code.map((node, i) => (
-                <NodeRender
-                  key={node.id}
-                  node={node}
-                  parentInfo={childInfo(sourceFile, "code", i)}
-                />
-              ))}
-            </div>
+            <SourceFileRender node={sourceFile} />
             <DebugMenu />
           </LineProvider>
         ) : (
