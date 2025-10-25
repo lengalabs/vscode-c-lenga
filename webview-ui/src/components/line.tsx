@@ -598,42 +598,73 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     },
   });
 
-  const content = (
-    <span tabIndex={0} onKeyDown={handleKeyDown}>
-      <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
+  const elseRender =
+    props.node.elseStatement &&
+    (props.node.elseStatement.type === "elseClause" ? (
       <NodeRender
-        node={props.node.condition}
-        parentInfo={childInfo(props.node, "condition")}
+        node={props.node.elseStatement}
+        parentInfo={childInfo(props.node, "elseStatement")}
         display="inline"
+        callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
       />
-      <span className="token-keyword">{")"}</span>{" "}
-      {/* <Object node={props.node.body} parentInfo={childInfo(props.node, "body")} display="inline"> */}
-      {/* {compoundStatementObjectRender(props.node.body, childInfo(props.node, "body"))} */}
+    ) : (
+      (() => {
+        const ifStatement = props.node.elseStatement;
+        const elseClauseCallbacks = {
+          onDelete: (node: objects.LanguageObject) => {
+            console.log("Converting if else to else: ", node.id);
+            // Replace the ifStatement with the elseStatement body
+            const newElseClause: objects.ElseClause = {
+              id: crypto.randomUUID(),
+              type: "elseClause",
+              body: ifStatement.body,
+            };
+            props.node.elseStatement = newElseClause;
+            nodeMap.set(newElseClause.id, newElseClause);
+            nodeMap.delete(ifStatement.id);
+            onEdit(props.node, "elseStatement");
+          },
+        };
+        return (
+          <>
+            {" "}
+            <Object
+              display="inline"
+              node={ifStatement}
+              parentInfo={childInfo(props.node, "elseStatement")}
+              callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
+            >
+              <span className="token-keyword" tabIndex={0}>
+                else
+              </span>
+            </Object>{" "}
+            <NodeRender
+              node={ifStatement}
+              parentInfo={childInfo(props.node, "elseStatement")}
+              display="inline"
+              callbacks={elseClauseCallbacks}
+            />
+          </>
+        );
+      })()
+    ));
+  const content = (
+    <span>
+      <span tabIndex={0} onKeyDown={handleKeyDown}>
+        <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
+        <NodeRender
+          node={props.node.condition}
+          parentInfo={childInfo(props.node, "condition")}
+          display="inline"
+        />
+        <span className="token-keyword">{")"}</span>{" "}
+      </span>
       <NodeRender
         node={props.node.body}
         parentInfo={childInfo(props.node, "body")}
         display="inline"
       />
-      {/* </Object> */}
-      {props.node.elseStatement &&
-        (props.node.elseStatement.type === "elseClause" ? (
-          <NodeRender
-            node={props.node.elseStatement}
-            parentInfo={childInfo(props.node, "elseStatement")}
-            display="inline"
-            callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
-          />
-        ) : (
-          <>
-            <span className="token-keyword"> else </span>
-            <NodeRender
-              node={props.node.elseStatement}
-              parentInfo={childInfo(props.node, "elseStatement")}
-              display="inline"
-              callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
-            />
-          </>
-        ))}
+      {elseRender}
     </span>
   );
 
