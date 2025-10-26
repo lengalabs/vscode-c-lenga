@@ -14,13 +14,51 @@ export function transpileFile(path: vscode.Uri) {
     vscode.window.showErrorMessage(`[Server] ${data.toString()}`);
   });
 
-  transpilerProcess.on("close", (code) => {
+  transpilerProcess.on("close", async (code) => {
     if (code === 0) {
-      vscode.window.showInformationMessage(`File transpiled successfully`);
+      // Determine the output file path and open it
+      const outputPath = getTranspiledFilePath(path);
+      vscode.window.showInformationMessage(`File transpiled successfully to ${outputPath.fsPath}`);
+      try {
+        if (outputPath.fsPath.endsWith(".lenga")) {
+          // Open .lenga files with the custom editor
+          const res = await vscode.commands.executeCommand(
+            "vscode.openWith",
+            outputPath,
+            "lengalab.c"
+          );
+        } else {
+          // Open other files (like .c) with the regular text editor
+          const document = await vscode.workspace.openTextDocument(outputPath);
+          await vscode.window.showTextDocument(document);
+        }
+      } catch (error) {
+        console.warn(`Could not open transpiled file: ${outputPath}`, error);
+      }
     } else {
       vscode.window.showErrorMessage(`Invalid file`);
     }
   });
+}
+
+/**
+ * Determines the output file path for a transpiled file
+ */
+function getTranspiledFilePath(inputPath: vscode.Uri): vscode.Uri {
+  const inputFile = inputPath.fsPath;
+
+  // If it's a .lenga file, remove .lenga extension
+  if (inputFile.endsWith(".lenga")) {
+    return vscode.Uri.file(inputFile.replace(/\.lenga$/, ""));
+  }
+
+  // If it's a .c file, add .lenga extension
+  if (inputFile.endsWith(".c")) {
+    return vscode.Uri.file(inputFile + ".lenga");
+  }
+
+  // Default: add .lenga extension
+  return vscode.Uri.file(inputFile + ".lenga");
 }
 
 export async function pickFileFromWorkspace(): Promise<vscode.Uri | undefined> {
