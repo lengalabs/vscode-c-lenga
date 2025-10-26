@@ -87,12 +87,17 @@
       "editor/title": [
         {
           "command": "lengalab.setStructuredView",
-          "when": "activeCustomEditorId == lengalab.c",
+          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == graph",
           "group": "navigation"
         },
         {
           "command": "lengalab.setGraphView",
-          "when": "activeCustomEditorId == lengalab.c",
+          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == structured",
+          "group": "navigation"
+        },
+        {
+          "command": "lengalab.transpileFile",
+          "when": "resourceLangId == c || resourceLangId == lenga",
           "group": "navigation"
         }
       ],
