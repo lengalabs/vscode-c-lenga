@@ -633,36 +633,18 @@ function PreprocIncludeRender({
 function FunctionDeclarationRender(
   props: XRenderProps<objects.FunctionDeclaration>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("FunctionDeclarationRender: Appending parameter");
-          prependToArray(
-            props.node,
-            "parameterList",
-            createParameter,
-            nodeMap,
-            onEdit,
-            requestFocus
-          );
-        }
+        console.log("FunctionDeclarationRender: Prepending parameter");
+        prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
       },
       insertLast: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("FunctionDeclarationRender: Appending parameter");
-          appendToArray(
-            props.node,
-            "parameterList",
-            createParameter,
-            nodeMap,
-            onEdit,
-            requestFocus
-          );
-        }
+        console.log("FunctionDeclarationRender: Appending parameter");
+        appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
       },
     },
   });
@@ -712,36 +694,18 @@ function FunctionDeclarationRender(
 function FunctionDefinitionRender(
   props: XRenderProps<objects.FunctionDefinition>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("FunctionDefinitionRender: Appending parameter");
-          prependToArray(
-            props.node,
-            "parameterList",
-            createParameter,
-            nodeMap,
-            onEdit,
-            requestFocus
-          );
-        }
+        console.log("FunctionDefinitionRender: Prepending parameter");
+        prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
       },
       insertLast: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("FunctionDefinitionRender: Appending parameter");
-          appendToArray(
-            props.node,
-            "parameterList",
-            createParameter,
-            nodeMap,
-            onEdit,
-            requestFocus
-          );
-        }
+        console.log("FunctionDefinitionRender: Appending parameter");
+        appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
       },
     },
   });
@@ -876,16 +840,14 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
 }
 
 export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
-  const { nodeMap, onEdit, mode, selectedNodeId, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("CompoundStatementRender: Inserting unknown node");
-          prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
-        }
+        console.log("SourceFileRender: Inserting unknown node");
+        prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
       },
     },
   });
@@ -934,22 +896,18 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 }
 
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
-  const { onEdit, nodeMap, mode, selectedNodeId, requestFocus } = useLineContext();
+  const { onEdit, nodeMap, mode, requestFocus } = useLineContext();
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("CompoundStatementRender: Inserting unknown node");
-          prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-        }
+        console.log("CompoundStatementRender: Inserting unknown node");
+        prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
       },
       insertLast: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("CompoundStatementRender: Appending unknown node");
-          appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-        }
+        console.log("CompoundStatementRender: Appending unknown node");
+        appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
       },
     },
   });
@@ -989,13 +947,13 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
 }
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
-  const { mode, onEdit, nodeMap, selectedNodeId, requestFocus } = useLineContext();
+  const { mode, onEdit, nodeMap, requestFocus } = useLineContext();
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id && !props.node.elseStatement) {
+        if (!props.node.elseStatement) {
           console.log("IfStatementRender: Inserting else clause");
           const newElseClause: objects.ElseClause = {
             id: crypto.randomUUID(),
@@ -1108,38 +1066,36 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
-  const { mode, onEdit, nodeMap, selectedNodeId, parentNodeInfo, requestFocus } = useLineContext();
+  const { mode, onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("ElseClauseRender: Converting to ifStatement");
-          // Convert to ifStatement
-          const newIfStatement: objects.IfStatement = {
+        console.log("ElseClauseRender: Converting to ifStatement");
+        // Convert to ifStatement
+        const newIfStatement: objects.IfStatement = {
+          id: crypto.randomUUID(),
+          type: "ifStatement",
+          condition: {
             id: crypto.randomUUID(),
-            type: "ifStatement",
-            condition: {
-              id: crypto.randomUUID(),
-              type: "unknown",
-              content: "",
-            },
-            body: props.node.body,
-          };
-          nodeMap.set(newIfStatement.id, newIfStatement);
-          nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
+            type: "unknown",
+            content: "",
+          },
+          body: props.node.body,
+        };
+        nodeMap.set(newIfStatement.id, newIfStatement);
+        nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
 
-          if (!parentNodeInfo) {
-            console.error("Parent node info is undefined for else clause:", props.node.id);
-            return;
-          }
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
-          onEdit(parentNodeInfo.parent, parentNodeInfo.key);
-          // Focus the condition (unknown node)
-          requestFocus(newIfStatement.condition.id, "content");
+        if (!parentNodeInfo) {
+          console.error("Parent node info is undefined for else clause:", props.node.id);
+          return;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
+        onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+        // Focus the condition (unknown node)
+        requestFocus(newIfStatement.condition.id, "content");
       },
     },
   });
@@ -1236,15 +1192,13 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
 }
 
 function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode, selectedNodeId } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
       insertFirst: () => {
-        if (selectedNodeId === props.node.id) {
-          console.log("CallExpressionRender: Appending argument");
-          appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
-        }
+        console.log("CallExpressionRender: Appending argument");
+        appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
       },
     },
   });
