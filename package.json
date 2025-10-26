@@ -94,6 +94,11 @@
           "command": "lengalab.setGraphView",
           "when": "activeCustomEditorId == lengalab.c",
           "group": "navigation"
+        },
+        {
+          "command": "lengalab.transpileFile",
+          "when": "resourceLangId == c || resourceLangId == lenga",
+          "group": "navigation"
         }
       ],
       "explorer/context": [
