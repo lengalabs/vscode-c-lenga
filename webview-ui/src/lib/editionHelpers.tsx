@@ -111,6 +111,23 @@ export function createArrayFieldCallbacks<
       (parent as any)[key] = newArray;
       nodeMap.delete(node.id);
       onEdit(parent, key);
+
+      // Focus next sibling, or previous sibling, or parent
+      if (newArray.length > 0) {
+        // Try next sibling (same index, since we removed current)
+        const nextIndex = Math.min(index, newArray.length - 1);
+        const nextNode = newArray[nextIndex];
+        const firstField = getFirstEditableField(nextNode);
+        if (firstField !== null) {
+          requestFocus(nextNode.id, firstField);
+        }
+      } else {
+        // Array is now empty, focus parent
+        const parentField = getFirstEditableField(parent);
+        if (parentField !== null) {
+          requestFocus(parent.id, parentField);
+        }
+      }
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing node:", oldNode.id, " at index:", index, " with:", newNode.id);
@@ -163,7 +180,7 @@ export function createOptionalFieldCallbacks<
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
-  requestFocus?: (nodeId: string, fieldKey: string) => void
+  requestFocus: (nodeId: string, fieldKey: string) => void
 ): NodeCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
@@ -172,6 +189,12 @@ export function createOptionalFieldCallbacks<
       (parent as any)[key] = null;
       nodeMap.delete(node.id);
       onEdit(parent, key);
+
+      // Focus parent after deleting optional field
+      const parentField = getFirstEditableField(parent);
+      if (parentField !== null) {
+        requestFocus(parent.id, parentField);
+      }
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing optional field:", key, " old node:", oldNode.id, " with:", newNode.id);
@@ -182,11 +205,9 @@ export function createOptionalFieldCallbacks<
       onEdit(parent, key);
 
       // Auto-focus on the first editable field of the new node
-      if (requestFocus) {
-        const firstField = getFirstEditableField(newNode);
-        if (firstField !== null) {
-          requestFocus(newNode.id, firstField);
-        }
+      const firstField = getFirstEditableField(newNode);
+      if (firstField !== null) {
+        requestFocus(newNode.id, firstField);
       }
     },
   };

@@ -600,7 +600,13 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
             node={props.node.value}
             display="inline"
             parentInfo={childInfo(props.node, "value")}
-            callbacks={createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit)}
+            callbacks={createOptionalFieldCallbacks(
+              props.node,
+              "value",
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
           />
         </>
       )}
@@ -786,7 +792,13 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         node={props.node.elseStatement}
         parentInfo={childInfo(props.node, "elseStatement")}
         display="inline"
-        callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
+        callbacks={createOptionalFieldCallbacks(
+          props.node,
+          "elseStatement",
+          nodeMap,
+          onEdit,
+          requestFocus
+        )}
       />
     ) : (
       (() => {
@@ -813,7 +825,13 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
               display="inline"
               node={ifStatement}
               parentInfo={childInfo(props.node, "elseStatement")}
-              callbacks={createOptionalFieldCallbacks(props.node, "elseStatement", nodeMap, onEdit)}
+              callbacks={createOptionalFieldCallbacks(
+                props.node,
+                "elseStatement",
+                nodeMap,
+                onEdit,
+                requestFocus
+              )}
             >
               <span className="token-keyword" tabIndex={0}>
                 else
@@ -964,7 +982,13 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
             node={props.node.value}
             parentInfo={childInfo(props.node, "value")}
             display="inline"
-            callbacks={createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit)}
+            callbacks={createOptionalFieldCallbacks(
+              props.node,
+              "value",
+              nodeMap,
+              onEdit,
+              requestFocus
+            )}
           />
         </>
       )}
