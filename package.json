@@ -41,22 +41,26 @@
       {
         "command": "lengalab.setStructuredView",
         "title": "Sets the editors view to a classic structured format",
-        "category": "SetView"
+        "category": "SetView",
+        "icon": "$(code-oss)"
       },
       {
         "command": "lengalab.setGraphView",
         "title": "Sets the editors view to a function call graph format",
-        "category": "SetView"
+        "category": "SetView",
+        "icon": "$(type-hierarchy)"
       },
       {
         "command": "lengalab.transpileFile",
         "title": "Transpile File",
-        "category": "Transpilation"
+        "category": "Transpilation",
+        "icon": "$(arrow-swap)"
       },
       {
         "command": "lengalab.toggleDebug",
         "title": "Toggle Debug Info",
-        "category": "Lengalab"
+        "category": "Lengalab",
+        "icon": "$(debug-alt)"
       }
     ],
     "keybindings": [
@@ -64,6 +68,18 @@
         "command": "lengalab.toggleDebug",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
+        "when": "activeCustomEditorId == lengalab.c"
+      },
+      {
+        "command": "lengalab.setStructuredView",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "activeCustomEditorId == lengalab.c"
+      },
+      {
+        "command": "lengalab.setGraphView",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g",
         "when": "activeCustomEditorId == lengalab.c"
       }
     ],
