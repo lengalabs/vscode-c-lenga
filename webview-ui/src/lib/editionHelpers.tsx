@@ -30,21 +30,21 @@ export function insertUnknownIntoField<
   }
 }
 // Helper to prepend an unknown node to an array field
-export function prependUnknownToArray<T extends objects.LanguageObject, K extends string & keyof T>(
+export function prependToArray<T extends objects.LanguageObject, K extends string & keyof T>(
   node: T,
   key: K,
+  constructor: (
+    requestFocus?: (nodeId: string, fieldKey: string) => void
+  ) => objects.LanguageObject,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
   requestFocus?: (nodeId: string, fieldKey: string) => void
 ): void {
-  const newUnknown = createUnknownNode();
+  const newUnknown = constructor(requestFocus);
   const array = node[key] as unknown as objects.LanguageObject[];
   array.unshift(newUnknown);
   nodeMap.set(newUnknown.id, newUnknown);
   onEdit(node, key);
-  if (requestFocus) {
-    requestFocus(newUnknown.id, "content");
-  }
 }
 
 // Helper to append an unknown node to an array field
@@ -128,6 +128,29 @@ export function createArrayFieldCallbacks<
       if (firstField !== null) {
         requestFocus(newNode.id, firstField);
       }
+    },
+    // Edit mode: insert at beginning or end of array
+    onInsertFirst: () => {
+      console.log("Inserting at beginning of array:", key);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newNode = constructor(requestFocus);
+      const newArray = [newNode, ...field];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
+      requestFocus(newNode.id, "content");
+    },
+    onInsertLast: () => {
+      console.log("Inserting at end of array:", key);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      const newNode = constructor(requestFocus);
+      const newArray = [...field, newNode];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
+      requestFocus(newNode.id, "content");
     },
   };
 }

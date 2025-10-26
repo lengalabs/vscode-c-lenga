@@ -13,9 +13,14 @@ import { EditorMode } from "../components/context";
  *   - insertSiblingBefore: Create a sibling node before (mapped to Shift+Enter)
  *   - delete: Remove the current node (mapped to Delete key)
  *
- * - Edit mode:
- *   - insert: Insert new content/child nodes (mapped to Enter key)
+ * - Edit mode (for array fields):
+ *   - insertFirst: Insert new element at beginning (mapped to Enter key)
+ *   - insertLast: Insert new element at end (mapped to Shift+Enter key)
  *   - delete: Remove content (mapped to Delete key)
+ *
+ * - Edit mode (for single fields):
+ *   - insert: Replace/modify current field (mapped to Enter key)
+ *   - delete: Clear field content (mapped to Delete key)
  *
  * The abstraction automatically handles:
  * - Event propagation (stopPropagation)
@@ -25,7 +30,7 @@ import { EditorMode } from "../components/context";
  * Usage:
  *   const handleKeyDown = createKeyDownHandler(mode, {
  *     edit: {
- *       insert: () => { ... }
+ *       insertFirst: () => { ... }
  *     }
  *   });
  */
@@ -38,7 +43,8 @@ interface CommandHandlers {
     delete?: CommandHandler;
   };
   edit?: {
-    insert?: CommandHandler;
+    insertFirst?: CommandHandler; // For array fields
+    insertLast?: CommandHandler; // For array fields
     delete?: CommandHandler;
   };
 }
@@ -54,7 +60,8 @@ const KEY_MAPPINGS: Record<EditorMode, KeyMapping> = {
     Delete: "delete",
   },
   edit: {
-    Enter: "insert",
+    Enter: "insertFirst",
+    "Shift+Enter": "insertLast",
     Delete: "delete",
   },
 };

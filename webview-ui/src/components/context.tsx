@@ -33,6 +33,9 @@ export interface NodeCallbacks {
   onInsertSiblingBefore?: (node: objects.LanguageObject) => void;
   onDelete?: (node: objects.LanguageObject) => void;
   onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
+  // Edit mode: insert at beginning or end of array
+  onInsertFirst?: () => void;
+  onInsertLast?: () => void;
 }
 
 export interface LineContextType {

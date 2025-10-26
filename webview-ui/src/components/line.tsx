@@ -8,11 +8,11 @@ import {
   createArrayFieldCallbacks,
   createOptionalFieldCallbacks,
   insertUnknownIntoField,
-  prependUnknownToArray,
   createRequiredFieldCallbacks,
   createParameter,
   appendToArray,
   createUnknown,
+  prependToArray,
 } from "../lib/editionHelpers";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
@@ -170,6 +170,20 @@ export function Object({ node, parentInfo, children, display = "block", callback
         }
       },
     },
+    edit: {
+      insertFirst: () => {
+        if (isSelected && callbacks?.onInsertFirst) {
+          console.log("Object: Inserting at beginning for", node.type);
+          callbacks.onInsertFirst();
+        }
+      },
+      insertLast: () => {
+        if (isSelected && callbacks?.onInsertLast) {
+          console.log("Object: Inserting at end for", node.type);
+          callbacks.onInsertLast();
+        }
+      },
+    },
   });
 
   const Element = display === "inline" ? "span" : "div";
@@ -260,7 +274,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   // When in edit mode and Enter is pressed, request available inserts
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         console.log("UnknownRender: Requesting available inserts");
         // Get parent info from the map
         const parent = props.parentInfo.parent;
@@ -388,7 +402,20 @@ function FunctionDeclarationRender(
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("FunctionDeclarationRender: Appending parameter");
+          prependToArray(
+            props.node,
+            "parameterList",
+            createParameter,
+            nodeMap,
+            onEdit,
+            requestFocus
+          );
+        }
+      },
+      insertLast: () => {
         if (selectedNodeId === props.node.id) {
           console.log("FunctionDeclarationRender: Appending parameter");
           appendToArray(
@@ -412,7 +439,7 @@ function FunctionDeclarationRender(
         parentInfo: props.parentInfo,
         className: "token-type",
         placeholder: "type",
-      })}
+      })}{" "}
       {EditableField({
         node: props.node,
         key: "identifier",
@@ -421,7 +448,6 @@ function FunctionDeclarationRender(
         placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
-
       {props.node.parameterList.map((param, i) => (
         <React.Fragment key={param.id}>
           {i > 0 && ", "}
@@ -456,7 +482,20 @@ function FunctionDefinitionRender(
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("FunctionDefinitionRender: Appending parameter");
+          prependToArray(
+            props.node,
+            "parameterList",
+            createParameter,
+            nodeMap,
+            onEdit,
+            requestFocus
+          );
+        }
+      },
+      insertLast: () => {
         if (selectedNodeId === props.node.id) {
           console.log("FunctionDefinitionRender: Appending parameter");
           appendToArray(
@@ -528,7 +567,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (!props.node.value) {
           console.log("DeclarationRender: Inserting unknown node as value");
           insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
@@ -604,10 +643,10 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (selectedNodeId === props.node.id) {
           console.log("CompoundStatementRender: Inserting unknown node");
-          prependUnknownToArray(props.node, "code", nodeMap, onEdit, requestFocus);
+          prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
         }
       },
     },
@@ -662,10 +701,16 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (selectedNodeId === props.node.id) {
           console.log("CompoundStatementRender: Inserting unknown node");
-          prependUnknownToArray(props.node, "codeBlock", nodeMap, onEdit, requestFocus);
+          prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
+        }
+      },
+      insertLast: () => {
+        if (selectedNodeId === props.node.id) {
+          console.log("CompoundStatementRender: Appending unknown node");
+          appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
         }
       },
     },
@@ -711,7 +756,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (selectedNodeId === props.node.id && !props.node.elseStatement) {
           console.log("IfStatementRender: Inserting else clause");
           const newElseClause: objects.ElseClause = {
@@ -818,7 +863,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (selectedNodeId === props.node.id) {
           console.log("ElseClauseRender: Converting to ifStatement");
           // Convert to ifStatement
@@ -900,7 +945,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (!props.node.value) {
           console.log("ReturnStatementRender: Inserting unknown node as return value");
           insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
@@ -939,7 +984,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 
   const handleKeyDown = createKeyDownHandler(mode, {
     edit: {
-      insert: () => {
+      insertFirst: () => {
         if (selectedNodeId === props.node.id) {
           console.log("CallExpressionRender: Appending argument");
           appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
