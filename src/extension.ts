@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as cp from "child_process";
 import { startServer } from "./server";
-import { transpileFile } from "./transpile";
+import { transpileFile, pickFileFromWorkspace } from "./transpile";
 import { Client } from "./client";
 import { ClengaEditorProvider } from "./views";
 
@@ -16,8 +16,13 @@ export function activate(context: vscode.ExtensionContext) {
   initServerWorkspace(client);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("lengalab.transpileFile", (filePath: vscode.Uri) => {
-      transpileFile(filePath);
+    vscode.commands.registerCommand("lengalab.transpileFile", async (filePath?: vscode.Uri) => {
+      const target = filePath ?? (await pickFileFromWorkspace());
+      if (!target) {
+        return;
+      }
+
+      await transpileFile(target);
     })
   );
 
