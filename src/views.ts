@@ -15,6 +15,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
   private readonly webviews = new WebviewCollection();
   private static instance: ClengaEditorProvider | null = null;
   private activeWebviewPanel: vscode.WebviewPanel | null = null;
+  private currentView: View = View.Structured; // Track current view state
 
   public static register(context: vscode.ExtensionContext, client: Client): vscode.Disposable {
     const provider = new ClengaEditorProvider(context, client);
@@ -47,20 +48,30 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
 
   public setStructuredView() {
     if (this.activeWebviewPanel) {
+      this.currentView = View.Structured;
       this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
         this.activeWebviewPanel.webview,
         View.Structured
       );
+      // Update command visibility
+      vscode.commands.executeCommand("setContext", "lengalab.currentView", "structured");
     }
   }
 
   public setGraphView() {
     if (this.activeWebviewPanel) {
+      this.currentView = View.Graph;
       this.activeWebviewPanel.webview.html = this.getHtmlForWebview(
         this.activeWebviewPanel.webview,
         View.Graph
       );
+      // Update command visibility
+      vscode.commands.executeCommand("setContext", "lengalab.currentView", "graph");
     }
+  }
+
+  public getCurrentView(): View {
+    return this.currentView;
   }
 
   async openCustomDocument(
@@ -121,12 +132,20 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     webviewPanel.onDidChangeViewState((e) => {
       if (e.webviewPanel.active) {
         this.activeWebviewPanel = e.webviewPanel;
+        // Update context when webview becomes active
+        vscode.commands.executeCommand(
+          "setContext",
+          "lengalab.currentView",
+          this.currentView === View.Structured ? "structured" : "graph"
+        );
       }
     });
 
     // Set as active immediately if visible
     if (webviewPanel.active) {
       this.activeWebviewPanel = webviewPanel;
+      // Set initial context
+      vscode.commands.executeCommand("setContext", "lengalab.currentView", "structured");
     }
 
     webviewPanel.webview.options = {
