@@ -15,6 +15,242 @@ import {
   prependToArray,
 } from "../lib/editionHelpers";
 
+// Valid C types for the type selector
+const C_TYPES = [
+  "void",
+  "int",
+  // "char",
+  // "float",
+  // "double",
+  // "short",
+  // "long",
+  // "unsigned char",
+  // "unsigned int",
+  // "unsigned short",
+  // "unsigned long",
+  // "signed char",
+  // "signed int",
+  // "signed short",
+  // "signed long",
+  // "long long",
+  // "unsigned long long",
+  // "size_t",
+  // "ptrdiff_t",
+];
+
+interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
+  node: T;
+  key: K;
+  parentInfo: ParentInfoV2;
+  className?: string;
+}
+
+function TypeSelector<T extends objects.LanguageObject, K extends string & keyof T>({
+  node,
+  key,
+  parentInfo,
+  className,
+}: TypeSelectorProps<T, K>) {
+  const {
+    selectedNodeId,
+    selectedKey,
+    onEdit,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+    focusRequest,
+    clearFocusRequest,
+    mode,
+  } = useLineContext();
+  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
+  const currentValue = String(node[key] ?? "");
+  const [inputValue, setInputValue] = React.useState(currentValue);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const hasFocusedRef = React.useRef(false);
+
+  // Filter types based on input
+  const filteredTypes = C_TYPES.filter((type) =>
+    type.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  // Find best match (exact prefix match, then contains match)
+  const getBestMatch = () => {
+    const exact = filteredTypes.find((type) =>
+      type.toLowerCase().startsWith(inputValue.toLowerCase())
+    );
+    return exact || filteredTypes[0] || inputValue;
+  };
+
+  React.useEffect(() => {
+    setInputValue(currentValue);
+  }, [currentValue]);
+
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === node.id &&
+      focusRequest.fieldKey === key &&
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing type selector for node:", node.id, " key:", key);
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, node.id, key, clearFocusRequest]);
+
+  const commitValue = (value: string) => {
+    if (value.trim() === "") {
+      // If the input is empty, revert to the current value
+      value = currentValue;
+    }
+
+    // Only allow valid types or revert to previous value
+    const isValidType = C_TYPES.includes(value);
+    const hasMatch = filteredTypes.length > 0;
+
+    let finalValue: string;
+    if (isValidType) {
+      // Input exactly matches a valid type
+      finalValue = value;
+    } else if (hasMatch) {
+      // Input doesn't exactly match, but there are filtered matches - use best match
+      finalValue = getBestMatch();
+    } else {
+      // No matches at all - revert to previous valid value
+      finalValue = currentValue;
+    }
+
+    node[key] = finalValue as T[K];
+    setInputValue(finalValue);
+    onEdit(node, key);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showDropdown && selectedIndex >= 0) {
+        e.stopPropagation();
+        commitValue(filteredTypes[selectedIndex]);
+      } else {
+        commitValue(inputValue);
+      }
+    } else if (e.key === "Escape") {
+      if (showDropdown) {
+        e.stopPropagation();
+      }
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+      setInputValue(currentValue);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showDropdown) {
+        setShowDropdown(true);
+        setSelectedIndex(0);
+      } else {
+        setSelectedIndex((prev) => Math.min(prev + 1, filteredTypes.length - 1));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (showDropdown) {
+        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+      }
+    }
+  };
+
+  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <input
+        ref={inputRef}
+        className={`inline-editor ${className ?? ""}`}
+        style={{
+          ...(isSelected
+            ? {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
+              }
+            : {}),
+          width,
+        }}
+        value={inputValue}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          setShowDropdown(true);
+          setSelectedIndex(-1);
+        }}
+        onKeyDown={handleKeyDown}
+        onFocus={() => {
+          setSelectedKey(key);
+          setSelectedNodeId(node.id);
+          setParentNodeInfo(parentInfo);
+          setShowDropdown(true);
+        }}
+        onBlur={() => {
+          // Delay to allow dropdown clicks
+          setTimeout(() => {
+            commitValue(inputValue);
+          }, 150);
+        }}
+        placeholder={currentValue}
+        readOnly={mode === "view"}
+      />
+      {showDropdown && filteredTypes.length > 0 && mode === "edit" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            background: "var(--vscode-dropdown-background)",
+            border: "1px solid var(--vscode-dropdown-border)",
+            borderRadius: "3px",
+            maxHeight: "200px",
+            overflowY: "auto",
+            zIndex: 1000,
+            minWidth: "100%",
+          }}
+        >
+          {filteredTypes.map((type, index) => (
+            <div
+              key={type}
+              style={{
+                padding: "4px 8px",
+                cursor: "pointer",
+                backgroundColor:
+                  index === selectedIndex
+                    ? "var(--vscode-list-activeSelectionBackground)"
+                    : "transparent",
+                color:
+                  index === selectedIndex
+                    ? "var(--vscode-list-activeSelectionForeground)"
+                    : "inherit",
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent blur
+                commitValue(type);
+              }}
+              onMouseEnter={() => setSelectedIndex(index)}
+            >
+              {type}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
   const { focusRequest, clearFocusRequest } = useLineContext();
@@ -433,12 +669,11 @@ function FunctionDeclarationRender(
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
+      {TypeSelector({
         node: props.node,
         key: "returnType",
         parentInfo: props.parentInfo,
         className: "token-type",
-        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
@@ -513,12 +748,11 @@ function FunctionDefinitionRender(
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
+      {TypeSelector({
         node: props.node,
         key: "returnType",
         parentInfo: props.parentInfo,
         className: "token-type",
-        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
@@ -578,12 +812,11 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
+      {TypeSelector({
         node: props.node,
         key: "primitiveType",
         parentInfo: props.parentInfo,
         className: "token-type",
-        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
@@ -623,12 +856,11 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
 
   const content = (
     <>
-      {EditableField({
+      {TypeSelector({
         node: props.node,
         key: "paramType",
         parentInfo: props.parentInfo,
         className: "token-type",
-        placeholder: "type",
       })}{" "}
       {EditableField({
         node: props.node,
