@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import * as objects from "../../../src/language_objects/cNodes";
-import { buildMaps, LineContext, ParentInfoV2, EditorMode } from "./context";
+import { buildMaps, LineContext, ParentInfo, EditorMode } from "./context";
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
@@ -12,10 +12,10 @@ interface LineProviderProps {
   availableInserts: objects.LanguageObject[] | null;
   selectedNodeId: string | null;
   selectedKey: string | null;
-  parentNodeInfo: ParentInfoV2 | null;
+  parentNodeInfo: ParentInfo | null;
   setSelectedNodeId: (id: string) => void;
   setSelectedKey: (key: string) => void;
-  setParentNodeInfo: (info: ParentInfoV2 | null) => void;
+  setParentNodeInfo: (info: ParentInfo | null) => void;
   children: React.ReactNode;
 }
 

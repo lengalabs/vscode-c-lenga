@@ -16,7 +16,7 @@ import * as objects from "../../../src/language_objects/cNodes";
 import { LineProvider } from "../components/lineContext";
 import { vscode } from "../vscode";
 import { visitNodes } from "../components/nodeVisiting";
-import { ParentInfoV2 } from "../components/context";
+import { ParentInfo } from "../components/context";
 import { childInfo } from "../components/childInfo";
 
 const nodeTypes = { function: FunctionNode };
@@ -28,7 +28,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [availableInserts, setAvailableInserts] = useState<objects.LanguageObject[] | null>(null);
-  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfoV2 | null>(null);
+  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfo | null>(null);
 
   const nodesRef = useRef<FunctionFlowNode[]>([]);
   useEffect(() => {

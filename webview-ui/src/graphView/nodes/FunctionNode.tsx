@@ -1,19 +1,19 @@
 import { FunctionDefinition } from "../../../../src/language_objects/cNodes";
 import { NodeRender } from "../../components/line";
-import { ParentInfoV2 } from "../../components/context";
+import { ParentInfo } from "../../components/context";
 import { Position, Handle } from "@xyflow/react";
 
 export type FunctionFlowNode = {
   id: string;
   type: "function";
   position: { x: number; y: number };
-  data: { func: FunctionDefinition; handlerPositions: number[]; parentInfo: ParentInfoV2 };
+  data: { func: FunctionDefinition; handlerPositions: number[]; parentInfo: ParentInfo };
 };
 
 export function FunctionNode({
   data,
 }: {
-  data: { func: FunctionDefinition; handlerPositions: number[]; parentInfo: ParentInfoV2 };
+  data: { func: FunctionDefinition; handlerPositions: number[]; parentInfo: ParentInfo };
 }) {
   const lineHeight = 22;
 

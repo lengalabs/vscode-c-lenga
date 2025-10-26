@@ -1,14 +1,8 @@
 import { createContext, useContext } from "react";
 import * as objects from "../../../src/language_objects/cNodes";
 
-export interface ParentInfo {
-  parent: objects.LanguageObject | null;
-  key: string;
-  index: number;
-}
-
 // Type-safe parent info with generics and defaults
-export type ParentInfoV2<
+export type ParentInfo<
   T extends objects.LanguageObject = objects.LanguageObject,
   K extends string & keyof T = string & keyof T,
 > = {
@@ -16,15 +10,6 @@ export type ParentInfoV2<
   key: K;
   index: number;
 };
-
-// Helper to create type-safe ParentInfoV2
-export function createParentInfo<T extends objects.LanguageObject, K extends string & keyof T>(
-  parent: T,
-  key: K,
-  index: number
-): ParentInfoV2<T, K> {
-  return { parent, key, index };
-}
 
 export type EditorMode = "view" | "edit";
 
@@ -47,12 +32,12 @@ export interface LineContextType {
   availableInserts: objects.LanguageObject[] | null;
   selectedNodeId: string | null;
   selectedKey: string | null;
-  parentNodeInfo: ParentInfoV2 | null;
-  setParentNodeInfo: (info: ParentInfoV2 | null) => void;
+  parentNodeInfo: ParentInfo | null;
+  setParentNodeInfo: (info: ParentInfo | null) => void;
   setSelectedNodeId: (id: string) => void;
   setSelectedKey: (key: string) => void;
   nodeMap: Map<string, objects.LanguageObject>;
-  parentMap: Map<string, ParentInfoV2>;
+  parentMap: Map<string, ParentInfo>;
   focusRequest: { nodeId: string; fieldKey: string } | null;
   requestFocus: (nodeId: string, fieldKey: string) => void;
   clearFocusRequest: () => void;
@@ -72,10 +57,10 @@ export function useLineContext(): LineContextType {
 
 export function buildMaps(ast: objects.LanguageObject[]): {
   nodeMap: Map<string, objects.LanguageObject>;
-  parentMap: Map<string, ParentInfoV2>;
+  parentMap: Map<string, ParentInfo>;
 } {
   const nodeMap = new Map<string, objects.LanguageObject>();
-  const parentMap = new Map<string, ParentInfoV2>();
+  const parentMap = new Map<string, ParentInfo>();
 
   function traverse(
     node: objects.LanguageObject | undefined,
@@ -90,7 +75,7 @@ export function buildMaps(ast: objects.LanguageObject[]): {
     nodeMap.set(node.id, node);
 
     if (parent) {
-      parentMap.set(node.id, { parent, key, index } as ParentInfoV2);
+      parentMap.set(node.id, { parent, key, index } as ParentInfo);
     }
 
     switch (node.type) {

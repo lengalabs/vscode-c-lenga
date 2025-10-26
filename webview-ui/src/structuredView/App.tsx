@@ -6,7 +6,7 @@ import { LineProvider } from "../components/lineContext";
 import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
 import { DebugProvider } from "../components/debugContext";
-import { ParentInfoV2, useLineContext } from "../components/context";
+import { ParentInfo, useLineContext } from "../components/context";
 import DebugMenu from "../components/DebugMenu";
 import { getFirstEditableField } from "../lib/editionHelpers";
 
@@ -34,7 +34,7 @@ export default function App() {
   const [sourceFile, setSourceFile] = useState<objects.SourceFile | undefined>(undefined);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfoV2 | null>(null);
+  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfo | null>(null);
   const [availableInserts, setAvailableInserts] = useState<objects.LanguageObject[] | null>(null);
   const [debug, setDebug] = useState<boolean>(false);
 

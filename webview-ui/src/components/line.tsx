@@ -1,5 +1,5 @@
 import React from "react";
-import { useLineContext, ParentInfoV2, NodeCallbacks } from "./context";
+import { useLineContext, ParentInfo, NodeCallbacks } from "./context";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";
@@ -41,7 +41,7 @@ const C_TYPES = [
 interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
-  parentInfo: ParentInfoV2;
+  parentInfo: ParentInfo;
   className?: string;
 }
 
@@ -283,7 +283,7 @@ function useFocusStructuralNode(nodeId: string) {
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
-  parentInfo: ParentInfoV2;
+  parentInfo: ParentInfo;
   className?: string;
   placeholder: string;
 }
@@ -374,7 +374,7 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
 
 interface ObjectProps {
   node: objects.LanguageObject;
-  parentInfo: ParentInfoV2;
+  parentInfo: ParentInfo;
   children: React.ReactNode;
   display?: "inline" | "block";
   callbacks?: NodeCallbacks;
@@ -448,7 +448,7 @@ export function Object({ node, parentInfo, children, display = "block", callback
 
 interface NodeRenderProps {
   node: objects.LanguageObject;
-  parentInfo: ParentInfoV2;
+  parentInfo: ParentInfo;
   callbacks?: NodeCallbacks;
   display?: "inline" | "block";
 }
