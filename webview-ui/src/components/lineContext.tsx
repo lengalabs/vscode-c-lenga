@@ -1,6 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import * as objects from "../../../src/language_objects/cNodes";
-import { buildMaps, LineContext, ParentInfoV2, EditorMode } from "./context";
+import { buildMaps, LineContext, ParentInfo, EditorMode } from "./context";
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
@@ -12,10 +12,10 @@ interface LineProviderProps {
   availableInserts: objects.LanguageObject[] | null;
   selectedNodeId: string | null;
   selectedKey: string | null;
-  parentNodeInfo: ParentInfoV2 | null;
+  parentNodeInfo: ParentInfo | null;
   setSelectedNodeId: (id: string) => void;
   setSelectedKey: (key: string) => void;
-  setParentNodeInfo: (info: ParentInfoV2 | null) => void;
+  setParentNodeInfo: (info: ParentInfo | null) => void;
   children: React.ReactNode;
 }
 
@@ -49,6 +49,34 @@ export function LineProvider({
   const clearFocusRequest = useCallback(() => {
     setFocusRequest(null);
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      if (event.key === "i" && mode === "view") {
+        event.preventDefault();
+        setMode("edit");
+        if (selectedNodeId && selectedKey) {
+          setFocusRequest({ nodeId: selectedNodeId, fieldKey: selectedKey });
+        }
+        return;
+      }
+
+      if (event.key === "Escape" && mode === "edit") {
+        event.preventDefault();
+        event.stopPropagation();
+        setMode("view");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mode, selectedKey, selectedNodeId, setMode]);
 
   return (
     <LineContext.Provider

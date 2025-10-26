@@ -1,18 +1,40 @@
-import { useState, useEffect } from "react";
-import { NodeRender, Object, ModeIndicator } from "../components/line";
-import { childInfo } from "../components/childInfo";
+import { useState, useEffect, useRef } from "react";
+import { SourceFileRender } from "../components/line";
+import ModeIndicator from "../components/ModeIndicator";
 import { LineProvider } from "../components/lineContext";
 
 import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
 import { DebugProvider } from "../components/debugContext";
-import { ParentInfoV2 } from "../components/context";
+import { ParentInfo, useLineContext } from "../components/context";
+import DebugMenu from "../components/DebugMenu";
+import { getFirstEditableField } from "../lib/editionHelpers";
+
+// Component that handles initial focus request
+function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile }) {
+  const { requestFocus } = useLineContext();
+  const hasRequestedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasRequestedRef.current && sourceFile.code.length > 0) {
+      const firstNode = sourceFile.code[0];
+      const firstField = getFirstEditableField(firstNode);
+      if (firstField !== null) {
+        console.log("Requesting initial focus on first node:", firstNode.id, "field:", firstField);
+        requestFocus(firstNode.id, firstField);
+        hasRequestedRef.current = true;
+      }
+    }
+  }, [sourceFile, requestFocus]);
+
+  return null;
+}
 
 export default function App() {
   const [sourceFile, setSourceFile] = useState<objects.SourceFile | undefined>(undefined);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfoV2 | null>(null);
+  const [parentNodeInfo, setParentNodeInfo] = useState<ParentInfo | null>(null);
   const [availableInserts, setAvailableInserts] = useState<objects.LanguageObject[] | null>(null);
   const [debug, setDebug] = useState<boolean>(false);
 
@@ -74,27 +96,13 @@ export default function App() {
             setSelectedKey={setSelectedKey}
             setParentNodeInfo={setParentNodeInfo}
           >
+            <InitialFocusHandler sourceFile={sourceFile} />
             <ModeIndicator />
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {sourceFile?.code.map((node, i) => (
-                <Object key={node.id} node={node}>
-                  <NodeRender node={node} parentInfo={childInfo(sourceFile, "code", i)} />
-                </Object>
-              ))}
-            </div>
+            <SourceFileRender node={sourceFile} />
+            <DebugMenu />
           </LineProvider>
         ) : (
           <p>loading...</p>
-        )}
-        {debug && (
-          <div>
-            <h1>Debug Info</h1>
-            <p>selectedNodeId: {selectedNodeId}</p>
-            <p>selectedKey: {selectedKey}</p>
-            <p>parentNodeId: {parentNodeInfo?.parent.id}</p>
-            <p>parentKey: {parentNodeInfo?.key}</p>
-            <p>parentIndex: {parentNodeInfo?.index}</p>
-          </div>
         )}
       </DebugProvider>
     </>
