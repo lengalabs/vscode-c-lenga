@@ -1,71 +1,42 @@
-# tpp-extension README
+# C Lenga Language Extension
 
-This is the README for your extension "tpp-extension". After writing up a brief description, we recommend including the following sections.
+A Visual Studio Code extension that provides Lenga support for the C programming language, offering advanced code visualization, transpilation capabilities, and an interactive development environment.
+
+## Getting Started
+
+You will need to have the [Lenga Server](https://github.com/lengalab/lenga) installed to proceed.
+
+### Prerequisites
+
+- Visual Studio Code 1.101.0 or higher
+- Lenga transpiler and lenga-server
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### 🔄 **Bi-directional Transpilation**
 
-For example if there is an image subfolder under your extension project workspace:
+- Convert C files to Lenga format (`.c` → `.c.lenga`) and back (`.lenga` → `.c`).
 
-\!\[feature X\]\(images/feature-x.png\)
+### 📊 **c.lenga File Editor With Dual View Modes**
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Structured View**: Familiar-looking code editor with hierarchical structure representation
+- **Graph View**: Function call graph visualization
+- Smart toggle between views with contextual button display
+- Keyboard shortcuts for quick view switching
 
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Dedicated custom editor for `.lenga` files
+- Interactive node editing capabilities
+- Real-time syntax validation and error reporting
+- Debug mode with detailed execution information
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
+Initial release of C Lenga Language Extension
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Bi-directional transpilation between C and Lenga formats
+- Dual view modes (structured and graph visualization)
+- Custom editor for interactive Lenga file editing
+- Language server integration for code analysis
+- Keyboard shortcuts and toolbar integration
