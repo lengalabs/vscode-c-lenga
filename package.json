@@ -1,10 +1,15 @@
 {
   "name": "c-lenga",
+  "publisher": "lengalabs",
   "displayName": "c-lenga",
   "description": "",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.101.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lengalabs/vscode-c-lenga.git"
   },
   "categories": [
     "Other"
