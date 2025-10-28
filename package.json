@@ -1,6 +1,6 @@
 {
-  "name": "lengalab",
-  "displayName": "lengalab",
+  "name": "c-lenga",
+  "displayName": "c-lenga",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -28,7 +28,7 @@
     ],
     "customEditors": [
       {
-        "viewType": "lengalab.c",
+        "viewType": "c-lenga",
         "displayName": "C Lenga Editor",
         "selector": [
           {
@@ -39,71 +39,71 @@
     ],
     "commands": [
       {
-        "command": "lengalab.setStructuredView",
+        "command": "c-lenga.setStructuredView",
         "title": "Sets the editors view to a classic structured format",
         "category": "SetView",
         "icon": "$(code-oss)"
       },
       {
-        "command": "lengalab.setGraphView",
+        "command": "c-lenga.setGraphView",
         "title": "Sets the editors view to a function call graph format",
         "category": "SetView",
         "icon": "$(type-hierarchy)"
       },
       {
-        "command": "lengalab.transpileFile",
+        "command": "c-lenga.transpileFile",
         "title": "Transpile File",
         "category": "Transpilation",
         "icon": "$(arrow-swap)"
       },
       {
-        "command": "lengalab.toggleDebug",
+        "command": "c-lenga.toggleDebug",
         "title": "Toggle Debug Info",
-        "category": "Lengalab",
+        "category": "c-lenga",
         "icon": "$(debug-alt)"
       }
     ],
     "keybindings": [
       {
-        "command": "lengalab.toggleDebug",
+        "command": "c-lenga.toggleDebug",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       },
       {
-        "command": "lengalab.setStructuredView",
+        "command": "c-lenga.setStructuredView",
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       },
       {
-        "command": "lengalab.setGraphView",
+        "command": "c-lenga.setGraphView",
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "lengalab.setStructuredView",
-          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == graph",
+          "command": "c-lenga.setStructuredView",
+          "when": "activeCustomEditorId == c-lenga && c-lenga.currentView == graph",
           "group": "navigation"
         },
         {
-          "command": "lengalab.setGraphView",
-          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == structured",
+          "command": "c-lenga.setGraphView",
+          "when": "activeCustomEditorId == c-lenga && c-lenga.currentView == structured",
           "group": "navigation"
         },
         {
-          "command": "lengalab.transpileFile",
+          "command": "c-lenga.transpileFile",
           "when": "resourceLangId == c || resourceLangId == lenga",
           "group": "navigation"
         }
       ],
       "explorer/context": [
         {
-          "command": "lengalab.transpileFile",
+          "command": "c-lenga.transpileFile",
           "when": "resourceLangId == c || resourceLangId == lenga",
           "group": "navigation",
           "args": [

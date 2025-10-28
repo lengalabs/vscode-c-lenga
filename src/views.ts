@@ -11,7 +11,7 @@ export enum View {
 }
 
 export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaDocument> {
-  private static readonly viewType = "lengalab.c";
+  private static readonly viewType = "c-lenga";
   private readonly webviews = new WebviewCollection();
   private static instance: ClengaEditorProvider | null = null;
   private activeWebviewPanel: vscode.WebviewPanel | null = null;
@@ -54,7 +54,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
         View.Structured
       );
       // Update command visibility
-      vscode.commands.executeCommand("setContext", "lengalab.currentView", "structured");
+      vscode.commands.executeCommand("setContext", "c-lenga.currentView", "structured");
     }
   }
 
@@ -66,7 +66,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
         View.Graph
       );
       // Update command visibility
-      vscode.commands.executeCommand("setContext", "lengalab.currentView", "graph");
+      vscode.commands.executeCommand("setContext", "c-lenga.currentView", "graph");
     }
   }
 
@@ -135,7 +135,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
         // Update context when webview becomes active
         vscode.commands.executeCommand(
           "setContext",
-          "lengalab.currentView",
+          "c-lenga.currentView",
           this.currentView === View.Structured ? "structured" : "graph"
         );
       }
@@ -145,7 +145,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     if (webviewPanel.active) {
       this.activeWebviewPanel = webviewPanel;
       // Set initial context
-      vscode.commands.executeCommand("setContext", "lengalab.currentView", "structured");
+      vscode.commands.executeCommand("setContext", "c-lenga.currentView", "structured");
     }
 
     webviewPanel.webview.options = {

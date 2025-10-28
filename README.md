@@ -4,7 +4,7 @@ A Visual Studio Code extension that provides Lenga support for the C programming
 
 ## Getting Started
 
-You will need to have the [Lenga Server](https://github.com/lengalab/lenga) installed to proceed.
+You will need to have the [Lenga Server](https://github.com/lengalabs/lenga) installed to proceed.
 
 ### Prerequisites
 
