@@ -31,15 +31,7 @@ You will need to have the [Lenga Server](https://github.com/lengalabs/lenga) ins
 
 ## Release Notes
 
-### 0.0.1
-
-Initial release of C Lenga Language Extension
-
-- Bi-directional transpilation between C and Lenga formats
-- Dual view modes (structured and graph visualization)
-- Custom editor for interactive Lenga file editing
-- Language server integration for code analysis
-- Keyboard shortcuts and toolbar integration
+See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Attributions
 

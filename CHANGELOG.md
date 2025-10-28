@@ -24,5 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/stpec/v2.0.
 ### Added
 
 - Initial release of the C-Lenga extension for Visual Studio Code.
-- Basic support for editing Lenga files written in C.
-- Transpilation features for converting Lenga C code to plain text C code and back.
+- Bi-directional transpilation between Lenga C code to plain text C.
+- Dual view modes (structured and graph visualization)
+- Custom editor for interactive Lenga file editing
+- Keyboard shortcuts and toolbar integration
