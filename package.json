@@ -3,7 +3,7 @@
   "publisher": "lengalabs",
   "displayName": "C-Lenga: C language support for the Lenga format",
   "description": "A Visual Studio Code extension for working with Lenga files written in C.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.101.0"
   },
