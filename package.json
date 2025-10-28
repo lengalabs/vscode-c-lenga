@@ -1,8 +1,8 @@
 {
   "name": "c-lenga",
   "publisher": "lengalabs",
-  "displayName": "c-lenga",
-  "description": "",
+  "displayName": "C-Lenga: C language support for the Lenga format",
+  "description": "A Visual Studio Code extension for working with Lenga files written in C.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.101.0"
