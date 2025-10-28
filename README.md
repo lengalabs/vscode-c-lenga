@@ -40,3 +40,17 @@ Initial release of C Lenga Language Extension
 - Custom editor for interactive Lenga file editing
 - Language server integration for code analysis
 - Keyboard shortcuts and toolbar integration
+
+## Attributions
+
+### Icon
+
+Image was cropped from a [photograph](https://commons.wikimedia.org/wiki/File:Nothofagus_pumilio-general_view_01.JPG) published by [Gagea](https://commons.wikimedia.org/wiki/User:Gagea) under [Creative Commons](https://en.wikipedia.org/wiki/en:Creative_Commons) Attribution-Share Alike [3.0 Unported](https://creativecommons.org/licenses/by-sa/3.0/deed.en), [2.5 Generic](https://creativecommons.org/licenses/by-sa/2.5/deed.en), [2.0 Generic](https://creativecommons.org/licenses/by-sa/2.0/deed.en) and [1.0 Generic](https://creativecommons.org/licenses/by-sa/1.0/deed.en) license.
+
+## License
+
+This project is licensed under the MIT License, excluding:
+
+- images/icon.png
+
+See the [LICENSE](LICENSE) file for details.

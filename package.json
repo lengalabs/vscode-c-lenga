@@ -14,6 +14,7 @@
   "categories": [
     "Other"
   ],
+  "icon": "images/icon.jpg",
   "activationEvents": [
     "workspaceContains:nodes.toml",
     "workspaceContains:*/nodes.toml"
