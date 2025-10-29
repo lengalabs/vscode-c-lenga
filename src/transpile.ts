@@ -25,7 +25,7 @@ export function transpileFile(path: vscode.Uri) {
           const res = await vscode.commands.executeCommand(
             "vscode.openWith",
             outputPath,
-            "lengalab.c"
+            "c-lenga"
           );
         } else {
           // Open other files (like .c) with the regular text editor

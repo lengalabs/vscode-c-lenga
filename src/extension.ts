@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
   initServerWorkspace(client);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("lengalab.transpileFile", async (filePath?: vscode.Uri) => {
+    vscode.commands.registerCommand("c-lenga.transpileFile", async (filePath?: vscode.Uri) => {
       const target = filePath ?? (await pickFileFromWorkspace());
       if (!target) {
         return;
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(ClengaEditorProvider.register(context, client));
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("lengalab.toggleDebug", () => {
+    vscode.commands.registerCommand("c-lenga.toggleDebug", () => {
       const provider = ClengaEditorProvider.getInstance();
       if (provider) {
         provider.toggleDebugForActiveEditor();
@@ -38,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("lengalab.setStructuredView", () => {
+    vscode.commands.registerCommand("c-lenga.setStructuredView", () => {
       const provider = ClengaEditorProvider.getInstance();
       if (provider) {
         provider.setStructuredView();
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("lengalab.setGraphView", () => {
+    vscode.commands.registerCommand("c-lenga.setGraphView", () => {
       const provider = ClengaEditorProvider.getInstance();
       if (provider) {
         provider.setGraphView();

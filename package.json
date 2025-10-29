@@ -1,14 +1,20 @@
 {
-  "name": "lengalab",
-  "displayName": "lengalab",
-  "description": "",
-  "version": "0.0.1",
+  "name": "c-lenga",
+  "publisher": "lengalabs",
+  "displayName": "C-Lenga: C language support for the Lenga format",
+  "description": "A Visual Studio Code extension for working with Lenga files written in C.",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.101.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lengalabs/vscode-c-lenga.git"
   },
   "categories": [
     "Other"
   ],
+  "icon": "images/icon.jpg",
   "activationEvents": [
     "workspaceContains:nodes.toml",
     "workspaceContains:*/nodes.toml"
@@ -28,7 +34,7 @@
     ],
     "customEditors": [
       {
-        "viewType": "lengalab.c",
+        "viewType": "c-lenga",
         "displayName": "C Lenga Editor",
         "selector": [
           {
@@ -39,71 +45,71 @@
     ],
     "commands": [
       {
-        "command": "lengalab.setStructuredView",
+        "command": "c-lenga.setStructuredView",
         "title": "Sets the editors view to a classic structured format",
         "category": "SetView",
         "icon": "$(code-oss)"
       },
       {
-        "command": "lengalab.setGraphView",
+        "command": "c-lenga.setGraphView",
         "title": "Sets the editors view to a function call graph format",
         "category": "SetView",
         "icon": "$(type-hierarchy)"
       },
       {
-        "command": "lengalab.transpileFile",
+        "command": "c-lenga.transpileFile",
         "title": "Transpile File",
         "category": "Transpilation",
         "icon": "$(arrow-swap)"
       },
       {
-        "command": "lengalab.toggleDebug",
+        "command": "c-lenga.toggleDebug",
         "title": "Toggle Debug Info",
-        "category": "Lengalab",
+        "category": "c-lenga",
         "icon": "$(debug-alt)"
       }
     ],
     "keybindings": [
       {
-        "command": "lengalab.toggleDebug",
+        "command": "c-lenga.toggleDebug",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       },
       {
-        "command": "lengalab.setStructuredView",
+        "command": "c-lenga.setStructuredView",
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       },
       {
-        "command": "lengalab.setGraphView",
+        "command": "c-lenga.setGraphView",
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g",
-        "when": "activeCustomEditorId == lengalab.c"
+        "when": "activeCustomEditorId == c-lenga"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "lengalab.setStructuredView",
-          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == graph",
+          "command": "c-lenga.setStructuredView",
+          "when": "activeCustomEditorId == c-lenga && c-lenga.currentView == graph",
           "group": "navigation"
         },
         {
-          "command": "lengalab.setGraphView",
-          "when": "activeCustomEditorId == lengalab.c && lengalab.currentView == structured",
+          "command": "c-lenga.setGraphView",
+          "when": "activeCustomEditorId == c-lenga && c-lenga.currentView == structured",
           "group": "navigation"
         },
         {
-          "command": "lengalab.transpileFile",
+          "command": "c-lenga.transpileFile",
           "when": "resourceLangId == c || resourceLangId == lenga",
           "group": "navigation"
         }
       ],
       "explorer/context": [
         {
-          "command": "lengalab.transpileFile",
+          "command": "c-lenga.transpileFile",
           "when": "resourceLangId == c || resourceLangId == lenga",
           "group": "navigation",
           "args": [
@@ -126,7 +132,10 @@
     "lint:check": "eslint src webview-ui/src --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.ts\" \"webview-ui/src/**/*.{ts,tsx}\" \"*.{js,mjs,json}\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"webview-ui/src/**/*.{ts,tsx}\" \"*.{js,mjs,json}\"",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "vsce": "vsce"
   },
   "devDependencies": {
     "@bufbuild/protobuf": "2.6.3",
@@ -150,6 +159,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
+    "@vscode/vsce": "^3.6.2",
     "google-protobuf": "^3.21.4",
     "lodash": "^4.17.21",
     "protobufjs": "^7.5.4",
