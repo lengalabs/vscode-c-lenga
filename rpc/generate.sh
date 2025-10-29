@@ -11,6 +11,7 @@ BRANCH_OR_COMMIT="main"                     # Can be branch or pinned commit has
 REMOTE_DIRECTORY="lenga-server/proto"       # Directory in the repo you want
 PROTOS_DIR="rpc/protos"                     # Relative to git repository root
 GENERATED_DIR="rpc/generated"               # Relative to git repository root
+TS_PROTO_VERSION="2.7.7"
 
 # ================================
 # Safety checks for variables
@@ -94,7 +95,7 @@ shopt -s globstar nullglob
 
 # Resolve protoc-gen-ts_proto without a local package.json
 # This downloads ts-proto into a temp cache and exposes the binary in PATH for this call.
-PLUGIN="$(npm exec --yes --package ts-proto -- bash -lc 'command -v protoc-gen-ts_proto')"
+PLUGIN="$(npm exec --yes --package "ts-proto@${TS_PROTO_VERSION}" -- bash -lc 'command -v protoc-gen-ts_proto')"
 if [ -z "$PLUGIN" ] || [ ! -x "$PLUGIN" ]; then
   echo "Error: failed to resolve protoc-gen-ts_proto via npm exec."
   exit 1
