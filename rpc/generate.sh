@@ -11,6 +11,7 @@ BRANCH_OR_COMMIT="main"                     # Can be branch or pinned commit has
 REMOTE_DIRECTORY="lenga-server/proto"       # Directory in the repo you want
 PROTOS_DIR="rpc/protos"                     # Relative to git repository root
 GENERATED_DIR="rpc/generated"               # Relative to git repository root
+TS_PROTO_VERSION="2.7.7"
 
 # ================================
 # Safety checks for variables
@@ -90,14 +91,18 @@ mkdir -p "$GENERATED_DIR"
 
 echo "Generating bindings"
 
-# Change ** wildcard behaviour to search directories recursivelly
-shopt -s globstar
+shopt -s globstar nullglob
 
-# Generate TS bindings from protobuf definitions
+# Resolve protoc-gen-ts_proto without a local package.json
+# This downloads ts-proto into a temp cache and exposes the binary in PATH for this call.
+PLUGIN="$(npm exec --yes --package "ts-proto@${TS_PROTO_VERSION}" -- bash -lc 'command -v protoc-gen-ts_proto')"
+if [ -z "$PLUGIN" ] || [ ! -x "$PLUGIN" ]; then
+  echo "Error: failed to resolve protoc-gen-ts_proto via npm exec."
+  exit 1
+fi
+
 protoc -I="$PROTOS_DIR" \
-  --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
+  --plugin="protoc-gen-ts_proto=$PLUGIN" \
   --ts_proto_out="$GENERATED_DIR" \
   --ts_proto_opt=esModuleInterop=true,useOptionals=messages,outputServices=grpc-js,env=node,oneof=unions \
   "$PROTOS_DIR"/**/*.proto
-
-echo "Done! Bindings can be found at '$GENERATED_DIR'"
