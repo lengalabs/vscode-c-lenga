@@ -534,10 +534,11 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
 interface ReferenceSelectorProps {
   node: objects.Reference;
   parentInfo: ParentInfo;
+  callbacks?: NodeCallbacks;
   className?: string;
 }
 
-function ReferenceSelector({ node, parentInfo, className }: ReferenceSelectorProps) {
+function ReferenceSelector({ node, parentInfo, className, callbacks }: ReferenceSelectorProps) {
   const {
     onEdit,
     setSelectedNodeId,
@@ -565,9 +566,37 @@ function ReferenceSelector({ node, parentInfo, className }: ReferenceSelectorPro
     label: decl.identifier,
     key: decl.id,
     onSelect: (selectedDecl: AvailableDeclaration) => {
-      // Update both the declarationId and trigger re-render
-      node.declarationId = selectedDecl.id;
-      onEdit(node, "declarationId");
+      switch (selectedDecl.type) {
+        case "function": {
+          // Replace Reference with CallExpression
+          console.log(
+            "Converting Reference to CallExpression for function:",
+            selectedDecl.identifier
+          );
+
+          const newCallExpression: objects.CallExpression = {
+            id: crypto.randomUUID(),
+            type: "callExpression",
+            idDeclaration: selectedDecl.id,
+            identifier: selectedDecl.identifier,
+            argumentList: [],
+          };
+
+          nodeMap.set(newCallExpression.id, newCallExpression);
+          nodeMap.delete(node.id);
+
+          // Replace in parent
+          if (callbacks?.onReplace) {
+            callbacks.onReplace(node, newCallExpression);
+          }
+          break;
+        }
+        case "variable":
+        case "parameter":
+          // Update reference to point to variable/parameter
+          node.declarationId = selectedDecl.id;
+          onEdit(node, "declarationId");
+      }
     },
   }));
 
@@ -1621,7 +1650,12 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
   const content = (
-    <ReferenceSelector node={props.node} parentInfo={props.parentInfo} className="token-variable" />
+    <ReferenceSelector
+      node={props.node}
+      parentInfo={props.parentInfo}
+      className="token-variable"
+      callbacks={props.callbacks}
+    />
   );
 
   return <Object {...props}>{content}</Object>;
