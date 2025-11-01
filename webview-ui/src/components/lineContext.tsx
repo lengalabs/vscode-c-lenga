@@ -32,7 +32,7 @@ export function LineProvider({
   setParentNodeInfo,
   children,
 }: LineProviderProps) {
-  const { nodeMap, parentMap } = useMemo(() => buildMaps(sourceFile.code), [sourceFile]);
+  const { nodeMap, parentMap } = useMemo(() => buildMaps(sourceFile), [sourceFile]);
 
   // Focus request state - when set, the matching field will focus itself
   const [focusRequest, setFocusRequest] = useState<{ nodeId: string; fieldKey: string } | null>(

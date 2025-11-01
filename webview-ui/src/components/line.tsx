@@ -14,6 +14,7 @@ import {
   createUnknown,
   prependToArray,
 } from "../lib/editionHelpers";
+import { AvailableDeclaration, findDeclarationsInScope } from "../lib/findDeclarations";
 
 // Valid C types for the type selector
 const C_TYPES = [
@@ -37,6 +38,281 @@ const C_TYPES = [
   // "size_t",
   // "ptrdiff_t",
 ];
+
+// ============================================================================
+// Generic Autocomplete Field Component
+// ============================================================================
+
+interface AutocompleteOption<T> {
+  value: T;
+  label: string;
+  key: string;
+  description: React.ReactNode;
+  onSelect: (value: T) => void;
+}
+
+interface AutocompleteFieldProps<T> {
+  // Current value display
+  currentValue: string;
+  // In case current value is empty
+  placeholder: string;
+
+  // Available options
+  options: AutocompleteOption<T>[];
+
+  // Callbacks
+  onFocus?: () => void;
+  onNoMatch?: (inputText: string) => void; // Called when no valid option matches
+
+  // Focus management
+  focusRequest: { nodeId: string; fieldKey: string } | null;
+  nodeId: string;
+  fieldKey: string;
+  clearFocusRequest: () => void;
+
+  // Styling
+  className?: string;
+  isSelected?: boolean;
+
+  // Mode
+  readOnly?: boolean;
+}
+
+function AutocompleteField<T>({
+  currentValue,
+  placeholder,
+  options,
+  onFocus,
+  onNoMatch,
+  focusRequest,
+  nodeId,
+  fieldKey,
+  clearFocusRequest,
+  className,
+  isSelected = false,
+  readOnly = false,
+}: AutocompleteFieldProps<T>) {
+  const [inputValue, setInputValue] = React.useState(currentValue);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const hasFocusedRef = React.useRef(false);
+
+  // Filter options based on input
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  // Find best match (exact prefix match, then contains match)
+  const getBestMatch = (): AutocompleteOption<T> | null => {
+    const exact = filteredOptions.find((option) =>
+      option.label.toLowerCase().startsWith(inputValue.toLowerCase())
+    );
+    return exact || filteredOptions[0] || null;
+  };
+
+  // Update input value when current value changes
+  React.useEffect(() => {
+    setInputValue(currentValue);
+  }, [currentValue]);
+
+  // Handle focus requests
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === nodeId &&
+      focusRequest.fieldKey === fieldKey &&
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing autocomplete field for node:", nodeId, " field:", fieldKey);
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
+
+  const commitValue = (option: AutocompleteOption<T> | null) => {
+    if (option) {
+      // Call the option's onSelect callback
+      option.onSelect(option.value);
+      setInputValue(option.label);
+    } else {
+      // No match found - call onNoMatch if provided, otherwise revert
+      if (onNoMatch) {
+        onNoMatch(inputValue);
+      }
+      setInputValue(currentValue);
+    }
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showDropdown) {
+        e.stopPropagation();
+        if (selectedIndex >= 0) {
+          commitValue(filteredOptions[selectedIndex]);
+        } else {
+          const bestMatch = getBestMatch();
+          commitValue(bestMatch);
+        }
+      }
+    } else if (e.key === "Escape") {
+      if (showDropdown) {
+        e.stopPropagation();
+      }
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+      setInputValue(currentValue);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showDropdown) {
+        setShowDropdown(true);
+        setSelectedIndex(0);
+      } else {
+        setSelectedIndex((prev) => Math.min(prev + 1, filteredOptions.length - 1));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (showDropdown) {
+        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+      }
+    }
+    // if key is letter/number and dropdown not shown, show it
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      setShowDropdown(true);
+    }
+  };
+
+  const handleFocus = () => {
+    if (onFocus) {
+      onFocus();
+    }
+  };
+
+  const handleBlur = () => {
+    const bestMatch = getBestMatch();
+    commitValue(bestMatch);
+  };
+  const placeholderText = currentValue.length === 0 ? placeholder : currentValue;
+  const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
+
+  // Display description of first or selected option
+  const description = (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0])
+    ?.description;
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <input
+        ref={inputRef}
+        className={`inline-editor ${className ?? ""}`}
+        style={{
+          ...(isSelected
+            ? {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
+              }
+            : {}),
+          width,
+        }}
+        value={inputValue}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          setShowDropdown(true);
+          setSelectedIndex(-1);
+        }}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={placeholderText}
+        readOnly={readOnly}
+      />
+      {showDropdown && filteredOptions.length > 0 && !readOnly && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: "-2px",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "-3px",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-start",
+            }}
+          >
+            <ScrollableBox>
+              {filteredOptions.map((option, index) =>
+                ((option: AutocompleteOption<T>, selected: boolean, index: number) => (
+                  <div
+                    key={option.key}
+                    style={{
+                      cursor: "pointer",
+                      backgroundColor: selected
+                        ? "var(--vscode-list-activeSelectionBackground)"
+                        : "transparent",
+                      color: selected ? "var(--vscode-list-activeSelectionForeground)" : "inherit",
+                      padding: "0px 2px",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      commitValue(option);
+                    }}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                  >
+                    {option.label}
+                  </div>
+                ))(option, index === selectedIndex, index)
+              )}
+            </ScrollableBox>
+            <ScrollableBox>{description}</ScrollableBox>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScrollableBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--vscode-dropdown-background)",
+        boxShadow: "inset 0 0 0 1px var(--vscode-dropdown-border)",
+        borderRadius: "2px",
+        padding: "1px",
+      }}
+    >
+      <div
+        style={{
+          maxHeight: "10rem",
+          minWidth: "10rem",
+          maxWidth: "20rem",
+          overflowY: "auto",
+          scrollbarGutter: "stable",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Type Selector (uses AutocompleteField)
+// ============================================================================
 
 interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
@@ -62,192 +338,250 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
     clearFocusRequest,
     mode,
   } = useLineContext();
+
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const currentValue = String(node[key] ?? "");
-  const [inputValue, setInputValue] = React.useState(currentValue);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const hasFocusedRef = React.useRef(false);
 
-  // Filter types based on input
-  const filteredTypes = C_TYPES.filter((type) =>
-    type.toLowerCase().includes(inputValue.toLowerCase())
-  );
-
-  // Find best match (exact prefix match, then contains match)
-  const getBestMatch = () => {
-    const exact = filteredTypes.find((type) =>
-      type.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    return exact || filteredTypes[0] || inputValue;
-  };
-
-  React.useEffect(() => {
-    setInputValue(currentValue);
-  }, [currentValue]);
-
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing type selector for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-        hasFocusedRef.current = true;
-        clearFocusRequest();
-      }
+  function commitValue(selectedType: string) {
+    if (currentValue !== selectedType) {
+      node[key] = selectedType as T[K];
+      onEdit(node, key);
     }
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
+  }
 
-  const commitValue = (value: string) => {
-    if (value.trim() === "") {
-      // If the input is empty, revert to the current value
-      value = currentValue;
-    }
+  // Convert C_TYPES to AutocompleteOption format
+  const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
+    value: type,
+    label: type,
+    description: (
+      <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+        C type
+      </span>
+    ),
+    key: type,
+    onSelect: (selectedType: string) => {
+      commitValue(selectedType);
+    },
+  }));
 
-    // Only allow valid types or revert to previous value
-    const isValidType = C_TYPES.includes(value);
-    const hasMatch = filteredTypes.length > 0;
-
-    let finalValue: string;
+  const handleNoMatch = (inputText: string) => {
+    // Check if input is a valid type despite not being in filtered options
+    const isValidType = C_TYPES.includes(inputText);
     if (isValidType) {
-      // Input exactly matches a valid type
-      finalValue = value;
-    } else if (hasMatch) {
-      // Input doesn't exactly match, but there are filtered matches - use best match
-      finalValue = getBestMatch();
+      commitValue(inputText);
+    } else if (inputText.trim() === "") {
+      // Empty input - revert to current value (do nothing)
     } else {
-      // No matches at all - revert to previous valid value
-      finalValue = currentValue;
-    }
-
-    node[key] = finalValue as T[K];
-    setInputValue(finalValue);
-    onEdit(node, key);
-    setShowDropdown(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (showDropdown && selectedIndex >= 0) {
-        e.stopPropagation();
-        commitValue(filteredTypes[selectedIndex]);
-      } else {
-        commitValue(inputValue);
-      }
-    } else if (e.key === "Escape") {
-      if (showDropdown) {
-        e.stopPropagation();
-      }
-      setShowDropdown(false);
-      setSelectedIndex(-1);
-      setInputValue(currentValue);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!showDropdown) {
-        setShowDropdown(true);
-        setSelectedIndex(0);
-      } else {
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredTypes.length - 1));
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (showDropdown) {
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
-      }
+      // Invalid type - revert to current value (do nothing)
     }
   };
 
-  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
+  const handleFocus = () => {
+    setSelectedKey(key);
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+  };
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <input
-        ref={inputRef}
-        className={`inline-editor ${className ?? ""}`}
-        style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
-          width,
-        }}
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          setShowDropdown(true);
-          setSelectedIndex(-1);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          setSelectedKey(key);
-          setSelectedNodeId(node.id);
-          setParentNodeInfo(parentInfo);
-          setShowDropdown(true);
-        }}
-        onBlur={() => {
-          // Delay to allow dropdown clicks
-          setTimeout(() => {
-            commitValue(inputValue);
-          }, 150);
-        }}
-        placeholder={currentValue}
-        readOnly={mode === "view"}
-      />
-      {showDropdown && filteredTypes.length > 0 && mode === "edit" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            background: "var(--vscode-dropdown-background)",
-            border: "1px solid var(--vscode-dropdown-border)",
-            borderRadius: "3px",
-            maxHeight: "200px",
-            overflowY: "auto",
-            zIndex: 1000,
-            minWidth: "100%",
-          }}
-        >
-          {filteredTypes.map((type, index) => (
-            <div
-              key={type}
-              style={{
-                padding: "4px 8px",
-                cursor: "pointer",
-                backgroundColor:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionBackground)"
-                    : "transparent",
-                color:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionForeground)"
-                    : "inherit",
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent blur
-                commitValue(type);
-              }}
-              onMouseEnter={() => setSelectedIndex(index)}
-            >
-              {type}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <AutocompleteField
+      currentValue={currentValue}
+      placeholder="type"
+      options={options}
+      onNoMatch={handleNoMatch}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey={key}
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+    />
+  );
+}
+
+// ============================================================================
+// Reference Selector (uses AutocompleteField)
+// ============================================================================
+
+interface ReferenceSelectorProps {
+  node: objects.Reference;
+  parentInfo: ParentInfo;
+  callbacks?: NodeCallbacks;
+  className?: string;
+}
+
+function ReferenceSelector({ node, parentInfo, className, callbacks }: ReferenceSelectorProps) {
+  const {
+    onEdit,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+    focusRequest,
+    clearFocusRequest,
+    mode,
+    nodeMap,
+    parentMap,
+  } = useLineContext();
+
+  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
+
+  // Get the current identifier from the target declaration
+  const targetDecl = nodeMap.get(node.declarationId);
+  const currentIdentifier =
+    targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
+
+  const handleFocus = () => {
+    console.log("Focusing ReferenceSelector for node:", node.id);
+    setSelectedKey("declarationId");
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+
+    // Find available declarations and convert to options
+    const declarations = findDeclarationsInScope(node, parentMap);
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations.map((decl) => ({
+      value: decl,
+      label: decl.identifier,
+      description: (
+        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+          {decl.type}
+        </span>
+      ),
+      key: decl.id,
+      onSelect: (selectedDecl: AvailableDeclaration) => {
+        switch (selectedDecl.type) {
+          case "functionDeclaration":
+          case "functionDefinition": {
+            // Replace Reference with CallExpression
+            console.log(
+              "Converting Reference to CallExpression for function:",
+              selectedDecl.identifier
+            );
+
+            const newCallExpression: objects.CallExpression = {
+              id: crypto.randomUUID(),
+              type: "callExpression",
+              idDeclaration: selectedDecl.id,
+              identifier: selectedDecl.identifier,
+              argumentList: [],
+            };
+
+            nodeMap.set(newCallExpression.id, newCallExpression);
+            nodeMap.delete(node.id);
+
+            // Replace in parent
+            if (callbacks?.onReplace) {
+              callbacks.onReplace(node, newCallExpression);
+            }
+            break;
+          }
+          case "declaration":
+          case "functionParameter":
+            // Update reference to point to variable/parameter
+            node.declarationId = selectedDecl.id;
+            onEdit(node, "declarationId");
+        }
+      },
+    }));
+    setOptions(newOptions);
+    console.log("Available declarations for reference:", declarations);
+  };
+
+  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
+
+  return (
+    <AutocompleteField
+      currentValue={currentIdentifier}
+      placeholder="reference_name"
+      options={options}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey="declarationId"
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+    />
+  );
+}
+
+// ============================================================================
+// Call Expression Selector (uses AutocompleteField, only shows functions)
+// ============================================================================
+
+interface CallExpressionSelectorProps {
+  node: objects.CallExpression;
+  parentInfo: ParentInfo;
+  className?: string;
+}
+
+function CallExpressionSelector({ node, parentInfo, className }: CallExpressionSelectorProps) {
+  const {
+    onEdit,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+    focusRequest,
+    clearFocusRequest,
+    mode,
+    nodeMap,
+    parentMap,
+  } = useLineContext();
+
+  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
+
+  // Get the current identifier from the target declaration
+  const targetDecl = nodeMap.get(node.idDeclaration);
+  const currentIdentifier =
+    targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
+
+  const handleFocus = () => {
+    setSelectedKey("idDeclaration");
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+
+    // Find available declarations and filter for functions only, then convert to options
+    const declarations = findDeclarationsInScope(node, parentMap);
+    const functions = declarations.filter(
+      (decl) => decl.type === "functionDeclaration" || decl.type === "functionDefinition"
+    );
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => ({
+      value: decl,
+      label: decl.identifier,
+      description: (
+        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+          {decl.type}
+        </span>
+      ),
+      key: decl.id,
+      onSelect: (selectedDecl: AvailableDeclaration) => {
+        // Update the call expression to point to the new function
+        node.idDeclaration = selectedDecl.id;
+        node.identifier = selectedDecl.identifier;
+        onEdit(node, "idDeclaration");
+      },
+    }));
+    setOptions(newOptions);
+    console.log("Available functions for call expression:", functions);
+  };
+
+  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
+
+  return (
+    <AutocompleteField
+      currentValue={currentIdentifier}
+      placeholder="function_name"
+      options={options}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey="idDeclaration"
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+    />
   );
 }
 
@@ -307,7 +641,8 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
     mode,
   } = useLineContext();
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
-  const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
+  const initialValue = String(node[key] ?? "");
+  const [inputValue, setInputValue] = React.useState(initialValue);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
@@ -364,8 +699,10 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
         setParentNodeInfo(parentInfo);
       }}
       onBlur={() => {
-        node[key] = inputValue as T[K];
-        onEdit(node, key);
+        if (initialValue !== inputValue) {
+          node[key] = inputValue as T[K];
+          onEdit(node, key);
+        }
       }}
       readOnly={mode === "view"}
     />
@@ -1205,13 +1542,11 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
+      <CallExpressionSelector
+        node={props.node}
+        parentInfo={props.parentInfo}
+        className="token-function"
+      />
       <span className="token-delimiter">{"("}</span>
       {props.node.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
@@ -1241,14 +1576,14 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 }
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
-  const { nodeMap } = useLineContext();
-  const targetNode = nodeMap.get(props.node.declarationId);
-
-  if (!targetNode || !("identifier" in targetNode)) {
-    return <>{props.node.declarationId}</>;
-  }
-
-  const content = <span className="token-variable">{String(targetNode.identifier)}</span>;
+  const content = (
+    <ReferenceSelector
+      node={props.node}
+      parentInfo={props.parentInfo}
+      className="token-variable"
+      callbacks={props.callbacks}
+    />
+  );
 
   return <Object {...props}>{content}</Object>;
 }

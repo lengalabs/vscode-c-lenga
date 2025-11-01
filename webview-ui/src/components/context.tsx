@@ -55,7 +55,7 @@ export function useLineContext(): LineContextType {
   return ctx;
 }
 
-export function buildMaps(ast: objects.LanguageObject[]): {
+export function buildMaps(ast: objects.SourceFile): {
   nodeMap: Map<string, objects.LanguageObject>;
   parentMap: Map<string, ParentInfo>;
 } {
@@ -134,11 +134,28 @@ export function buildMaps(ast: objects.LanguageObject[]): {
         traverse(elseClause.body, elseClause, "body", 0);
         break;
       }
-      default:
+      case "sourceFile": {
+        const sourceFile = node as objects.SourceFile;
+        sourceFile.code.forEach((stmt, i) => traverse(stmt, sourceFile, "code", i));
+        break;
+      }
+      case "binaryExpression": {
+        const binaryExpr = node as objects.BinaryExpression;
+        traverse(binaryExpr.left, binaryExpr, "left", 0);
+        traverse(binaryExpr.right, binaryExpr, "right", 0);
+        break;
+      }
+      case "preprocInclude":
+      case "comment":
+      case "functionParameter":
+      case "numberLiteral":
+      case "reference":
+      case "stringLiteral":
+      case "unknown":
         break; // leaf nodes
     }
   }
 
-  ast.forEach((node) => traverse(node));
+  traverse(ast);
   return { nodeMap, parentMap };
 }
