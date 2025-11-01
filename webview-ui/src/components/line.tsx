@@ -196,13 +196,16 @@ function AutocompleteField<T>({
         setSelectedIndex((prev) => Math.max(prev - 1, -1));
       }
     }
+    // if key is letter/number and dropdown not shown, show it
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      setShowDropdown(true);
+    }
   };
 
   const handleFocus = () => {
     if (onFocus) {
       onFocus();
     }
-    setShowDropdown(true);
   };
 
   const handleBlur = () => {
@@ -316,14 +319,20 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const currentValue = String(node[key] ?? "");
 
+  function commitValue(selectedType: string) {
+    if (currentValue !== selectedType) {
+      node[key] = selectedType as T[K];
+      onEdit(node, key);
+    }
+  }
+
   // Convert C_TYPES to AutocompleteOption format
   const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
     value: type,
     label: type,
     key: type,
     onSelect: (selectedType: string) => {
-      node[key] = selectedType as T[K];
-      onEdit(node, key);
+      commitValue(selectedType);
     },
   }));
 
@@ -331,8 +340,7 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
     // Check if input is a valid type despite not being in filtered options
     const isValidType = C_TYPES.includes(inputText);
     if (isValidType) {
-      node[key] = inputText as T[K];
-      onEdit(node, key);
+      commitValue(inputText);
     } else if (inputText.trim() === "") {
       // Empty input - revert to current value (do nothing)
     } else {
