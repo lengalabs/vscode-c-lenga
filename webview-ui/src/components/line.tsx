@@ -664,6 +664,118 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
   );
 }
 
+// ============================================================================
+// Call Expression Selector (uses AutocompleteField, only shows functions)
+// ============================================================================
+
+interface CallExpressionSelectorProps {
+  node: objects.CallExpression;
+  parentInfo: ParentInfo;
+  className?: string;
+}
+
+function CallExpressionSelector({ node, parentInfo, className }: CallExpressionSelectorProps) {
+  const {
+    onEdit,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+    focusRequest,
+    clearFocusRequest,
+    mode,
+    nodeMap,
+  } = useLineContext();
+
+  const [availableFunctions, setAvailableFunctions] = React.useState<AvailableDeclaration[]>([]);
+
+  // Get the current identifier from the target declaration
+  const targetDecl = nodeMap.get(node.idDeclaration);
+  const currentIdentifier =
+    targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
+
+  // Convert AvailableDeclaration to AutocompleteOption format - only functions can replace with other functions
+  const options: AutocompleteOption<AvailableDeclaration>[] = availableFunctions.map((decl) => ({
+    value: decl,
+    label: decl.identifier,
+    key: decl.id,
+    onSelect: (selectedDecl: AvailableDeclaration) => {
+      // Update the call expression to point to the new function
+      node.idDeclaration = selectedDecl.id;
+      node.identifier = selectedDecl.identifier;
+      onEdit(node, "idDeclaration");
+    },
+  }));
+
+  const handleFocus = () => {
+    setSelectedKey("idDeclaration");
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+
+    // Find all function declarations/definitions (globally available)
+    const functions: AvailableDeclaration[] = [];
+    nodeMap.forEach((mapNode) => {
+      if (mapNode.type === "functionDeclaration" || mapNode.type === "functionDefinition") {
+        const funcNode = mapNode as objects.FunctionDeclaration | objects.FunctionDefinition;
+        functions.push({
+          id: mapNode.id,
+          identifier: funcNode.identifier,
+          type: "function",
+        });
+      }
+    });
+    setAvailableFunctions(functions);
+  };
+
+  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
+
+  return (
+    <AutocompleteField
+      currentValue={currentIdentifier}
+      placeholder="function_name"
+      options={options}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey="idDeclaration"
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+      renderOption={(option, isSelected, index, setSelectedIndex) => (
+        <div
+          key={option.key}
+          style={{
+            padding: "4px 8px",
+            cursor: "pointer",
+            backgroundColor: isSelected
+              ? "var(--vscode-list-activeSelectionBackground)"
+              : "transparent",
+            color: isSelected
+              ? "var(--vscode-list-activeSelectionForeground)"
+              : "var(--vscode-dropdown-foreground)",
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            option.onSelect(option.value);
+          }}
+          onMouseEnter={() => setSelectedIndex(index)}
+        >
+          <span style={{ fontWeight: "bold" }}>{option.value.identifier}</span>
+          <span
+            style={{
+              marginLeft: "8px",
+              fontSize: "0.9em",
+              opacity: 0.7,
+            }}
+          >
+            (function)
+          </span>
+        </div>
+      )}
+    />
+  );
+}
+
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
   const { focusRequest, clearFocusRequest } = useLineContext();
@@ -1618,13 +1730,11 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
+      <CallExpressionSelector
+        node={props.node}
+        parentInfo={props.parentInfo}
+        className="token-function"
+      />
       <span className="token-delimiter">{"("}</span>
       {props.node.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
