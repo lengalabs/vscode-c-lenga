@@ -38,6 +38,174 @@ const C_TYPES = [
   // "ptrdiff_t",
 ];
 
+// Interface for available declarations that can be referenced
+interface AvailableDeclaration {
+  id: string;
+  identifier: string;
+  type: "variable" | "parameter" | "function";
+}
+
+/**
+ * Find all declarations that are in scope at the given reference position.
+ * In C, a variable can only be referenced if:
+ * 1. It's declared before the current position in the same scope or parent scope
+ * 2. It's a function parameter (available throughout the function body)
+ * 3. It's a function declaration/definition (available globally)
+ */
+function findDeclarationsInScope(
+  referenceNodeId: string,
+  nodeMap: Map<string, objects.LanguageObject>,
+  parentMap: Map<string, ParentInfo>
+): AvailableDeclaration[] {
+  const declarations: AvailableDeclaration[] = [];
+  const referenceParentInfo = parentMap.get(referenceNodeId);
+
+  if (!referenceParentInfo) {
+    return declarations;
+  }
+
+  // Helper to check if a node comes before another in the same array
+  const comesBefore = (nodeId: string, currentParentInfo: ParentInfo): boolean => {
+    const nodeInfo = parentMap.get(nodeId);
+    if (!nodeInfo) return false;
+
+    // Must be in the same parent array
+    if (
+      nodeInfo.parent.id !== currentParentInfo.parent.id ||
+      nodeInfo.key !== currentParentInfo.key
+    ) {
+      return false;
+    }
+
+    // Check index
+    return nodeInfo.index < currentParentInfo.index;
+  };
+
+  // Helper to get all ancestors of a node (for scope chain)
+  const getAncestors = (nodeId: string): objects.LanguageObject[] => {
+    const ancestors: objects.LanguageObject[] = [];
+    let currentId = nodeId;
+
+    while (true) {
+      const parentInfo = parentMap.get(currentId);
+      if (!parentInfo) break;
+      ancestors.push(parentInfo.parent);
+      currentId = parentInfo.parent.id;
+    }
+
+    return ancestors;
+  };
+
+  // Get the scope chain (ancestors) of the reference
+  const scopeChain = getAncestors(referenceNodeId);
+
+  // 1. Find function declarations and definitions (globally available)
+  nodeMap.forEach((node) => {
+    if (node.type === "functionDeclaration" || node.type === "functionDefinition") {
+      const funcNode = node as objects.FunctionDeclaration | objects.FunctionDefinition;
+      declarations.push({
+        id: node.id,
+        identifier: funcNode.identifier,
+        type: "function",
+      });
+    }
+  });
+
+  // 2. Find function parameters if we're inside a function
+  const enclosingFunction = scopeChain.find(
+    (ancestor) => ancestor.type === "functionDefinition"
+  ) as objects.FunctionDefinition | undefined;
+
+  if (enclosingFunction) {
+    enclosingFunction.parameterList.forEach((param) => {
+      declarations.push({
+        id: param.id,
+        identifier: param.identifier,
+        type: "parameter",
+      });
+    });
+  }
+
+  // 3. Find variable declarations in the current scope and parent scopes
+  // We need to traverse each scope in the chain and find declarations that come before our position
+  for (const scopeNode of scopeChain) {
+    if (scopeNode.type === "compoundStatement") {
+      const compStmt = scopeNode as objects.CompoundStatement;
+
+      // Find declarations in this scope that come before the reference
+      compStmt.codeBlock.forEach((stmt) => {
+        if (stmt.type === "declaration") {
+          const decl = stmt as objects.Declaration;
+
+          // Check if this declaration comes before our reference
+          // We need to traverse up from the reference to see if we're in this scope
+          let currentNode = nodeMap.get(referenceNodeId);
+          let currentParentInfo = referenceParentInfo;
+
+          // Walk up until we find the scope or reach root
+          while (currentNode && currentParentInfo) {
+            if (currentParentInfo.parent.id === scopeNode.id) {
+              // We're in this scope - check if declaration comes before
+              if (comesBefore(stmt.id, currentParentInfo)) {
+                declarations.push({
+                  id: decl.id,
+                  identifier: decl.identifier,
+                  type: "variable",
+                });
+              }
+              break;
+            }
+            // Move up one level
+            currentNode = currentParentInfo.parent;
+            const nextParentInfo = parentMap.get(currentNode.id);
+            if (!nextParentInfo) break;
+            currentParentInfo = nextParentInfo;
+          }
+        }
+      });
+    } else if (scopeNode.type === "sourceFile") {
+      // Global scope - find all declarations that come before
+      const sourceFile = scopeNode as objects.SourceFile;
+
+      sourceFile.code.forEach((stmt) => {
+        if (stmt.type === "declaration") {
+          const decl = stmt as objects.Declaration;
+
+          // For global scope, check if it comes before the reference
+          // Find where in the tree our reference appears
+          let currentNode = nodeMap.get(referenceNodeId);
+          let currentParentInfo = referenceParentInfo;
+
+          while (currentNode && currentParentInfo) {
+            if (currentParentInfo.parent.id === sourceFile.id) {
+              if (comesBefore(stmt.id, currentParentInfo)) {
+                declarations.push({
+                  id: decl.id,
+                  identifier: decl.identifier,
+                  type: "variable",
+                });
+              }
+              break;
+            }
+            currentNode = currentParentInfo.parent;
+            const nextParentInfo = parentMap.get(currentNode.id);
+            if (!nextParentInfo) break;
+            currentParentInfo = nextParentInfo;
+          }
+        }
+      });
+    }
+  }
+
+  // Remove duplicates (in case a declaration is found multiple times)
+  const seen = new Set<string>();
+  return declarations.filter((decl) => {
+    if (seen.has(decl.id)) return false;
+    seen.add(decl.id);
+    return true;
+  });
+}
+
 interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
@@ -243,6 +411,225 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
               onMouseEnter={() => setSelectedIndex(index)}
             >
               {type}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ReferenceSelectorProps {
+  node: objects.Reference;
+  parentInfo: ParentInfo;
+  className?: string;
+}
+
+function ReferenceSelector({ node, parentInfo, className }: ReferenceSelectorProps) {
+  const {
+    onEdit,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+    focusRequest,
+    clearFocusRequest,
+    mode,
+    nodeMap,
+    parentMap,
+  } = useLineContext();
+
+  const [availableDeclarations, setAvailableDeclarations] = React.useState<AvailableDeclaration[]>(
+    []
+  );
+  const [inputValue, setInputValue] = React.useState("");
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const hasFocusedRef = React.useRef(false);
+
+  // Get the current identifier from the target declaration
+  const targetDecl = nodeMap.get(node.declarationId);
+  const currentIdentifier =
+    targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
+
+  // Filter declarations based on input
+  const filteredDeclarations = availableDeclarations.filter((decl) =>
+    decl.identifier.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  // Find best match (exact prefix match, then contains match, then revert to current)
+  const getBestMatch = (): AvailableDeclaration | null => {
+    const exact = filteredDeclarations.find((decl) =>
+      decl.identifier.toLowerCase().startsWith(inputValue.toLowerCase())
+    );
+    return exact || filteredDeclarations[0] || null;
+  };
+
+  React.useEffect(() => {
+    setInputValue(currentIdentifier);
+  }, [currentIdentifier]);
+
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === node.id &&
+      focusRequest.fieldKey === "declarationId" &&
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing reference selector for node:", node.id);
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, node.id, clearFocusRequest]);
+
+  const commitValue = (declaration: AvailableDeclaration | null) => {
+    if (!declaration) {
+      // Revert to current value
+      setInputValue(currentIdentifier);
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+      return;
+    }
+
+    // Update both the declarationId and trigger re-render
+    node.declarationId = declaration.id;
+    onEdit(node, "declarationId");
+    setInputValue(declaration.identifier);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showDropdown && selectedIndex >= 0) {
+        commitValue(filteredDeclarations[selectedIndex]);
+      } else {
+        const bestMatch = getBestMatch();
+        commitValue(bestMatch);
+      }
+    } else if (e.key === "Escape") {
+      if (showDropdown) {
+        e.preventDefault();
+      }
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+      setInputValue(currentIdentifier);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showDropdown) {
+        setShowDropdown(true);
+        setSelectedIndex(0);
+      } else {
+        setSelectedIndex((prev) => Math.min(prev + 1, filteredDeclarations.length - 1));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (showDropdown) {
+        setSelectedIndex((prev) => Math.max(prev - 1, 0));
+      }
+    }
+  };
+
+  const handleFocus = () => {
+    setSelectedKey("declarationId");
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+
+    // Find available declarations when focused
+    const declarations = findDeclarationsInScope(node.id, nodeMap, parentMap);
+    setAvailableDeclarations(declarations);
+    setShowDropdown(true);
+  };
+
+  const width = `${inputValue.length === 0 ? currentIdentifier.length : inputValue.length}ch`;
+  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <input
+        ref={inputRef}
+        className={`inline-editor ${className ?? ""}`}
+        style={{
+          ...(isSelected
+            ? {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
+              }
+            : {}),
+          width,
+        }}
+        value={inputValue}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          setShowDropdown(true);
+          setSelectedIndex(-1);
+        }}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={() => {
+          // Delay to allow dropdown clicks
+          setTimeout(() => {
+            const bestMatch = getBestMatch();
+            commitValue(bestMatch);
+          }, 150);
+        }}
+        placeholder={currentIdentifier}
+        readOnly={mode === "view"}
+      />
+      {showDropdown && filteredDeclarations.length > 0 && mode === "edit" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            background: "var(--vscode-dropdown-background)",
+            border: "1px solid var(--vscode-dropdown-border)",
+            borderRadius: "3px",
+            maxHeight: "200px",
+            overflowY: "auto",
+            zIndex: 1000,
+            minWidth: "150px",
+          }}
+        >
+          {filteredDeclarations.map((decl, index) => (
+            <div
+              key={decl.id}
+              style={{
+                padding: "4px 8px",
+                cursor: "pointer",
+                backgroundColor:
+                  index === selectedIndex
+                    ? "var(--vscode-list-activeSelectionBackground)"
+                    : "transparent",
+                color:
+                  index === selectedIndex
+                    ? "var(--vscode-list-activeSelectionForeground)"
+                    : "var(--vscode-dropdown-foreground)",
+              }}
+              onMouseEnter={() => setSelectedIndex(index)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                commitValue(decl);
+              }}
+            >
+              <span style={{ fontWeight: "bold" }}>{decl.identifier}</span>
+              <span
+                style={{
+                  marginLeft: "8px",
+                  fontSize: "0.9em",
+                  opacity: 0.7,
+                }}
+              >
+                ({decl.type})
+              </span>
             </div>
           ))}
         </div>
@@ -1241,14 +1628,9 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 }
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
-  const { nodeMap } = useLineContext();
-  const targetNode = nodeMap.get(props.node.declarationId);
-
-  if (!targetNode || !("identifier" in targetNode)) {
-    return <>{props.node.declarationId}</>;
-  }
-
-  const content = <span className="token-variable">{String(targetNode.identifier)}</span>;
+  const content = (
+    <ReferenceSelector node={props.node} parentInfo={props.parentInfo} className="token-variable" />
+  );
 
   return <Object {...props}>{content}</Object>;
 }
