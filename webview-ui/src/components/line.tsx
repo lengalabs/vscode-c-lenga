@@ -205,6 +205,10 @@ function AutocompleteField<T>({
   const placeholderText = currentValue.length === 0 ? placeholder : currentValue;
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
+  // Display description of first or selected option
+  const description = (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0])
+    ?.description;
+
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <input
@@ -244,20 +248,11 @@ function AutocompleteField<T>({
             style={{
               position: "absolute",
               top: "-3px",
-              background: "var(--vscode-dropdown-background)",
-              boxShadow: "inset 0 0 0 1px var(--vscode-dropdown-border)",
-              borderRadius: "2px",
-              padding: "1px",
-              minWidth: "120%",
+              display: "flex",
+              flexDirection: "row",
             }}
           >
-            <div
-              style={{
-                maxHeight: "10rem",
-                overflowY: "auto",
-                scrollbarGutter: "stable",
-              }}
-            >
+            <ScrollableBox>
               {filteredOptions.map((option, index) =>
                 ((option: AutocompleteOption<T>, selected: boolean, index: number) => (
                   <div
@@ -280,10 +275,36 @@ function AutocompleteField<T>({
                   </div>
                 ))(option, index === selectedIndex, index)
               )}
-            </div>
+            </ScrollableBox>
+            <ScrollableBox>{description}</ScrollableBox>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ScrollableBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--vscode-dropdown-background)",
+        boxShadow: "inset 0 0 0 1px var(--vscode-dropdown-border)",
+        borderRadius: "2px",
+        padding: "1px",
+      }}
+    >
+      <div
+        style={{
+          maxHeight: "10rem",
+          minWidth: "10rem",
+          maxWidth: "20rem",
+          overflowY: "auto",
+          scrollbarGutter: "stable",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
