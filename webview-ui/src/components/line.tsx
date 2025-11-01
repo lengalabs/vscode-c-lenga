@@ -370,11 +370,8 @@ function AutocompleteField<T>({
   };
 
   const handleBlur = () => {
-    // Delay to allow dropdown clicks
-    setTimeout(() => {
-      const bestMatch = getBestMatch();
-      commitValue(bestMatch);
-    }, 150);
+    const bestMatch = getBestMatch();
+    commitValue(bestMatch);
   };
   const placeholderText = currentValue.length === 0 ? placeholder : currentValue;
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
