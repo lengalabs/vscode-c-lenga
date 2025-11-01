@@ -206,6 +206,252 @@ function findDeclarationsInScope(
   });
 }
 
+// ============================================================================
+// Generic Autocomplete Field Component
+// ============================================================================
+
+interface AutocompleteOption<T> {
+  value: T;
+  label: string;
+  key: string;
+  onSelect: (value: T) => void;
+}
+
+interface AutocompleteFieldProps<T> {
+  // Current value display
+  currentValue: string;
+
+  // Available options
+  options: AutocompleteOption<T>[];
+
+  // Callbacks
+  onFocus?: () => void;
+  onNoMatch?: (inputText: string) => void; // Called when no valid option matches
+
+  // Focus management
+  focusRequest: { nodeId: string; fieldKey: string } | null;
+  nodeId: string;
+  fieldKey: string;
+  clearFocusRequest: () => void;
+
+  // Styling
+  className?: string;
+  isSelected?: boolean;
+
+  // Mode
+  readOnly?: boolean;
+
+  // Custom option renderer (optional)
+  // Receives: option, isSelected flag, index, and setSelectedIndex callback
+  renderOption?: (
+    option: AutocompleteOption<T>,
+    isSelected: boolean,
+    index: number,
+    setSelectedIndex: (index: number) => void
+  ) => React.ReactNode;
+}
+
+function AutocompleteField<T>({
+  currentValue,
+  options,
+  onFocus,
+  onNoMatch,
+  focusRequest,
+  nodeId,
+  fieldKey,
+  clearFocusRequest,
+  className,
+  isSelected = false,
+  readOnly = false,
+  renderOption,
+}: AutocompleteFieldProps<T>) {
+  const [inputValue, setInputValue] = React.useState(currentValue);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const hasFocusedRef = React.useRef(false);
+
+  // Filter options based on input
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  // Find best match (exact prefix match, then contains match)
+  const getBestMatch = (): AutocompleteOption<T> | null => {
+    const exact = filteredOptions.find((option) =>
+      option.label.toLowerCase().startsWith(inputValue.toLowerCase())
+    );
+    return exact || filteredOptions[0] || null;
+  };
+
+  // Update input value when current value changes
+  React.useEffect(() => {
+    setInputValue(currentValue);
+  }, [currentValue]);
+
+  // Handle focus requests
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === nodeId &&
+      focusRequest.fieldKey === fieldKey &&
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing autocomplete field for node:", nodeId, " field:", fieldKey);
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
+
+  const commitValue = (option: AutocompleteOption<T> | null) => {
+    if (option) {
+      // Call the option's onSelect callback
+      option.onSelect(option.value);
+      setInputValue(option.label);
+    } else {
+      // No match found - call onNoMatch if provided, otherwise revert
+      if (onNoMatch) {
+        onNoMatch(inputValue);
+      }
+      setInputValue(currentValue);
+    }
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showDropdown && selectedIndex >= 0) {
+        e.stopPropagation();
+        commitValue(filteredOptions[selectedIndex]);
+      } else {
+        const bestMatch = getBestMatch();
+        commitValue(bestMatch);
+      }
+    } else if (e.key === "Escape") {
+      if (showDropdown) {
+        e.stopPropagation();
+      }
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+      setInputValue(currentValue);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showDropdown) {
+        setShowDropdown(true);
+        setSelectedIndex(0);
+      } else {
+        setSelectedIndex((prev) => Math.min(prev + 1, filteredOptions.length - 1));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (showDropdown) {
+        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+      }
+    }
+  };
+
+  const handleFocus = () => {
+    if (onFocus) {
+      onFocus();
+    }
+    setShowDropdown(true);
+  };
+
+  const handleBlur = () => {
+    // Delay to allow dropdown clicks
+    setTimeout(() => {
+      const bestMatch = getBestMatch();
+      commitValue(bestMatch);
+    }, 150);
+  };
+
+  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
+
+  // Default option renderer
+  const defaultRenderOption = (option: AutocompleteOption<T>, selected: boolean, index: number) => (
+    <div
+      key={option.key}
+      style={{
+        padding: "4px 8px",
+        cursor: "pointer",
+        backgroundColor: selected ? "var(--vscode-list-activeSelectionBackground)" : "transparent",
+        color: selected ? "var(--vscode-list-activeSelectionForeground)" : "inherit",
+      }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        commitValue(option);
+      }}
+      onMouseEnter={() => setSelectedIndex(index)}
+    >
+      {option.label}
+    </div>
+  );
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <input
+        ref={inputRef}
+        className={`inline-editor ${className ?? ""}`}
+        style={{
+          ...(isSelected
+            ? {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
+              }
+            : {}),
+          width,
+        }}
+        value={inputValue}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          setShowDropdown(true);
+          setSelectedIndex(-1);
+        }}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={currentValue}
+        readOnly={readOnly}
+      />
+      {showDropdown && filteredOptions.length > 0 && !readOnly && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            background: "var(--vscode-dropdown-background)",
+            border: "1px solid var(--vscode-dropdown-border)",
+            borderRadius: "3px",
+            maxHeight: "200px",
+            overflowY: "auto",
+            zIndex: 1000,
+            minWidth: "100%",
+          }}
+        >
+          {filteredOptions.map((option, index) =>
+            renderOption
+              ? renderOption(option, index === selectedIndex, index, setSelectedIndex)
+              : defaultRenderOption(option, index === selectedIndex, index)
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Type Selector (uses AutocompleteField)
+// ============================================================================
+
 interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
@@ -230,194 +476,60 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
     clearFocusRequest,
     mode,
   } = useLineContext();
+
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const currentValue = String(node[key] ?? "");
-  const [inputValue, setInputValue] = React.useState(currentValue);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const hasFocusedRef = React.useRef(false);
 
-  // Filter types based on input
-  const filteredTypes = C_TYPES.filter((type) =>
-    type.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  // Convert C_TYPES to AutocompleteOption format
+  const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
+    value: type,
+    label: type,
+    key: type,
+    onSelect: (selectedType: string) => {
+      node[key] = selectedType as T[K];
+      onEdit(node, key);
+    },
+  }));
 
-  // Find best match (exact prefix match, then contains match)
-  const getBestMatch = () => {
-    const exact = filteredTypes.find((type) =>
-      type.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    return exact || filteredTypes[0] || inputValue;
-  };
-
-  React.useEffect(() => {
-    setInputValue(currentValue);
-  }, [currentValue]);
-
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing type selector for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-        hasFocusedRef.current = true;
-        clearFocusRequest();
-      }
-    }
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
-
-  const commitValue = (value: string) => {
-    if (value.trim() === "") {
-      // If the input is empty, revert to the current value
-      value = currentValue;
-    }
-
-    // Only allow valid types or revert to previous value
-    const isValidType = C_TYPES.includes(value);
-    const hasMatch = filteredTypes.length > 0;
-
-    let finalValue: string;
+  const handleNoMatch = (inputText: string) => {
+    // Check if input is a valid type despite not being in filtered options
+    const isValidType = C_TYPES.includes(inputText);
     if (isValidType) {
-      // Input exactly matches a valid type
-      finalValue = value;
-    } else if (hasMatch) {
-      // Input doesn't exactly match, but there are filtered matches - use best match
-      finalValue = getBestMatch();
+      node[key] = inputText as T[K];
+      onEdit(node, key);
+    } else if (inputText.trim() === "") {
+      // Empty input - revert to current value (do nothing)
     } else {
-      // No matches at all - revert to previous valid value
-      finalValue = currentValue;
-    }
-
-    node[key] = finalValue as T[K];
-    setInputValue(finalValue);
-    onEdit(node, key);
-    setShowDropdown(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (showDropdown && selectedIndex >= 0) {
-        e.stopPropagation();
-        commitValue(filteredTypes[selectedIndex]);
-      } else {
-        commitValue(inputValue);
-      }
-    } else if (e.key === "Escape") {
-      if (showDropdown) {
-        e.stopPropagation();
-      }
-      setShowDropdown(false);
-      setSelectedIndex(-1);
-      setInputValue(currentValue);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!showDropdown) {
-        setShowDropdown(true);
-        setSelectedIndex(0);
-      } else {
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredTypes.length - 1));
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (showDropdown) {
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
-      }
+      // Invalid type - revert to current value (do nothing)
     }
   };
 
-  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
+  const handleFocus = () => {
+    setSelectedKey(key);
+    setSelectedNodeId(node.id);
+    setParentNodeInfo(parentInfo);
+  };
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <input
-        ref={inputRef}
-        className={`inline-editor ${className ?? ""}`}
-        style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
-          width,
-        }}
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          setShowDropdown(true);
-          setSelectedIndex(-1);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          setSelectedKey(key);
-          setSelectedNodeId(node.id);
-          setParentNodeInfo(parentInfo);
-          setShowDropdown(true);
-        }}
-        onBlur={() => {
-          // Delay to allow dropdown clicks
-          setTimeout(() => {
-            commitValue(inputValue);
-          }, 150);
-        }}
-        placeholder={currentValue}
-        readOnly={mode === "view"}
-      />
-      {showDropdown && filteredTypes.length > 0 && mode === "edit" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            background: "var(--vscode-dropdown-background)",
-            border: "1px solid var(--vscode-dropdown-border)",
-            borderRadius: "3px",
-            maxHeight: "200px",
-            overflowY: "auto",
-            zIndex: 1000,
-            minWidth: "100%",
-          }}
-        >
-          {filteredTypes.map((type, index) => (
-            <div
-              key={type}
-              style={{
-                padding: "4px 8px",
-                cursor: "pointer",
-                backgroundColor:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionBackground)"
-                    : "transparent",
-                color:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionForeground)"
-                    : "inherit",
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent blur
-                commitValue(type);
-              }}
-              onMouseEnter={() => setSelectedIndex(index)}
-            >
-              {type}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <AutocompleteField
+      currentValue={currentValue}
+      options={options}
+      onNoMatch={handleNoMatch}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey={key}
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+    />
   );
 }
+
+// ============================================================================
+// Reference Selector (uses AutocompleteField)
+// ============================================================================
 
 interface ReferenceSelectorProps {
   node: objects.Reference;
@@ -441,102 +553,23 @@ function ReferenceSelector({ node, parentInfo, className }: ReferenceSelectorPro
   const [availableDeclarations, setAvailableDeclarations] = React.useState<AvailableDeclaration[]>(
     []
   );
-  const [inputValue, setInputValue] = React.useState("");
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const hasFocusedRef = React.useRef(false);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.declarationId);
   const currentIdentifier =
     targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
 
-  // Filter declarations based on input
-  const filteredDeclarations = availableDeclarations.filter((decl) =>
-    decl.identifier.toLowerCase().includes(inputValue.toLowerCase())
-  );
-
-  // Find best match (exact prefix match, then contains match, then revert to current)
-  const getBestMatch = (): AvailableDeclaration | null => {
-    const exact = filteredDeclarations.find((decl) =>
-      decl.identifier.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    return exact || filteredDeclarations[0] || null;
-  };
-
-  React.useEffect(() => {
-    setInputValue(currentIdentifier);
-  }, [currentIdentifier]);
-
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === "declarationId" &&
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing reference selector for node:", node.id);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-        hasFocusedRef.current = true;
-        clearFocusRequest();
-      }
-    }
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, node.id, clearFocusRequest]);
-
-  const commitValue = (declaration: AvailableDeclaration | null) => {
-    if (!declaration) {
-      // Revert to current value
-      setInputValue(currentIdentifier);
-      setShowDropdown(false);
-      setSelectedIndex(-1);
-      return;
-    }
-
-    // Update both the declarationId and trigger re-render
-    node.declarationId = declaration.id;
-    onEdit(node, "declarationId");
-    setInputValue(declaration.identifier);
-    setShowDropdown(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (showDropdown && selectedIndex >= 0) {
-        commitValue(filteredDeclarations[selectedIndex]);
-      } else {
-        const bestMatch = getBestMatch();
-        commitValue(bestMatch);
-      }
-    } else if (e.key === "Escape") {
-      if (showDropdown) {
-        e.preventDefault();
-      }
-      setShowDropdown(false);
-      setSelectedIndex(-1);
-      setInputValue(currentIdentifier);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!showDropdown) {
-        setShowDropdown(true);
-        setSelectedIndex(0);
-      } else {
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredDeclarations.length - 1));
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (showDropdown) {
-        setSelectedIndex((prev) => Math.max(prev - 1, 0));
-      }
-    }
-  };
+  // Convert AvailableDeclaration to AutocompleteOption format
+  const options: AutocompleteOption<AvailableDeclaration>[] = availableDeclarations.map((decl) => ({
+    value: decl,
+    label: decl.identifier,
+    key: decl.id,
+    onSelect: (selectedDecl: AvailableDeclaration) => {
+      // Update both the declarationId and trigger re-render
+      node.declarationId = selectedDecl.id;
+      onEdit(node, "declarationId");
+    },
+  }));
 
   const handleFocus = () => {
     setSelectedKey("declarationId");
@@ -546,95 +579,54 @@ function ReferenceSelector({ node, parentInfo, className }: ReferenceSelectorPro
     // Find available declarations when focused
     const declarations = findDeclarationsInScope(node.id, nodeMap, parentMap);
     setAvailableDeclarations(declarations);
-    setShowDropdown(true);
   };
 
-  const width = `${inputValue.length === 0 ? currentIdentifier.length : inputValue.length}ch`;
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <input
-        ref={inputRef}
-        className={`inline-editor ${className ?? ""}`}
-        style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
-          width,
-        }}
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          setShowDropdown(true);
-          setSelectedIndex(-1);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={() => {
-          // Delay to allow dropdown clicks
-          setTimeout(() => {
-            const bestMatch = getBestMatch();
-            commitValue(bestMatch);
-          }, 150);
-        }}
-        placeholder={currentIdentifier}
-        readOnly={mode === "view"}
-      />
-      {showDropdown && filteredDeclarations.length > 0 && mode === "edit" && (
+    <AutocompleteField
+      currentValue={currentIdentifier}
+      options={options}
+      onFocus={handleFocus}
+      focusRequest={focusRequest}
+      nodeId={node.id}
+      fieldKey="declarationId"
+      clearFocusRequest={clearFocusRequest}
+      className={className}
+      isSelected={!!isSelected}
+      readOnly={mode === "view"}
+      renderOption={(option, isSelected, index, setSelectedIndex) => (
         <div
+          key={option.key}
           style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            background: "var(--vscode-dropdown-background)",
-            border: "1px solid var(--vscode-dropdown-border)",
-            borderRadius: "3px",
-            maxHeight: "200px",
-            overflowY: "auto",
-            zIndex: 1000,
-            minWidth: "150px",
+            padding: "4px 8px",
+            cursor: "pointer",
+            backgroundColor: isSelected
+              ? "var(--vscode-list-activeSelectionBackground)"
+              : "transparent",
+            color: isSelected
+              ? "var(--vscode-list-activeSelectionForeground)"
+              : "var(--vscode-dropdown-foreground)",
           }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            option.onSelect(option.value);
+          }}
+          onMouseEnter={() => setSelectedIndex(index)}
         >
-          {filteredDeclarations.map((decl, index) => (
-            <div
-              key={decl.id}
-              style={{
-                padding: "4px 8px",
-                cursor: "pointer",
-                backgroundColor:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionBackground)"
-                    : "transparent",
-                color:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionForeground)"
-                    : "var(--vscode-dropdown-foreground)",
-              }}
-              onMouseEnter={() => setSelectedIndex(index)}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                commitValue(decl);
-              }}
-            >
-              <span style={{ fontWeight: "bold" }}>{decl.identifier}</span>
-              <span
-                style={{
-                  marginLeft: "8px",
-                  fontSize: "0.9em",
-                  opacity: 0.7,
-                }}
-              >
-                ({decl.type})
-              </span>
-            </div>
-          ))}
+          <span style={{ fontWeight: "bold" }}>{option.value.identifier}</span>
+          <span
+            style={{
+              marginLeft: "8px",
+              fontSize: "0.9em",
+              opacity: 0.7,
+            }}
+          >
+            ({option.value.type})
+          </span>
         </div>
       )}
-    </div>
+    />
   );
 }
 
