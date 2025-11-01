@@ -47,6 +47,7 @@ interface AutocompleteOption<T> {
   value: T;
   label: string;
   key: string;
+  description: React.ReactNode;
   onSelect: (value: T) => void;
 }
 
@@ -75,16 +76,6 @@ interface AutocompleteFieldProps<T> {
 
   // Mode
   readOnly?: boolean;
-
-  // Custom option renderer (optional)
-  // Receives: option, isSelected flag, index, setSelectedIndex callback, and commitValue callback
-  renderOption?: (
-    option: AutocompleteOption<T>,
-    isSelected: boolean,
-    index: number,
-    setSelectedIndex: (index: number) => void,
-    commitValue: (option: AutocompleteOption<T>) => void
-  ) => React.ReactNode;
 }
 
 function AutocompleteField<T>({
@@ -100,7 +91,6 @@ function AutocompleteField<T>({
   className,
   isSelected = false,
   readOnly = false,
-  renderOption,
 }: AutocompleteFieldProps<T>) {
   const [inputValue, setInputValue] = React.useState(currentValue);
   const [showDropdown, setShowDropdown] = React.useState(false);
@@ -215,26 +205,6 @@ function AutocompleteField<T>({
   const placeholderText = currentValue.length === 0 ? placeholder : currentValue;
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
-  // Default option renderer
-  const defaultRenderOption = (option: AutocompleteOption<T>, selected: boolean, index: number) => (
-    <div
-      key={option.key}
-      style={{
-        padding: "4px 8px",
-        cursor: "pointer",
-        backgroundColor: selected ? "var(--vscode-list-activeSelectionBackground)" : "transparent",
-        color: selected ? "var(--vscode-list-activeSelectionForeground)" : "inherit",
-      }}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        commitValue(option);
-      }}
-      onMouseEnter={() => setSelectedIndex(index)}
-    >
-      {option.label}
-    </div>
-  );
-
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <input
@@ -266,21 +236,45 @@ function AutocompleteField<T>({
           style={{
             position: "absolute",
             top: "100%",
-            left: 0,
-            background: "var(--vscode-dropdown-background)",
-            border: "1px solid var(--vscode-dropdown-border)",
-            borderRadius: "3px",
-            maxHeight: "200px",
-            overflowY: "auto",
+            left: "-2px",
             zIndex: 1000,
-            minWidth: "100%",
           }}
         >
-          {filteredOptions.map((option, index) =>
-            renderOption
-              ? renderOption(option, index === selectedIndex, index, setSelectedIndex, commitValue)
-              : defaultRenderOption(option, index === selectedIndex, index)
-          )}
+          <div
+            style={{
+              position: "absolute",
+              top: "-3px",
+              background: "var(--vscode-dropdown-background)",
+              boxShadow: "inset 0 0 0 1px var(--vscode-dropdown-border)",
+              borderRadius: "2px",
+              padding: "0px 2px",
+              maxHeight: "10rem",
+              overflowY: "auto",
+              minWidth: "120%",
+            }}
+          >
+            {filteredOptions.map((option, index) =>
+              ((option: AutocompleteOption<T>, selected: boolean, index: number) => (
+                <div
+                  key={option.key}
+                  style={{
+                    cursor: "pointer",
+                    backgroundColor: selected
+                      ? "var(--vscode-list-activeSelectionBackground)"
+                      : "transparent",
+                    color: selected ? "var(--vscode-list-activeSelectionForeground)" : "inherit",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    commitValue(option);
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                >
+                  {option.label}
+                </div>
+              ))(option, index === selectedIndex, index)
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -330,6 +324,11 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
   const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
     value: type,
     label: type,
+    description: (
+      <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+        C type
+      </span>
+    ),
     key: type,
     onSelect: (selectedType: string) => {
       commitValue(selectedType);
@@ -414,6 +413,11 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
     const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations.map((decl) => ({
       value: decl,
       label: decl.identifier,
+      description: (
+        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+          {decl.type}
+        </span>
+      ),
       key: decl.id,
       onSelect: (selectedDecl: AvailableDeclaration) => {
         switch (selectedDecl.type) {
@@ -469,37 +473,6 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
       className={className}
       isSelected={!!isSelected}
       readOnly={mode === "view"}
-      renderOption={(option, isSelected, index, setSelectedIndex, commitValue) => (
-        <div
-          key={option.key}
-          style={{
-            padding: "4px 8px",
-            cursor: "pointer",
-            backgroundColor: isSelected
-              ? "var(--vscode-list-activeSelectionBackground)"
-              : "transparent",
-            color: isSelected
-              ? "var(--vscode-list-activeSelectionForeground)"
-              : "var(--vscode-dropdown-foreground)",
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            commitValue(option);
-          }}
-          onMouseEnter={() => setSelectedIndex(index)}
-        >
-          <span style={{ fontWeight: "bold" }}>{option.value.identifier}</span>
-          <span
-            style={{
-              marginLeft: "8px",
-              fontSize: "0.9em",
-              opacity: 0.7,
-            }}
-          >
-            ({option.value.type})
-          </span>
-        </div>
-      )}
     />
   );
 }
@@ -547,6 +520,11 @@ function CallExpressionSelector({ node, parentInfo, className }: CallExpressionS
     const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => ({
       value: decl,
       label: decl.identifier,
+      description: (
+        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
+          {decl.type}
+        </span>
+      ),
       key: decl.id,
       onSelect: (selectedDecl: AvailableDeclaration) => {
         // Update the call expression to point to the new function
@@ -574,37 +552,6 @@ function CallExpressionSelector({ node, parentInfo, className }: CallExpressionS
       className={className}
       isSelected={!!isSelected}
       readOnly={mode === "view"}
-      renderOption={(option, isSelected, index, setSelectedIndex, commitValue) => (
-        <div
-          key={option.key}
-          style={{
-            padding: "4px 8px",
-            cursor: "pointer",
-            backgroundColor: isSelected
-              ? "var(--vscode-list-activeSelectionBackground)"
-              : "transparent",
-            color: isSelected
-              ? "var(--vscode-list-activeSelectionForeground)"
-              : "var(--vscode-dropdown-foreground)",
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            commitValue(option);
-          }}
-          onMouseEnter={() => setSelectedIndex(index)}
-        >
-          <span style={{ fontWeight: "bold" }}>{option.value.identifier}</span>
-          <span
-            style={{
-              marginLeft: "8px",
-              fontSize: "0.9em",
-              opacity: 0.7,
-            }}
-          >
-            (function)
-          </span>
-        </div>
-      )}
     />
   );
 }
