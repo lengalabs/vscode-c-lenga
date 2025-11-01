@@ -220,6 +220,8 @@ interface AutocompleteOption<T> {
 interface AutocompleteFieldProps<T> {
   // Current value display
   currentValue: string;
+  // In case current value is empty
+  placeholder: string;
 
   // Available options
   options: AutocompleteOption<T>[];
@@ -253,6 +255,7 @@ interface AutocompleteFieldProps<T> {
 
 function AutocompleteField<T>({
   currentValue,
+  placeholder,
   options,
   onFocus,
   onNoMatch,
@@ -373,8 +376,8 @@ function AutocompleteField<T>({
       commitValue(bestMatch);
     }, 150);
   };
-
-  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
+  const placeholderText = currentValue.length === 0 ? placeholder : currentValue;
+  const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
   // Default option renderer
   const defaultRenderOption = (option: AutocompleteOption<T>, selected: boolean, index: number) => (
@@ -419,7 +422,7 @@ function AutocompleteField<T>({
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder={currentValue}
+        placeholder={placeholderText}
         readOnly={readOnly}
       />
       {showDropdown && filteredOptions.length > 0 && !readOnly && (
@@ -513,6 +516,7 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
   return (
     <AutocompleteField
       currentValue={currentValue}
+      placeholder="type"
       options={options}
       onNoMatch={handleNoMatch}
       onFocus={handleFocus}
@@ -615,6 +619,7 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
   return (
     <AutocompleteField
       currentValue={currentIdentifier}
+      placeholder="reference_name"
       options={options}
       onFocus={handleFocus}
       focusRequest={focusRequest}
