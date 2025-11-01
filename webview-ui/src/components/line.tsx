@@ -657,7 +657,8 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
     mode,
   } = useLineContext();
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
-  const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
+  const initialValue = String(node[key] ?? "");
+  const [inputValue, setInputValue] = React.useState(initialValue);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
@@ -714,8 +715,10 @@ function EditableField<T extends objects.LanguageObject, K extends string & keyo
         setParentNodeInfo(parentInfo);
       }}
       onBlur={() => {
-        node[key] = inputValue as T[K];
-        onEdit(node, key);
+        if (initialValue !== inputValue) {
+          node[key] = inputValue as T[K];
+          onEdit(node, key);
+        }
       }}
       readOnly={mode === "view"}
     />
