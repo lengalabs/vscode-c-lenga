@@ -250,6 +250,7 @@ function AutocompleteField<T>({
               top: "-3px",
               display: "flex",
               flexDirection: "row",
+              alignItems: "flex-start",
             }}
           >
             <ScrollableBox>
