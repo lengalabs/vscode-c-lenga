@@ -244,12 +244,13 @@ interface AutocompleteFieldProps<T> {
   readOnly?: boolean;
 
   // Custom option renderer (optional)
-  // Receives: option, isSelected flag, index, and setSelectedIndex callback
+  // Receives: option, isSelected flag, index, setSelectedIndex callback, and commitValue callback
   renderOption?: (
     option: AutocompleteOption<T>,
     isSelected: boolean,
     index: number,
-    setSelectedIndex: (index: number) => void
+    setSelectedIndex: (index: number) => void,
+    commitValue: (option: AutocompleteOption<T>) => void
   ) => React.ReactNode;
 }
 
@@ -439,7 +440,7 @@ function AutocompleteField<T>({
         >
           {filteredOptions.map((option, index) =>
             renderOption
-              ? renderOption(option, index === selectedIndex, index, setSelectedIndex)
+              ? renderOption(option, index === selectedIndex, index, setSelectedIndex, commitValue)
               : defaultRenderOption(option, index === selectedIndex, index)
           )}
         </div>
@@ -626,7 +627,7 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
       className={className}
       isSelected={!!isSelected}
       readOnly={mode === "view"}
-      renderOption={(option, isSelected, index, setSelectedIndex) => (
+      renderOption={(option, isSelected, index, setSelectedIndex, commitValue) => (
         <div
           key={option.key}
           style={{
@@ -641,7 +642,7 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
           }}
           onMouseDown={(e) => {
             e.preventDefault();
-            option.onSelect(option.value);
+            commitValue(option);
           }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
@@ -738,7 +739,7 @@ function CallExpressionSelector({ node, parentInfo, className }: CallExpressionS
       className={className}
       isSelected={!!isSelected}
       readOnly={mode === "view"}
-      renderOption={(option, isSelected, index, setSelectedIndex) => (
+      renderOption={(option, isSelected, index, setSelectedIndex, commitValue) => (
         <div
           key={option.key}
           style={{
@@ -753,7 +754,7 @@ function CallExpressionSelector({ node, parentInfo, className }: CallExpressionS
           }}
           onMouseDown={(e) => {
             e.preventDefault();
-            option.onSelect(option.value);
+            commitValue(option);
           }}
           onMouseEnter={() => setSelectedIndex(index)}
         >
