@@ -14,6 +14,7 @@ import {
   createUnknown,
   prependToArray,
 } from "../lib/editionHelpers";
+import { AvailableDeclaration, findDeclarationsInScope } from "../lib/findDeclarations";
 
 // Valid C types for the type selector
 const C_TYPES = [
@@ -37,174 +38,6 @@ const C_TYPES = [
   // "size_t",
   // "ptrdiff_t",
 ];
-
-// Interface for available declarations that can be referenced
-interface AvailableDeclaration {
-  id: string;
-  identifier: string;
-  type: "variable" | "parameter" | "function";
-}
-
-/**
- * Find all declarations that are in scope at the given reference position.
- * In C, a variable can only be referenced if:
- * 1. It's declared before the current position in the same scope or parent scope
- * 2. It's a function parameter (available throughout the function body)
- * 3. It's a function declaration/definition (available globally)
- */
-function findDeclarationsInScope(
-  referenceNodeId: string,
-  nodeMap: Map<string, objects.LanguageObject>,
-  parentMap: Map<string, ParentInfo>
-): AvailableDeclaration[] {
-  const declarations: AvailableDeclaration[] = [];
-  const referenceParentInfo = parentMap.get(referenceNodeId);
-
-  if (!referenceParentInfo) {
-    return declarations;
-  }
-
-  // Helper to check if a node comes before another in the same array
-  const comesBefore = (nodeId: string, currentParentInfo: ParentInfo): boolean => {
-    const nodeInfo = parentMap.get(nodeId);
-    if (!nodeInfo) return false;
-
-    // Must be in the same parent array
-    if (
-      nodeInfo.parent.id !== currentParentInfo.parent.id ||
-      nodeInfo.key !== currentParentInfo.key
-    ) {
-      return false;
-    }
-
-    // Check index
-    return nodeInfo.index < currentParentInfo.index;
-  };
-
-  // Helper to get all ancestors of a node (for scope chain)
-  const getAncestors = (nodeId: string): objects.LanguageObject[] => {
-    const ancestors: objects.LanguageObject[] = [];
-    let currentId = nodeId;
-
-    while (true) {
-      const parentInfo = parentMap.get(currentId);
-      if (!parentInfo) break;
-      ancestors.push(parentInfo.parent);
-      currentId = parentInfo.parent.id;
-    }
-
-    return ancestors;
-  };
-
-  // Get the scope chain (ancestors) of the reference
-  const scopeChain = getAncestors(referenceNodeId);
-
-  // 1. Find function declarations and definitions (globally available)
-  nodeMap.forEach((node) => {
-    if (node.type === "functionDeclaration" || node.type === "functionDefinition") {
-      const funcNode = node as objects.FunctionDeclaration | objects.FunctionDefinition;
-      declarations.push({
-        id: node.id,
-        identifier: funcNode.identifier,
-        type: "function",
-      });
-    }
-  });
-
-  // 2. Find function parameters if we're inside a function
-  const enclosingFunction = scopeChain.find(
-    (ancestor) => ancestor.type === "functionDefinition"
-  ) as objects.FunctionDefinition | undefined;
-
-  if (enclosingFunction) {
-    enclosingFunction.parameterList.forEach((param) => {
-      declarations.push({
-        id: param.id,
-        identifier: param.identifier,
-        type: "parameter",
-      });
-    });
-  }
-
-  // 3. Find variable declarations in the current scope and parent scopes
-  // We need to traverse each scope in the chain and find declarations that come before our position
-  for (const scopeNode of scopeChain) {
-    if (scopeNode.type === "compoundStatement") {
-      const compStmt = scopeNode as objects.CompoundStatement;
-
-      // Find declarations in this scope that come before the reference
-      compStmt.codeBlock.forEach((stmt) => {
-        if (stmt.type === "declaration") {
-          const decl = stmt as objects.Declaration;
-
-          // Check if this declaration comes before our reference
-          // We need to traverse up from the reference to see if we're in this scope
-          let currentNode = nodeMap.get(referenceNodeId);
-          let currentParentInfo = referenceParentInfo;
-
-          // Walk up until we find the scope or reach root
-          while (currentNode && currentParentInfo) {
-            if (currentParentInfo.parent.id === scopeNode.id) {
-              // We're in this scope - check if declaration comes before
-              if (comesBefore(stmt.id, currentParentInfo)) {
-                declarations.push({
-                  id: decl.id,
-                  identifier: decl.identifier,
-                  type: "variable",
-                });
-              }
-              break;
-            }
-            // Move up one level
-            currentNode = currentParentInfo.parent;
-            const nextParentInfo = parentMap.get(currentNode.id);
-            if (!nextParentInfo) break;
-            currentParentInfo = nextParentInfo;
-          }
-        }
-      });
-    } else if (scopeNode.type === "sourceFile") {
-      // Global scope - find all declarations that come before
-      const sourceFile = scopeNode as objects.SourceFile;
-
-      sourceFile.code.forEach((stmt) => {
-        if (stmt.type === "declaration") {
-          const decl = stmt as objects.Declaration;
-
-          // For global scope, check if it comes before the reference
-          // Find where in the tree our reference appears
-          let currentNode = nodeMap.get(referenceNodeId);
-          let currentParentInfo = referenceParentInfo;
-
-          while (currentNode && currentParentInfo) {
-            if (currentParentInfo.parent.id === sourceFile.id) {
-              if (comesBefore(stmt.id, currentParentInfo)) {
-                declarations.push({
-                  id: decl.id,
-                  identifier: decl.identifier,
-                  type: "variable",
-                });
-              }
-              break;
-            }
-            currentNode = currentParentInfo.parent;
-            const nextParentInfo = parentMap.get(currentNode.id);
-            if (!nextParentInfo) break;
-            currentParentInfo = nextParentInfo;
-          }
-        }
-      });
-    }
-  }
-
-  // Remove duplicates (in case a declaration is found multiple times)
-  const seen = new Set<string>();
-  return declarations.filter((decl) => {
-    if (seen.has(decl.id)) return false;
-    seen.add(decl.id);
-    return true;
-  });
-}
 
 // ============================================================================
 // Generic Autocomplete Field Component
@@ -333,12 +166,14 @@ function AutocompleteField<T>({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (showDropdown && selectedIndex >= 0) {
+      if (showDropdown) {
         e.stopPropagation();
-        commitValue(filteredOptions[selectedIndex]);
-      } else {
-        const bestMatch = getBestMatch();
-        commitValue(bestMatch);
+        if (selectedIndex >= 0) {
+          commitValue(filteredOptions[selectedIndex]);
+        } else {
+          const bestMatch = getBestMatch();
+          commitValue(bestMatch);
+        }
       }
     } else if (e.key === "Escape") {
       if (showDropdown) {
@@ -553,63 +388,62 @@ function ReferenceSelector({ node, parentInfo, className, callbacks }: Reference
     parentMap,
   } = useLineContext();
 
-  const [availableDeclarations, setAvailableDeclarations] = React.useState<AvailableDeclaration[]>(
-    []
-  );
+  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.declarationId);
   const currentIdentifier =
     targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
 
-  // Convert AvailableDeclaration to AutocompleteOption format
-  const options: AutocompleteOption<AvailableDeclaration>[] = availableDeclarations.map((decl) => ({
-    value: decl,
-    label: decl.identifier,
-    key: decl.id,
-    onSelect: (selectedDecl: AvailableDeclaration) => {
-      switch (selectedDecl.type) {
-        case "function": {
-          // Replace Reference with CallExpression
-          console.log(
-            "Converting Reference to CallExpression for function:",
-            selectedDecl.identifier
-          );
-
-          const newCallExpression: objects.CallExpression = {
-            id: crypto.randomUUID(),
-            type: "callExpression",
-            idDeclaration: selectedDecl.id,
-            identifier: selectedDecl.identifier,
-            argumentList: [],
-          };
-
-          nodeMap.set(newCallExpression.id, newCallExpression);
-          nodeMap.delete(node.id);
-
-          // Replace in parent
-          if (callbacks?.onReplace) {
-            callbacks.onReplace(node, newCallExpression);
-          }
-          break;
-        }
-        case "variable":
-        case "parameter":
-          // Update reference to point to variable/parameter
-          node.declarationId = selectedDecl.id;
-          onEdit(node, "declarationId");
-      }
-    },
-  }));
-
   const handleFocus = () => {
+    console.log("Focusing ReferenceSelector for node:", node.id);
     setSelectedKey("declarationId");
     setSelectedNodeId(node.id);
     setParentNodeInfo(parentInfo);
 
-    // Find available declarations when focused
-    const declarations = findDeclarationsInScope(node.id, nodeMap, parentMap);
-    setAvailableDeclarations(declarations);
+    // Find available declarations and convert to options
+    const declarations = findDeclarationsInScope(node, parentMap);
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations.map((decl) => ({
+      value: decl,
+      label: decl.identifier,
+      key: decl.id,
+      onSelect: (selectedDecl: AvailableDeclaration) => {
+        switch (selectedDecl.type) {
+          case "functionDeclaration":
+          case "functionDefinition": {
+            // Replace Reference with CallExpression
+            console.log(
+              "Converting Reference to CallExpression for function:",
+              selectedDecl.identifier
+            );
+
+            const newCallExpression: objects.CallExpression = {
+              id: crypto.randomUUID(),
+              type: "callExpression",
+              idDeclaration: selectedDecl.id,
+              identifier: selectedDecl.identifier,
+              argumentList: [],
+            };
+
+            nodeMap.set(newCallExpression.id, newCallExpression);
+            nodeMap.delete(node.id);
+
+            // Replace in parent
+            if (callbacks?.onReplace) {
+              callbacks.onReplace(node, newCallExpression);
+            }
+            break;
+          }
+          case "declaration":
+          case "functionParameter":
+            // Update reference to point to variable/parameter
+            node.declarationId = selectedDecl.id;
+            onEdit(node, "declarationId");
+        }
+      },
+    }));
+    setOptions(newOptions);
+    console.log("Available declarations for reference:", declarations);
   };
 
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
@@ -682,46 +516,39 @@ function CallExpressionSelector({ node, parentInfo, className }: CallExpressionS
     clearFocusRequest,
     mode,
     nodeMap,
+    parentMap,
   } = useLineContext();
 
-  const [availableFunctions, setAvailableFunctions] = React.useState<AvailableDeclaration[]>([]);
+  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.idDeclaration);
   const currentIdentifier =
     targetDecl && "identifier" in targetDecl ? String(targetDecl.identifier) : "";
 
-  // Convert AvailableDeclaration to AutocompleteOption format - only functions can replace with other functions
-  const options: AutocompleteOption<AvailableDeclaration>[] = availableFunctions.map((decl) => ({
-    value: decl,
-    label: decl.identifier,
-    key: decl.id,
-    onSelect: (selectedDecl: AvailableDeclaration) => {
-      // Update the call expression to point to the new function
-      node.idDeclaration = selectedDecl.id;
-      node.identifier = selectedDecl.identifier;
-      onEdit(node, "idDeclaration");
-    },
-  }));
-
   const handleFocus = () => {
     setSelectedKey("idDeclaration");
     setSelectedNodeId(node.id);
     setParentNodeInfo(parentInfo);
 
-    // Find all function declarations/definitions (globally available)
-    const functions: AvailableDeclaration[] = [];
-    nodeMap.forEach((mapNode) => {
-      if (mapNode.type === "functionDeclaration" || mapNode.type === "functionDefinition") {
-        const funcNode = mapNode as objects.FunctionDeclaration | objects.FunctionDefinition;
-        functions.push({
-          id: mapNode.id,
-          identifier: funcNode.identifier,
-          type: "function",
-        });
-      }
-    });
-    setAvailableFunctions(functions);
+    // Find available declarations and filter for functions only, then convert to options
+    const declarations = findDeclarationsInScope(node, parentMap);
+    const functions = declarations.filter(
+      (decl) => decl.type === "functionDeclaration" || decl.type === "functionDefinition"
+    );
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => ({
+      value: decl,
+      label: decl.identifier,
+      key: decl.id,
+      onSelect: (selectedDecl: AvailableDeclaration) => {
+        // Update the call expression to point to the new function
+        node.idDeclaration = selectedDecl.id;
+        node.identifier = selectedDecl.identifier;
+        onEdit(node, "idDeclaration");
+      },
+    }));
+    setOptions(newOptions);
+    console.log("Available functions for call expression:", functions);
   };
 
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
