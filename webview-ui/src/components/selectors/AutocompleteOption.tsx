@@ -214,7 +214,7 @@ export function AutocompleteField<T>({
               alignItems: "flex-start",
             }}
           >
-            <ScrollableBox>
+            <ScrollableBox style={{ maxHeight: "15rem", minWidth: "10ch", maxWidth: "40ch" }}>
               {filteredOptions.map((matchedOption, index) =>
                 ((matchedOption: MatchedOption<T>, selected: boolean, index: number) => (
                   <div
@@ -239,7 +239,9 @@ export function AutocompleteField<T>({
               )}
             </ScrollableBox>
             {selectedMatchedOption?.option.description && (
-              <ScrollableBox>{selectedMatchedOption.option.description}</ScrollableBox>
+              <ScrollableBox style={{ maxHeight: "10rem", width: "60ch" }}>
+                {selectedMatchedOption.option.description}
+              </ScrollableBox>
             )}
           </div>
         </div>
@@ -371,7 +373,13 @@ function getMatchingOptions<T>(
   ];
 }
 
-export function ScrollableBox({ children }: { children: React.ReactNode }) {
+export function ScrollableBox({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       style={{
@@ -383,9 +391,7 @@ export function ScrollableBox({ children }: { children: React.ReactNode }) {
     >
       <div
         style={{
-          maxHeight: "10rem",
-          minWidth: "10rem",
-          maxWidth: "20rem",
+          ...style,
           overflowY: "auto",
           scrollbarGutter: "stable",
         }}

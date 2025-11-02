@@ -3,6 +3,7 @@ import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
 import { NodeCallbacks, ParentInfo, useLineContext } from "../context";
+import { NodeRender } from "../line";
 
 export function ReferenceSelector({
   node,
@@ -37,50 +38,53 @@ export function ReferenceSelector({
 
     // Find available declarations and convert to options
     const declarations = findDeclarationsInScope(node, parentMap);
-    const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations.map((decl) => ({
-      value: decl,
-      label: decl.identifier,
-      description: (
-        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
-          {decl.type}
-        </span>
-      ),
-      key: decl.id,
-      onSelect: (selectedDecl: AvailableDeclaration) => {
-        switch (selectedDecl.type) {
-          case "functionDeclaration":
-          case "functionDefinition": {
-            // Replace Reference with CallExpression
-            console.log(
-              "Converting Reference to CallExpression for function:",
-              selectedDecl.identifier
-            );
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations.map((decl) => {
+      const parentInfo = parentMap.get(decl.id)!; // We don't expect decl to be missing from parentMap. The only node without a parent is the source file.
 
-            const newCallExpression: objects.CallExpression = {
-              id: crypto.randomUUID(),
-              type: "callExpression",
-              idDeclaration: selectedDecl.id,
-              identifier: selectedDecl.identifier,
-              argumentList: [],
-            };
+      return {
+        value: decl,
+        label: decl.identifier,
+        description: NodeRender({
+          node: decl,
+          parentInfo,
+        }),
+        key: decl.id,
+        onSelect: (selectedDecl: AvailableDeclaration) => {
+          switch (selectedDecl.type) {
+            case "functionDeclaration":
+            case "functionDefinition": {
+              // Replace Reference with CallExpression
+              console.log(
+                "Converting Reference to CallExpression for function:",
+                selectedDecl.identifier
+              );
 
-            nodeMap.set(newCallExpression.id, newCallExpression);
-            nodeMap.delete(node.id);
+              const newCallExpression: objects.CallExpression = {
+                id: crypto.randomUUID(),
+                type: "callExpression",
+                idDeclaration: selectedDecl.id,
+                identifier: selectedDecl.identifier,
+                argumentList: [],
+              };
 
-            // Replace in parent
-            if (callbacks?.onReplace) {
-              callbacks.onReplace(node, newCallExpression);
+              nodeMap.set(newCallExpression.id, newCallExpression);
+              nodeMap.delete(node.id);
+
+              // Replace in parent
+              if (callbacks?.onReplace) {
+                callbacks.onReplace(node, newCallExpression);
+              }
+              break;
             }
-            break;
+            case "declaration":
+            case "functionParameter":
+              // Update reference to point to variable/parameter
+              node.declarationId = selectedDecl.id;
+              onEdit(node, "declarationId");
           }
-          case "declaration":
-          case "functionParameter":
-            // Update reference to point to variable/parameter
-            node.declarationId = selectedDecl.id;
-            onEdit(node, "declarationId");
-        }
-      },
-    }));
+        },
+      };
+    });
     setOptions(newOptions);
     console.log("Available declarations for reference:", declarations);
   };

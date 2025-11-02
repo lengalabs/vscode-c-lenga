@@ -3,6 +3,7 @@ import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
 import { ParentInfo, useLineContext } from "../context";
+import { NodeRender } from "../line";
 
 interface CallExpressionSelectorProps {
   node: objects.CallExpression;
@@ -43,22 +44,25 @@ export function CallExpressionSelector({
     const functions = declarations.filter(
       (decl) => decl.type === "functionDeclaration" || decl.type === "functionDefinition"
     );
-    const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => ({
-      value: decl,
-      label: decl.identifier,
-      description: (
-        <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
-          {decl.type}
-        </span>
-      ),
-      key: decl.id,
-      onSelect: (selectedDecl: AvailableDeclaration) => {
-        // Update the call expression to point to the new function
-        node.idDeclaration = selectedDecl.id;
-        node.identifier = selectedDecl.identifier;
-        onEdit(node, "idDeclaration");
-      },
-    }));
+    const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => {
+      const parentInfo = parentMap.get(decl.id)!; // We don't expect decl to be missing from parentMap. The only node without a parent is the source file.
+
+      return {
+        value: decl,
+        label: decl.identifier,
+        description: NodeRender({
+          node: decl,
+          parentInfo,
+        }),
+        key: decl.id,
+        onSelect: (selectedDecl: AvailableDeclaration) => {
+          // Update the call expression to point to the new function
+          node.idDeclaration = selectedDecl.id;
+          node.identifier = selectedDecl.identifier;
+          onEdit(node, "idDeclaration");
+        },
+      };
+    });
     setOptions(newOptions);
     console.log("Available functions for call expression:", functions);
   };
