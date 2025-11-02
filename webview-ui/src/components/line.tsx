@@ -47,7 +47,7 @@ interface AutocompleteOption<T> {
   value: T;
   label: string;
   key: string;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   onSelect: (value: T) => void;
 }
 
@@ -206,8 +206,8 @@ function AutocompleteField<T>({
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
   // Display description of first or selected option
-  const description = (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0])
-    ?.description;
+  const selectedOption: AutocompleteOption<T> | undefined =
+    (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0]) ?? undefined;
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
@@ -277,7 +277,9 @@ function AutocompleteField<T>({
                 ))(option, index === selectedIndex, index)
               )}
             </ScrollableBox>
-            <ScrollableBox>{description}</ScrollableBox>
+            {selectedOption.description && (
+              <ScrollableBox>{selectedOption.description}</ScrollableBox>
+            )}
           </div>
         </div>
       )}
@@ -353,11 +355,6 @@ function TypeSelector<T extends objects.LanguageObject, K extends string & keyof
   const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
     value: type,
     label: type,
-    description: (
-      <span style={{ fontStyle: "italic", color: "var(--vscode-descriptionForeground)" }}>
-        C type
-      </span>
-    ),
     key: type,
     onSelect: (selectedType: string) => {
       commitValue(selectedType);
