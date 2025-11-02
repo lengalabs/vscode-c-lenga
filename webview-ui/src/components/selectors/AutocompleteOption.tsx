@@ -8,6 +8,12 @@ export interface AutocompleteOption<T> {
   description?: React.ReactNode;
   onSelect: (value: T) => void;
 }
+
+interface MatchedOption<T> {
+  option: AutocompleteOption<T>;
+  matchIndices: number[]; // Indices of matched characters in the label
+}
+
 interface AutocompleteFieldProps<T> {
   // Current value display
   currentValue: string;
@@ -58,7 +64,7 @@ export function AutocompleteField<T>({
   const filteredOptions = getMatchingOptions<T>(options, inputValue);
 
   // Find best match (exact prefix match, then contains match)
-  const getBestMatch = (): AutocompleteOption<T> | null => {
+  const getBestMatch = (): MatchedOption<T> | null => {
     if (inputValue.length === 0) {
       return null;
     }
@@ -91,11 +97,11 @@ export function AutocompleteField<T>({
     }
   }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
 
-  const commitValue = (option: AutocompleteOption<T> | null) => {
-    if (option) {
+  const commitValue = (matchedOption: MatchedOption<T> | null) => {
+    if (matchedOption) {
       // Call the option's onSelect callback
-      option.onSelect(option.value);
-      setInputValue(option.label);
+      matchedOption.option.onSelect(matchedOption.option.value);
+      setInputValue(matchedOption.option.label);
     } else {
       // No match found - call onNoMatch if provided, otherwise revert
       if (onNoMatch) {
@@ -161,7 +167,7 @@ export function AutocompleteField<T>({
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
   // Display description of first or selected option
-  const selectedOption: AutocompleteOption<T> | undefined =
+  const selectedMatchedOption: MatchedOption<T> | undefined =
     (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0]) ?? undefined;
 
   return (
@@ -209,10 +215,10 @@ export function AutocompleteField<T>({
             }}
           >
             <ScrollableBox>
-              {filteredOptions.map((option, index) =>
-                ((option: AutocompleteOption<T>, selected: boolean, index: number) => (
+              {filteredOptions.map((matchedOption, index) =>
+                ((matchedOption: MatchedOption<T>, selected: boolean, index: number) => (
                   <div
-                    key={option.key}
+                    key={matchedOption.option.key}
                     style={{
                       cursor: "pointer",
                       backgroundColor: selected
@@ -223,17 +229,17 @@ export function AutocompleteField<T>({
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
-                      commitValue(option);
+                      commitValue(matchedOption);
                     }}
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
-                    {option.label}
+                    {renderHighlightedText(matchedOption.option.label, matchedOption.matchIndices)}
                   </div>
-                ))(option, index === selectedIndex, index)
+                ))(matchedOption, index === selectedIndex, index)
               )}
             </ScrollableBox>
-            {selectedOption.description && (
-              <ScrollableBox>{selectedOption.description}</ScrollableBox>
+            {selectedMatchedOption?.option.description && (
+              <ScrollableBox>{selectedMatchedOption.option.description}</ScrollableBox>
             )}
           </div>
         </div>
@@ -242,20 +248,52 @@ export function AutocompleteField<T>({
   );
 }
 
-function getMatchingOptions<T>(options: AutocompleteOption<T>[], inputValue: string) {
+function renderHighlightedText(label: string, matchIndices: number[]): React.ReactNode {
+  if (matchIndices.length === 0) {
+    return label;
+  }
+
+  const parts: React.ReactNode[] = [];
+  const matchSet = new Set(matchIndices);
+
+  for (let i = 0; i < label.length; i++) {
+    const char = label[i];
+    if (matchSet.has(i)) {
+      parts.push(
+        <span key={i} style={{ fontWeight: "bold", textDecoration: "underline" }}>
+          {char}
+        </span>
+      );
+    } else {
+      // Combine consecutive non-matching characters
+      if (parts.length > 0 && typeof parts[parts.length - 1] === "string") {
+        parts[parts.length - 1] = (parts[parts.length - 1] as string) + char;
+      } else {
+        parts.push(char);
+      }
+    }
+  }
+
+  return <>{parts}</>;
+}
+
+function getMatchingOptions<T>(
+  options: AutocompleteOption<T>[],
+  inputValue: string
+): MatchedOption<T>[] {
   if (inputValue.length === 0) {
-    return options;
+    return options.map((option) => ({ option, matchIndices: [] }));
   }
 
   const lowerInput = inputValue.toLowerCase();
 
   // Categorize options (case-sensitive first, then case-insensitive)
-  const exactMatchesCS: AutocompleteOption<T>[] = [];
-  const exactMatchesCI: AutocompleteOption<T>[] = [];
-  const startsWithMatchesCS: AutocompleteOption<T>[] = [];
-  const startsWithMatchesCI: AutocompleteOption<T>[] = [];
-  const containsMatchesCS: AutocompleteOption<T>[] = [];
-  const containsMatchesCI: AutocompleteOption<T>[] = [];
+  const exactMatchesCS: MatchedOption<T>[] = [];
+  const exactMatchesCI: MatchedOption<T>[] = [];
+  const startsWithMatchesCS: MatchedOption<T>[] = [];
+  const startsWithMatchesCI: MatchedOption<T>[] = [];
+  const containsMatchesCS: MatchedOption<T>[] = [];
+  const containsMatchesCI: MatchedOption<T>[] = [];
   const remainingOptions: AutocompleteOption<T>[] = [];
 
   for (const option of options) {
@@ -264,37 +302,61 @@ function getMatchingOptions<T>(options: AutocompleteOption<T>[], inputValue: str
 
     // Exact matches
     if (label === inputValue) {
-      exactMatchesCS.push(option);
+      const matchIndices = Array.from({ length: label.length }, (_, i) => i);
+      exactMatchesCS.push({ option, matchIndices });
     } else if (lowerLabel === lowerInput) {
-      exactMatchesCI.push(option);
+      const matchIndices = Array.from({ length: label.length }, (_, i) => i);
+      exactMatchesCI.push({ option, matchIndices });
     }
     // Starts with
     else if (label.startsWith(inputValue)) {
-      startsWithMatchesCS.push(option);
+      const matchIndices = Array.from({ length: inputValue.length }, (_, i) => i);
+      startsWithMatchesCS.push({ option, matchIndices });
     } else if (lowerLabel.startsWith(lowerInput)) {
-      startsWithMatchesCI.push(option);
+      const matchIndices = Array.from({ length: inputValue.length }, (_, i) => i);
+      startsWithMatchesCI.push({ option, matchIndices });
     }
     // Contains
     else if (label.includes(inputValue)) {
-      containsMatchesCS.push(option);
+      const startIndex = label.indexOf(inputValue);
+      const matchIndices = Array.from({ length: inputValue.length }, (_, i) => startIndex + i);
+      containsMatchesCS.push({ option, matchIndices });
     } else if (lowerLabel.includes(lowerInput)) {
-      containsMatchesCI.push(option);
+      const startIndex = lowerLabel.indexOf(lowerInput);
+      const matchIndices = Array.from({ length: inputValue.length }, (_, i) => startIndex + i);
+      containsMatchesCI.push({ option, matchIndices });
     } else {
       remainingOptions.push(option);
     }
   }
 
   // Fuzzy search on remaining options
-  let fuzzyMatches: AutocompleteOption<T>[] = [];
+  let fuzzyMatches: MatchedOption<T>[] = [];
   if (remainingOptions.length > 0) {
     const fuse = new Fuse(remainingOptions, {
       keys: ["label"],
       threshold: 0.4, // Lower is more strict (0.0 = exact match, 1.0 = match anything)
       includeScore: true,
+      includeMatches: true,
     });
 
     const results = fuse.search(inputValue);
-    fuzzyMatches = results.map((result) => result.item);
+    fuzzyMatches = results.map((result) => {
+      const matchIndices: number[] = [];
+      // Extract match indices from Fuse.js results
+      if (result.matches && result.matches.length > 0) {
+        for (const match of result.matches) {
+          if (match.indices) {
+            for (const [start, end] of match.indices) {
+              for (let i = start; i <= end; i++) {
+                matchIndices.push(i);
+              }
+            }
+          }
+        }
+      }
+      return { option: result.item, matchIndices };
+    });
   }
 
   // Combine all matches in priority order
