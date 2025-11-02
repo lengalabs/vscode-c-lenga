@@ -18,6 +18,7 @@ import { TypeSelector } from "./selectors/TypeSelector";
 import { ReferenceSelector } from "./selectors/ReferenceSelector";
 import { CallExpressionSelector } from "./selectors/CallExpressionSelector";
 import { EditableField } from "./EditableField";
+import { AutocompleteField, AutocompleteOption } from "./selectors/AutocompleteOption";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
@@ -179,102 +180,57 @@ export function NodeRender(props: NodeRenderProps): React.ReactNode {
 }
 
 function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
-  const { mode, onRequestAvailableInserts, availableInserts } = useLineContext();
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLSelectElement>(null);
+  const {
+    mode,
+    onRequestAvailableInserts,
+    availableInserts,
+    focusRequest,
+    clearFocusRequest,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+  } = useLineContext();
 
-  // When in edit mode and Enter is pressed, request available inserts
-  const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("UnknownRender: Requesting available inserts");
-        // Get parent info from the map
-        const parent = props.parentInfo.parent;
-        const key = props.parentInfo.key;
-        onRequestAvailableInserts(parent.id, key);
-        setShowDropdown(true);
+  // Convert availableInserts to AutocompleteOptions
+  const options: AutocompleteOption<objects.LanguageObject>[] = React.useMemo(() => {
+    if (!availableInserts) return [];
+    return availableInserts.map((insert, idx) => ({
+      value: insert,
+      label: insert.type,
+      key: `${insert.type}-${idx}`,
+      description: <NodeRender node={insert} parentInfo={props.parentInfo} />,
+      onSelect: (selectedInsert: objects.LanguageObject) => {
+        console.log("Selected option to insert:", selectedInsert);
+        // Use the replace callback if provided
+        if (props.callbacks?.onReplace) {
+          props.callbacks.onReplace(props.node, selectedInsert);
+        } else {
+          console.warn("No onReplace callback provided for UnknownRender");
+        }
       },
-    },
-  });
+    }));
+  }, [availableInserts, props.callbacks, props.node]);
 
-  // Focus the dropdown when it appears and options are loaded
-  React.useEffect(() => {
-    if (showDropdown && availableInserts && availableInserts.length > 0 && dropdownRef.current) {
-      dropdownRef.current.focus();
-    }
-  }, [showDropdown, availableInserts]);
-
-  const commitSelection = () => {
-    if (!dropdownRef.current) {
-      console.log("Dropdown ref not set");
-      return;
-    }
-
-    const selectedIndex = parseInt(dropdownRef.current.value);
-    if (availableInserts && selectedIndex >= 0) {
-      const selectedOption = availableInserts[selectedIndex];
-      console.log("Selected option to insert:", selectedOption);
-
-      // Use the replace callback if provided
-      if (props.callbacks?.onReplace) {
-        props.callbacks.onReplace(props.node, selectedOption);
-      } else {
-        console.warn("No onReplace callback provided for UnknownRender");
-      }
-
-      setShowDropdown(false);
-    }
-  };
-
-  const handleDropdownKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      commitSelection();
-    } else if (e.key === "Escape") {
-      e.stopPropagation();
-      e.preventDefault();
-      setShowDropdown(false);
-    }
-  };
-
-  const handleDropdownClick = () => {
-    // Commit the selection when user clicks on an option
-    commitSelection();
-  };
+  function handleOnFocus() {
+    onRequestAvailableInserts(props.parentInfo.parent.id, props.parentInfo.key);
+    setSelectedKey("content");
+    setSelectedNodeId(props.node.id);
+    setParentNodeInfo(props.parentInfo);
+  }
 
   const content = (
-    <span onKeyDown={handleKeyDown}>
-      {EditableField({
-        node: props.node,
-        key: "content",
-        parentInfo: props.parentInfo,
-        placeholder: "value",
-      })}
-      {showDropdown && availableInserts && availableInserts.length > 0 && (
-        <select
-          ref={dropdownRef}
-          onKeyDown={handleDropdownKeyDown}
-          onClick={handleDropdownClick}
-          onBlur={() => setShowDropdown(false)}
-          size={Math.min(10, availableInserts.length)}
-          style={{
-            position: "absolute",
-            zIndex: 1000,
-            backgroundColor: "var(--vscode-dropdown-background)",
-            color: "var(--vscode-dropdown-foreground)",
-            border: "1px solid var(--vscode-dropdown-border)",
-          }}
-        >
-          <option value="-1">-- Select an option --</option>
-          {availableInserts.map((option, idx) => (
-            <option key={idx} value={idx}>
-              {option.type}
-            </option>
-          ))}
-        </select>
-      )}
-    </span>
+    <AutocompleteField
+      currentValue={""}
+      placeholder="Select type..."
+      options={options}
+      onFocus={handleOnFocus}
+      focusRequest={focusRequest}
+      nodeId={props.node.id}
+      fieldKey="content"
+      clearFocusRequest={clearFocusRequest}
+      isSelected={false}
+      readOnly={mode === "view"}
+    />
   );
 
   return <Object {...props}>{content}</Object>;
