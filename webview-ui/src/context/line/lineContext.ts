@@ -159,3 +159,11 @@ export function buildMaps(ast: objects.SourceFile): {
   traverse(ast);
   return { nodeMap, parentMap };
 }
+
+export function childInfo<T extends objects.LanguageObject, K extends string & keyof T>(
+  parent: T,
+  key: K,
+  index: number = 0
+): ParentInfo {
+  return { parent, key, index } as unknown as ParentInfo;
+}

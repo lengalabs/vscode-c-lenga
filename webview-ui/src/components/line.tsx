@@ -1,8 +1,12 @@
 import React from "react";
-import { useLineContext, ParentInfo, NodeCallbacks } from "../context/line/lineContext";
+import {
+  useLineContext,
+  ParentInfo,
+  NodeCallbacks,
+  childInfo as parentInfoFromChild,
+} from "../context/line/lineContext";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
-import { childInfo } from "./childInfo";
 import { createKeyDownHandler } from "../lib/keyBinds";
 import {
   createArrayFieldCallbacks,
@@ -303,7 +307,7 @@ function FunctionDeclarationRender(
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(props.node, "parameterList", i)}
+            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
             callbacks={createArrayFieldCallbacks(
               props.node,
               "parameterList",
@@ -364,7 +368,7 @@ function FunctionDefinitionRender(
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(props.node, "parameterList", i)}
+            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
               props.node,
@@ -382,7 +386,7 @@ function FunctionDefinitionRender(
       {props.node.compoundStatement && (
         <NodeRender
           node={props.node.compoundStatement}
-          parentInfo={childInfo(props.node, "compoundStatement")}
+          parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
           // callbacks={} TODO: transform into FunctionDeclaration on delete
         />
       )}
@@ -429,7 +433,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
           <NodeRender
             node={props.node.value}
             display="inline"
-            parentInfo={childInfo(props.node, "value")}
+            parentInfo={parentInfoFromChild(props.node, "value")}
             callbacks={createOptionalFieldCallbacks(
               props.node,
               "value",
@@ -494,7 +498,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             type: "unknown",
             content: "",
           }}
-          parentInfo={childInfo(props.node, "code")}
+          parentInfo={parentInfoFromChild(props.node, "code")}
         />
       ) : (
         <div
@@ -508,7 +512,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             <NodeRender
               key={node.id}
               node={node}
-              parentInfo={childInfo(props.node, "code", i)}
+              parentInfo={parentInfoFromChild(props.node, "code", i)}
               callbacks={createArrayFieldCallbacks(
                 props.node,
                 "code",
@@ -559,7 +563,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
           <NodeRender
             key={node.id}
             node={node}
-            parentInfo={childInfo(props.node, "codeBlock", i)}
+            parentInfo={parentInfoFromChild(props.node, "codeBlock", i)}
             callbacks={createArrayFieldCallbacks(
               props.node,
               "codeBlock",
@@ -613,7 +617,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     (props.node.elseStatement.type === "elseClause" ? (
       <NodeRender
         node={props.node.elseStatement}
-        parentInfo={childInfo(props.node, "elseStatement")}
+        parentInfo={parentInfoFromChild(props.node, "elseStatement")}
         display="inline"
         callbacks={createOptionalFieldCallbacks(
           props.node,
@@ -647,7 +651,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
             <Object
               display="inline"
               node={ifStatement}
-              parentInfo={childInfo(props.node, "elseStatement")}
+              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
               callbacks={createOptionalFieldCallbacks(
                 props.node,
                 "elseStatement",
@@ -662,7 +666,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
             </Object>{" "}
             <NodeRender
               node={ifStatement}
-              parentInfo={childInfo(props.node, "elseStatement")}
+              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
               display="inline"
               callbacks={elseClauseCallbacks}
             />
@@ -680,14 +684,14 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
           node={props.node.condition}
-          parentInfo={childInfo(props.node, "condition")}
+          parentInfo={parentInfoFromChild(props.node, "condition")}
           display="inline"
         />
         <span className="token-keyword">{")"}</span>{" "}
       </span>
       <NodeRender
         node={props.node.body}
-        parentInfo={childInfo(props.node, "body")}
+        parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
       />
       {elseRender}
@@ -767,7 +771,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       > */}
       <NodeRender
         node={props.node.body}
-        parentInfo={childInfo(props.node, "body")}
+        parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
         callbacks={bodyCallbacks}
       />
@@ -801,7 +805,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
           {" "}
           <NodeRender
             node={props.node.value}
-            parentInfo={childInfo(props.node, "value")}
+            parentInfo={parentInfoFromChild(props.node, "value")}
             display="inline"
             callbacks={createOptionalFieldCallbacks(
               props.node,
@@ -849,7 +853,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
           {i > 0 && ", "}
           <NodeRender
             node={arg}
-            parentInfo={childInfo(props.node, "argumentList", i)}
+            parentInfo={parentInfoFromChild(props.node, "argumentList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
               props.node,
@@ -902,7 +906,7 @@ function AssignmentExpressionRender(
       {"="}{" "}
       <NodeRender
         node={props.node.value}
-        parentInfo={childInfo(props.node, "value")}
+        parentInfo={parentInfoFromChild(props.node, "value")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus)}
       />
@@ -953,7 +957,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
     <>
       <NodeRender
         node={props.node.left}
-        parentInfo={childInfo(props.node, "left")}
+        parentInfo={parentInfoFromChild(props.node, "left")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "left", nodeMap, onEdit, requestFocus)}
       />{" "}
@@ -965,7 +969,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
       })}{" "}
       <NodeRender
         node={props.node.right}
-        parentInfo={childInfo(props.node, "right")}
+        parentInfo={parentInfoFromChild(props.node, "right")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "right", nodeMap, onEdit, requestFocus)}
       />
