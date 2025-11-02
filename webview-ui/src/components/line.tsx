@@ -3,7 +3,7 @@ import {
   useLineContext,
   ParentInfo,
   NodeCallbacks,
-  childInfo as parentInfoFromChild,
+  parentInfoFromChild,
 } from "../context/line/lineContext";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";

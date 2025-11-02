@@ -160,7 +160,7 @@ export function buildMaps(ast: objects.SourceFile): {
   return { nodeMap, parentMap };
 }
 
-export function childInfo<T extends objects.LanguageObject, K extends string & keyof T>(
+export function parentInfoFromChild<T extends objects.LanguageObject, K extends string & keyof T>(
   parent: T,
   key: K,
   index: number = 0
