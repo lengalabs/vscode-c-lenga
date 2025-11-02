@@ -5,6 +5,13 @@ import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
 import { NodeCallbacks, ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
+export interface ReferenceSelectorProps {
+  node: objects.Reference;
+  parentInfo: ParentInfo;
+  callbacks?: NodeCallbacks;
+  className?: string;
+}
+
 export function ReferenceSelector({
   node,
   parentInfo,
@@ -106,10 +113,4 @@ export function ReferenceSelector({
       readOnly={mode === "view"}
     />
   );
-}
-export interface ReferenceSelectorProps {
-  node: objects.Reference;
-  parentInfo: ParentInfo;
-  callbacks?: NodeCallbacks;
-  className?: string;
 }

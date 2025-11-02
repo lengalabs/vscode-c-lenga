@@ -19,6 +19,7 @@ import { ReferenceSelector } from "./selectors/ReferenceSelector";
 import { CallExpressionSelector } from "./selectors/CallExpressionSelector";
 import { EditableField } from "./EditableField";
 import { AutocompleteField, AutocompleteOption } from "./selectors/AutocompleteOption";
+import { AssignmentSelector } from "./selectors/AssignmentSelector";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
@@ -887,15 +888,18 @@ function AssignmentExpressionRender(
   props: XRenderProps<objects.AssignmentExpression>
 ): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  const targetNode = nodeMap.get(props.node.idDeclaration);
-
-  if (!targetNode || !("identifier" in targetNode)) {
-    return <>{props.node.idDeclaration}</>;
-  }
-
   const content = (
     <>
-      <span className="token-variable">{String(targetNode.identifier)}</span> {"="}{" "}
+      <span className="token-variable">
+        {
+          <AssignmentSelector
+            node={props.node}
+            parentInfo={props.parentInfo}
+            className="token-variable"
+          />
+        }
+      </span>{" "}
+      {"="}{" "}
       <NodeRender
         node={props.node.value}
         parentInfo={childInfo(props.node, "value")}
