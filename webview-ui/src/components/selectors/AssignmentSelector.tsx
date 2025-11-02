@@ -5,13 +5,13 @@ import { Option, Field } from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
-export interface AssignmentSelectorProps {
+interface Props {
   node: objects.AssignmentExpression;
   parentInfo: ParentInfo;
   className?: string;
 }
 
-export function AssignmentSelector({ node, parentInfo, className }: AssignmentSelectorProps) {
+export default function AssignmentSelector({ node, parentInfo, className }: Props) {
   const {
     onEdit,
     setSelectedNodeId,

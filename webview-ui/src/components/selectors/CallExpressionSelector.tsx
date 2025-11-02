@@ -5,16 +5,13 @@ import * as Autocomplete from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
-interface CallExpressionSelectorProps {
+interface Props {
   node: objects.CallExpression;
   parentInfo: ParentInfo;
   className?: string;
 }
-export function CallExpressionSelector({
-  node,
-  parentInfo,
-  className,
-}: CallExpressionSelectorProps) {
+
+export default function CallExpressionSelector({ node, parentInfo, className }: Props) {
   const {
     onEdit,
     setSelectedNodeId,

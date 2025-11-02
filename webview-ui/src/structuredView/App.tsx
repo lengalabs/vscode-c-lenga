@@ -5,10 +5,10 @@ import { LineProvider } from "../components/lineContext";
 
 import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
-import { DebugProvider } from "../components/debugContext";
 import { ParentInfo, useLineContext } from "../components/context";
 import DebugMenu from "../components/DebugMenu";
 import { getFirstEditableField } from "../lib/editionHelpers";
+import DebugProvider from "../context/debug/DebugProvider";
 
 // Component that handles initial focus request
 function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile }) {

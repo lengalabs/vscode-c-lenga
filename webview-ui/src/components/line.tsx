@@ -14,12 +14,12 @@ import {
   createUnknown,
   prependToArray,
 } from "../lib/editionHelpers";
-import { TypeSelector } from "./selectors/TypeSelector";
-import { ReferenceSelector } from "./selectors/ReferenceSelector";
-import { CallExpressionSelector } from "./selectors/CallExpressionSelector";
-import { EditableField } from "./EditableField";
 import * as Autocomplete from "./selectors/Autocomplete";
-import { AssignmentSelector } from "./selectors/AssignmentSelector";
+import CallExpressionSelector from "./selectors/CallExpressionSelector";
+import AssignmentSelector from "./selectors/AssignmentSelector";
+import ReferenceSelector from "./selectors/ReferenceSelector";
+import EditableField from "./EditableField";
+import TypeSelector from "./selectors/TypeSelector";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {

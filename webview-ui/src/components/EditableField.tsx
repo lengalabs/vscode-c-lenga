@@ -9,13 +9,11 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
   className?: string;
   placeholder: string;
 }
-export function EditableField<T extends objects.LanguageObject, K extends string & keyof T>({
-  node,
-  key,
-  parentInfo,
-  className,
-  placeholder,
-}: EditableFieldProps<T, K>) {
+
+export default function EditableField<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>({ node, key, parentInfo, className, placeholder }: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
     selectedKey,

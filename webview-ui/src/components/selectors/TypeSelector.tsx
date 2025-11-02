@@ -33,7 +33,8 @@ interface TypeSelectorProps<T extends objects.LanguageObject, K extends string &
   parentInfo: ParentInfo;
   className?: string;
 }
-export function TypeSelector<T extends objects.LanguageObject, K extends string & keyof T>({
+
+export default function TypeSelector<T extends objects.LanguageObject, K extends string & keyof T>({
   node,
   key,
   parentInfo,

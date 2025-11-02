@@ -1,4 +1,4 @@
-import { useDebugContext } from "../lib/debugContext";
+import { useDebugContext } from "../context/debug/debugContext";
 import { useLineContext } from "./context";
 
 export default function DebugMenu(): React.ReactNode {

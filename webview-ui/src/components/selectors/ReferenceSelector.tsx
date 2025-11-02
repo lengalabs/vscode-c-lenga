@@ -5,19 +5,14 @@ import { Option, Field } from "./Autocomplete";
 import { NodeCallbacks, ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
-export interface ReferenceSelectorProps {
+interface Props {
   node: objects.Reference;
   parentInfo: ParentInfo;
   callbacks?: NodeCallbacks;
   className?: string;
 }
 
-export function ReferenceSelector({
-  node,
-  parentInfo,
-  className,
-  callbacks,
-}: ReferenceSelectorProps) {
+export default function ReferenceSelector({ node, parentInfo, className, callbacks }: Props) {
   const {
     onEdit,
     setSelectedNodeId,
