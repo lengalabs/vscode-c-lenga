@@ -209,7 +209,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
         }
       },
     }));
-  }, [availableInserts, props.callbacks, props.node]);
+  }, [availableInserts, props.callbacks, props.node, props.parentInfo]);
 
   function handleOnFocus() {
     onRequestAvailableInserts(props.parentInfo.parent.id, props.parentInfo.key);
