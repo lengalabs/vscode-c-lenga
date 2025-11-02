@@ -1,4 +1,5 @@
 import React from "react";
+import Fuse from "fuse.js";
 
 export interface AutocompleteOption<T> {
   value: T;
@@ -54,19 +55,14 @@ export function AutocompleteField<T>({
   const hasFocusedRef = React.useRef(false);
 
   // Filter options based on input
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  const filteredOptions = getMatchingOptions<T>(options, inputValue);
 
   // Find best match (exact prefix match, then contains match)
   const getBestMatch = (): AutocompleteOption<T> | null => {
     if (inputValue.length === 0) {
       return null;
     }
-    const exact = filteredOptions.find((option) =>
-      option.label.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    return exact || filteredOptions[0] || null;
+    return filteredOptions[0] || null;
   };
 
   // Update input value when current value changes
@@ -245,6 +241,74 @@ export function AutocompleteField<T>({
     </div>
   );
 }
+
+function getMatchingOptions<T>(options: AutocompleteOption<T>[], inputValue: string) {
+  if (inputValue.length === 0) {
+    return options;
+  }
+
+  const lowerInput = inputValue.toLowerCase();
+
+  // Categorize options (case-sensitive first, then case-insensitive)
+  const exactMatchesCS: AutocompleteOption<T>[] = [];
+  const exactMatchesCI: AutocompleteOption<T>[] = [];
+  const startsWithMatchesCS: AutocompleteOption<T>[] = [];
+  const startsWithMatchesCI: AutocompleteOption<T>[] = [];
+  const containsMatchesCS: AutocompleteOption<T>[] = [];
+  const containsMatchesCI: AutocompleteOption<T>[] = [];
+  const remainingOptions: AutocompleteOption<T>[] = [];
+
+  for (const option of options) {
+    const label = option.label;
+    const lowerLabel = label.toLowerCase();
+
+    // Exact matches
+    if (label === inputValue) {
+      exactMatchesCS.push(option);
+    } else if (lowerLabel === lowerInput) {
+      exactMatchesCI.push(option);
+    }
+    // Starts with
+    else if (label.startsWith(inputValue)) {
+      startsWithMatchesCS.push(option);
+    } else if (lowerLabel.startsWith(lowerInput)) {
+      startsWithMatchesCI.push(option);
+    }
+    // Contains
+    else if (label.includes(inputValue)) {
+      containsMatchesCS.push(option);
+    } else if (lowerLabel.includes(lowerInput)) {
+      containsMatchesCI.push(option);
+    } else {
+      remainingOptions.push(option);
+    }
+  }
+
+  // Fuzzy search on remaining options
+  let fuzzyMatches: AutocompleteOption<T>[] = [];
+  if (remainingOptions.length > 0) {
+    const fuse = new Fuse(remainingOptions, {
+      keys: ["label"],
+      threshold: 0.4, // Lower is more strict (0.0 = exact match, 1.0 = match anything)
+      includeScore: true,
+    });
+
+    const results = fuse.search(inputValue);
+    fuzzyMatches = results.map((result) => result.item);
+  }
+
+  // Combine all matches in priority order
+  return [
+    ...exactMatchesCS,
+    ...exactMatchesCI,
+    ...startsWithMatchesCS,
+    ...startsWithMatchesCI,
+    ...containsMatchesCS,
+    ...containsMatchesCI,
+    ...fuzzyMatches,
+  ];
+}
+
 export function ScrollableBox({ children }: { children: React.ReactNode }) {
   return (
     <div
