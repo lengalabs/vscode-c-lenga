@@ -1,7 +1,7 @@
 import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
-import { Option, Field } from "./Autocomplete";
+import * as Autocomplete from "./Autocomplete";
 import { NodeCallbacks, ParentInfo, useLineContext } from "../../context/line/lineContext";
 import { NodeRender } from "../line";
 
@@ -25,7 +25,7 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
     parentMap,
   } = useLineContext();
 
-  const [options, setOptions] = React.useState<Option<AvailableDeclaration>[]>([]);
+  const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.declarationId);
@@ -40,7 +40,7 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
 
     // Find available declarations and convert to options
     const declarations = findDeclarationsInScope(node, parentMap);
-    const newOptions: Option<AvailableDeclaration>[] = declarations.map((decl) => {
+    const newOptions: Autocomplete.Option<AvailableDeclaration>[] = declarations.map((decl) => {
       const parentInfo = parentMap.get(decl.id)!; // We don't expect decl to be missing from parentMap. The only node without a parent is the source file.
 
       return {
@@ -94,7 +94,7 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
 
   return (
-    <Field
+    <Autocomplete.Field
       currentValue={currentIdentifier}
       placeholder="reference_name"
       options={options}
