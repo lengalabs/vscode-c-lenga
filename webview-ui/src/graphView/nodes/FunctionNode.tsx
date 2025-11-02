@@ -1,6 +1,6 @@
 import { FunctionDefinition } from "../../../../src/language_objects/cNodes";
 import { NodeRender } from "../../components/line";
-import { ParentInfo } from "../../components/context";
+import { ParentInfo } from "../../context/line/lineContext";
 import { Position, Handle } from "@xyflow/react";
 
 export type FunctionFlowNode = {

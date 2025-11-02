@@ -1,5 +1,5 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { ParentInfo } from "./context";
+import { ParentInfo } from "../context/line/lineContext";
 
 // Helper to create ParentInfo for a child node
 

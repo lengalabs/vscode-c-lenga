@@ -1,6 +1,6 @@
 import * as objects from "../../../../src/language_objects/cNodes";
 import * as Autocomplete from "./Autocomplete";
-import { ParentInfo, useLineContext } from "../context";
+import { ParentInfo, useLineContext } from "../../context/line/lineContext";
 
 // Valid C types for the type selector
 const C_TYPES = [

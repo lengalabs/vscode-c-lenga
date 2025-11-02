@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent } from "react";
-import { useLineContext } from "./context";
+import { useLineContext } from "../context/line/lineContext";
 
 export default function ModeIndicator() {
   const { mode, setMode } = useLineContext();

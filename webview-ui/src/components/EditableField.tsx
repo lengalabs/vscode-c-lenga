@@ -1,6 +1,6 @@
 import React from "react";
 import * as objects from "../../../src/language_objects/cNodes";
-import { ParentInfo, useLineContext } from "./context";
+import { ParentInfo, useLineContext } from "../context/line/lineContext";
 
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;

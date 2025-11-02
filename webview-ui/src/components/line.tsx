@@ -1,5 +1,5 @@
 import React from "react";
-import { useLineContext, ParentInfo, NodeCallbacks } from "./context";
+import { useLineContext, ParentInfo, NodeCallbacks } from "../context/line/lineContext";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
 import { childInfo } from "./childInfo";

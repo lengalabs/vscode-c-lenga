@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import * as objects from "../../../src/language_objects/cNodes";
+import * as objects from "../../../../src/language_objects/cNodes";
 
 // Type-safe parent info with generics and defaults
 export type ParentInfo<

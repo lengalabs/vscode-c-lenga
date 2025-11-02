@@ -1,5 +1,5 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { ParentInfo } from "../components/context";
+import { ParentInfo } from "../context/line/lineContext";
 
 // Interface for available declarations that can be referenced
 export type AvailableDeclaration =

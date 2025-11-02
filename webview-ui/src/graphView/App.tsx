@@ -13,10 +13,10 @@ import {
 import "@xyflow/react/dist/style.css";
 import { FunctionNode, FunctionFlowNode } from "./nodes/FunctionNode";
 import * as objects from "../../../src/language_objects/cNodes";
-import { LineProvider } from "../components/lineContext";
+import LineProvider from "../context/line/LineProvider";
 import { vscode } from "../vscode";
 import { visitNodes } from "../components/nodeVisiting";
-import { ParentInfo } from "../components/context";
+import { ParentInfo } from "../context/line/lineContext";
 import { childInfo } from "../components/childInfo";
 
 const nodeTypes = { function: FunctionNode };

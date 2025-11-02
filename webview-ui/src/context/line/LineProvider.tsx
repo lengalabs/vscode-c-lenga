@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
-import * as objects from "../../../src/language_objects/cNodes";
-import { buildMaps, LineContext, ParentInfo, EditorMode } from "./context";
+import * as objects from "../../../../src/language_objects/cNodes";
+import { buildMaps, LineContext, ParentInfo, EditorMode } from "./lineContext";
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
@@ -19,7 +19,7 @@ interface LineProviderProps {
   children: React.ReactNode;
 }
 
-export function LineProvider({
+export default function LineProvider({
   sourceFile,
   onEdit,
   onRequestAvailableInserts,

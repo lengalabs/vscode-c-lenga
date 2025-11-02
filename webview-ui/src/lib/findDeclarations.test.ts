@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { findDeclarationsInScope } from "./findDeclarations";
 import * as objects from "../../../src/language_objects/cNodes";
-import { buildMaps, ParentInfo } from "../components/context";
+import { buildMaps, ParentInfo } from "../context/line/lineContext";
 
 // Helper to create a parent map from nodes
 function buildParentMap(node: objects.SourceFile): Map<string, ParentInfo> {

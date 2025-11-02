@@ -1,5 +1,5 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { NodeCallbacks } from "../components/context";
+import { NodeCallbacks } from "../context/line/lineContext";
 
 // Helper to create a new unknown node
 function createUnknownNode(): objects.Unknown {

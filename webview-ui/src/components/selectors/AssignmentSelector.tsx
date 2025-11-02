@@ -2,7 +2,7 @@ import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import { Option, Field } from "./Autocomplete";
-import { ParentInfo, useLineContext } from "../context";
+import { ParentInfo, useLineContext } from "../../context/line/lineContext";
 import { NodeRender } from "../line";
 
 interface Props {

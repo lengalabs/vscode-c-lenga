@@ -1,5 +1,5 @@
 import React from "react";
-import { EditorMode } from "../components/context";
+import { EditorMode } from "../context/line/lineContext";
 
 /**
  * Keyboard command abstraction for structured editing
