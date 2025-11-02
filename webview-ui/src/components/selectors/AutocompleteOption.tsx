@@ -60,6 +60,9 @@ export function AutocompleteField<T>({
 
   // Find best match (exact prefix match, then contains match)
   const getBestMatch = (): AutocompleteOption<T> | null => {
+    if (inputValue.length === 0) {
+      return null;
+    }
     const exact = filteredOptions.find((option) =>
       option.label.toLowerCase().startsWith(inputValue.toLowerCase())
     );
