@@ -1,7 +1,7 @@
 import React from "react";
 import Fuse from "fuse.js";
 
-export interface AutocompleteOption<T> {
+export interface Option<T> {
   value: T;
   label: string;
   key: string;
@@ -9,19 +9,19 @@ export interface AutocompleteOption<T> {
   onSelect: (value: T) => void;
 }
 
-interface MatchedOption<T> {
-  option: AutocompleteOption<T>;
+interface OptionMatch<T> {
+  option: Option<T>;
   matchIndices: number[]; // Indices of matched characters in the label
 }
 
-interface AutocompleteFieldProps<T> {
+interface Props<T> {
   // Current value display
   currentValue: string;
   // In case current value is empty
   placeholder: string;
 
   // Available options
-  options: AutocompleteOption<T>[];
+  options: Option<T>[];
 
   // Callbacks
   onFocus?: () => void;
@@ -40,7 +40,8 @@ interface AutocompleteFieldProps<T> {
   // Mode
   readOnly?: boolean;
 }
-export function AutocompleteField<T>({
+
+export function Field<T>({
   currentValue,
   placeholder,
   options,
@@ -53,7 +54,7 @@ export function AutocompleteField<T>({
   className,
   isSelected = false,
   readOnly = false,
-}: AutocompleteFieldProps<T>) {
+}: Props<T>) {
   const [inputValue, setInputValue] = React.useState(currentValue);
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
@@ -64,7 +65,7 @@ export function AutocompleteField<T>({
   const filteredOptions = getMatchingOptions<T>(options, inputValue);
 
   // Find best match (exact prefix match, then contains match)
-  const getBestMatch = (): MatchedOption<T> | null => {
+  const getBestMatch = (): OptionMatch<T> | null => {
     if (inputValue.length === 0) {
       return null;
     }
@@ -97,7 +98,7 @@ export function AutocompleteField<T>({
     }
   }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
 
-  const commitValue = (matchedOption: MatchedOption<T> | null) => {
+  const commitValue = (matchedOption: OptionMatch<T> | null) => {
     if (matchedOption) {
       // Call the option's onSelect callback
       matchedOption.option.onSelect(matchedOption.option.value);
@@ -167,7 +168,7 @@ export function AutocompleteField<T>({
   const width = `${inputValue.length === 0 ? placeholderText.length : inputValue.length}ch`;
 
   // Display description of first or selected option
-  const selectedMatchedOption: MatchedOption<T> | undefined =
+  const selectedMatchedOption: OptionMatch<T> | undefined =
     (selectedIndex >= 0 ? filteredOptions[selectedIndex] : filteredOptions[0]) ?? undefined;
 
   return (
@@ -216,7 +217,7 @@ export function AutocompleteField<T>({
           >
             <ScrollableBox style={{ maxHeight: "15rem", minWidth: "10ch", maxWidth: "40ch" }}>
               {filteredOptions.map((matchedOption, index) =>
-                ((matchedOption: MatchedOption<T>, selected: boolean, index: number) => (
+                ((matchedOption: OptionMatch<T>, selected: boolean, index: number) => (
                   <div
                     key={matchedOption.option.key}
                     style={{
@@ -279,10 +280,7 @@ function renderHighlightedText(label: string, matchIndices: number[]): React.Rea
   return <>{parts}</>;
 }
 
-function getMatchingOptions<T>(
-  options: AutocompleteOption<T>[],
-  inputValue: string
-): MatchedOption<T>[] {
+function getMatchingOptions<T>(options: Option<T>[], inputValue: string): OptionMatch<T>[] {
   if (inputValue.length === 0) {
     return options.map((option) => ({ option, matchIndices: [] }));
   }
@@ -290,13 +288,13 @@ function getMatchingOptions<T>(
   const lowerInput = inputValue.toLowerCase();
 
   // Categorize options (case-sensitive first, then case-insensitive)
-  const exactMatchesCS: MatchedOption<T>[] = [];
-  const exactMatchesCI: MatchedOption<T>[] = [];
-  const startsWithMatchesCS: MatchedOption<T>[] = [];
-  const startsWithMatchesCI: MatchedOption<T>[] = [];
-  const containsMatchesCS: MatchedOption<T>[] = [];
-  const containsMatchesCI: MatchedOption<T>[] = [];
-  const remainingOptions: AutocompleteOption<T>[] = [];
+  const exactMatchesCS: OptionMatch<T>[] = [];
+  const exactMatchesCI: OptionMatch<T>[] = [];
+  const startsWithMatchesCS: OptionMatch<T>[] = [];
+  const startsWithMatchesCI: OptionMatch<T>[] = [];
+  const containsMatchesCS: OptionMatch<T>[] = [];
+  const containsMatchesCI: OptionMatch<T>[] = [];
+  const remainingOptions: Option<T>[] = [];
 
   for (const option of options) {
     const label = option.label;
@@ -333,7 +331,7 @@ function getMatchingOptions<T>(
   }
 
   // Fuzzy search on remaining options
-  let fuzzyMatches: MatchedOption<T>[] = [];
+  let fuzzyMatches: OptionMatch<T>[] = [];
   if (remainingOptions.length > 0) {
     const fuse = new Fuse(remainingOptions, {
       keys: ["label"],

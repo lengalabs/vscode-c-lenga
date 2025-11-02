@@ -1,7 +1,7 @@
 import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
-import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
+import * as Autocomplete from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
@@ -27,7 +27,7 @@ export function CallExpressionSelector({
     parentMap,
   } = useLineContext();
 
-  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
+  const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.idDeclaration);
@@ -44,7 +44,7 @@ export function CallExpressionSelector({
     const functions = declarations.filter(
       (decl) => decl.type === "functionDeclaration" || decl.type === "functionDefinition"
     );
-    const newOptions: AutocompleteOption<AvailableDeclaration>[] = functions.map((decl) => {
+    const newOptions: Autocomplete.Option<AvailableDeclaration>[] = functions.map((decl) => {
       const parentInfo = parentMap.get(decl.id)!; // We don't expect decl to be missing from parentMap. The only node without a parent is the source file.
 
       return {
@@ -70,7 +70,7 @@ export function CallExpressionSelector({
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
 
   return (
-    <AutocompleteField
+    <Autocomplete.Field
       currentValue={currentIdentifier}
       placeholder="function_name"
       options={options}

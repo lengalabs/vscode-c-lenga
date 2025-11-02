@@ -18,7 +18,7 @@ import { TypeSelector } from "./selectors/TypeSelector";
 import { ReferenceSelector } from "./selectors/ReferenceSelector";
 import { CallExpressionSelector } from "./selectors/CallExpressionSelector";
 import { EditableField } from "./EditableField";
-import { AutocompleteField, AutocompleteOption } from "./selectors/AutocompleteOption";
+import * as Autocomplete from "./selectors/Autocomplete";
 import { AssignmentSelector } from "./selectors/AssignmentSelector";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
@@ -193,7 +193,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   } = useLineContext();
 
   // Convert availableInserts to AutocompleteOptions
-  const options: AutocompleteOption<objects.LanguageObject>[] = React.useMemo(() => {
+  const options: Autocomplete.Option<objects.LanguageObject>[] = React.useMemo(() => {
     if (!availableInserts) return [];
     return availableInserts.map((insert, idx) => ({
       value: insert,
@@ -220,7 +220,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   }
 
   const content = (
-    <AutocompleteField
+    <Autocomplete.Field
       currentValue={""}
       placeholder="Select type..."
       options={options}

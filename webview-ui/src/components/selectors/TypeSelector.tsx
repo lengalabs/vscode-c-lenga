@@ -1,5 +1,5 @@
 import * as objects from "../../../../src/language_objects/cNodes";
-import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
+import * as Autocomplete from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../context";
 
 // Valid C types for the type selector
@@ -62,7 +62,7 @@ export function TypeSelector<T extends objects.LanguageObject, K extends string 
   }
 
   // Convert C_TYPES to AutocompleteOption format
-  const options: AutocompleteOption<string>[] = C_TYPES.map((type) => ({
+  const options: Autocomplete.Option<string>[] = C_TYPES.map((type) => ({
     value: type,
     label: type,
     key: type,
@@ -90,7 +90,7 @@ export function TypeSelector<T extends objects.LanguageObject, K extends string 
   };
 
   return (
-    <AutocompleteField
+    <Autocomplete.Field
       currentValue={currentValue}
       placeholder="type"
       options={options}

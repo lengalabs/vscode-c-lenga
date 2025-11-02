@@ -1,7 +1,7 @@
 import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
-import { AutocompleteOption, AutocompleteField } from "./AutocompleteOption";
+import { Option, Field } from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../context";
 import { NodeRender } from "../line";
 
@@ -24,7 +24,7 @@ export function AssignmentSelector({ node, parentInfo, className }: AssignmentSe
     parentMap,
   } = useLineContext();
 
-  const [options, setOptions] = React.useState<AutocompleteOption<AvailableDeclaration>[]>([]);
+  const [options, setOptions] = React.useState<Option<AvailableDeclaration>[]>([]);
 
   // Get the current identifier from the target declaration
   const targetDecl = nodeMap.get(node.idDeclaration);
@@ -39,7 +39,7 @@ export function AssignmentSelector({ node, parentInfo, className }: AssignmentSe
 
     // Find available declarations and convert to options
     const declarations = findDeclarationsInScope(node, parentMap);
-    const newOptions: AutocompleteOption<AvailableDeclaration>[] = declarations
+    const newOptions: Option<AvailableDeclaration>[] = declarations
       .filter((decl) => decl.type === "declaration" || decl.type === "functionParameter")
       .map((decl) => {
         const parentInfo = parentMap.get(decl.id)!; // We don't expect decl to be missing from parentMap. The only node without a parent is the source file.
@@ -66,7 +66,7 @@ export function AssignmentSelector({ node, parentInfo, className }: AssignmentSe
   const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
 
   return (
-    <AutocompleteField
+    <Field
       currentValue={currentIdentifier}
       placeholder="reference_name"
       options={options}
