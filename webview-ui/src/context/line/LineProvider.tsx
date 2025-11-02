@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
-import * as objects from "../../../src/language_objects/cNodes";
-import { buildMaps, LineContext, ParentInfo, EditorMode } from "./context";
+import * as objects from "../../../../src/language_objects/cNodes";
+import { buildMaps, LineContext, ParentInfo, EditorMode } from "./lineContext";
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
@@ -19,7 +19,7 @@ interface LineProviderProps {
   children: React.ReactNode;
 }
 
-export function LineProvider({
+export default function LineProvider({
   sourceFile,
   onEdit,
   onRequestAvailableInserts,
@@ -32,7 +32,7 @@ export function LineProvider({
   setParentNodeInfo,
   children,
 }: LineProviderProps) {
-  const { nodeMap, parentMap } = useMemo(() => buildMaps(sourceFile.code), [sourceFile]);
+  const { nodeMap, parentMap } = useMemo(() => buildMaps(sourceFile), [sourceFile]);
 
   // Focus request state - when set, the matching field will focus itself
   const [focusRequest, setFocusRequest] = useState<{ nodeId: string; fieldKey: string } | null>(

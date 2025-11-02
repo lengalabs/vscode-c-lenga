@@ -13,11 +13,10 @@ import {
 import "@xyflow/react/dist/style.css";
 import { FunctionNode, FunctionFlowNode } from "./nodes/FunctionNode";
 import * as objects from "../../../src/language_objects/cNodes";
-import { LineProvider } from "../components/lineContext";
+import LineProvider from "../context/line/LineProvider";
 import { vscode } from "../vscode";
-import { visitNodes } from "../components/nodeVisiting";
-import { ParentInfo } from "../components/context";
-import { childInfo } from "../components/childInfo";
+import { visitNodes } from "../lib/nodeVisiting";
+import { ParentInfo, parentInfoFromChild } from "../context/line/lineContext";
 
 const nodeTypes = { function: FunctionNode };
 
@@ -86,7 +85,7 @@ export default function App() {
               data: {
                 func: object as objects.FunctionDefinition,
                 handlerPositions: positions,
-                parentInfo: childInfo(newSourceFile, "code", i),
+                parentInfo: parentInfoFromChild(newSourceFile, "code", i),
               },
             } satisfies FunctionFlowNode;
             functionNodes.push(flowNode);

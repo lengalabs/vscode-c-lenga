@@ -1,11 +1,11 @@
-import { DebugContext } from "../lib/debugContext";
+import { DebugContext } from "./debugContext";
 
 interface DebugProviderProps {
   debug: boolean;
   children: React.ReactNode;
 }
 
-export function DebugProvider({ debug, children }: DebugProviderProps) {
+export default function DebugProvider({ debug, children }: DebugProviderProps) {
   return (
     <DebugContext.Provider
       value={{

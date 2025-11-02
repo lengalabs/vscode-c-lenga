@@ -1,5 +1,5 @@
-import { useDebugContext } from "../lib/debugContext";
-import { useLineContext } from "./context";
+import { useDebugContext } from "../context/debug/debugContext";
+import { useLineContext } from "../context/line/lineContext";
 
 export default function DebugMenu(): React.ReactNode {
   const { debug } = useDebugContext();

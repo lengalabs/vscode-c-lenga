@@ -160,6 +160,7 @@
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
     "@vscode/vsce": "^3.6.2",
+    "fuse.js": "^7.1.0",
     "google-protobuf": "^3.21.4",
     "lodash": "^4.17.21",
     "protobufjs": "^7.5.4",

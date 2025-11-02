@@ -1,8 +1,12 @@
 import React from "react";
-import { useLineContext, ParentInfo, NodeCallbacks } from "./context";
+import {
+  useLineContext,
+  ParentInfo,
+  NodeCallbacks,
+  parentInfoFromChild,
+} from "../context/line/lineContext";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
-import { childInfo } from "./childInfo";
 import { createKeyDownHandler } from "../lib/keyBinds";
 import {
   createArrayFieldCallbacks,
@@ -14,242 +18,12 @@ import {
   createUnknown,
   prependToArray,
 } from "../lib/editionHelpers";
-
-// Valid C types for the type selector
-const C_TYPES = [
-  "void",
-  "int",
-  // "char",
-  // "float",
-  // "double",
-  // "short",
-  // "long",
-  // "unsigned char",
-  // "unsigned int",
-  // "unsigned short",
-  // "unsigned long",
-  // "signed char",
-  // "signed int",
-  // "signed short",
-  // "signed long",
-  // "long long",
-  // "unsigned long long",
-  // "size_t",
-  // "ptrdiff_t",
-];
-
-interface TypeSelectorProps<T extends objects.LanguageObject, K extends string & keyof T> {
-  node: T;
-  key: K;
-  parentInfo: ParentInfo;
-  className?: string;
-}
-
-function TypeSelector<T extends objects.LanguageObject, K extends string & keyof T>({
-  node,
-  key,
-  parentInfo,
-  className,
-}: TypeSelectorProps<T, K>) {
-  const {
-    selectedNodeId,
-    selectedKey,
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-  } = useLineContext();
-  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
-  const currentValue = String(node[key] ?? "");
-  const [inputValue, setInputValue] = React.useState(currentValue);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const hasFocusedRef = React.useRef(false);
-
-  // Filter types based on input
-  const filteredTypes = C_TYPES.filter((type) =>
-    type.toLowerCase().includes(inputValue.toLowerCase())
-  );
-
-  // Find best match (exact prefix match, then contains match)
-  const getBestMatch = () => {
-    const exact = filteredTypes.find((type) =>
-      type.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    return exact || filteredTypes[0] || inputValue;
-  };
-
-  React.useEffect(() => {
-    setInputValue(currentValue);
-  }, [currentValue]);
-
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing type selector for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-        hasFocusedRef.current = true;
-        clearFocusRequest();
-      }
-    }
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
-
-  const commitValue = (value: string) => {
-    if (value.trim() === "") {
-      // If the input is empty, revert to the current value
-      value = currentValue;
-    }
-
-    // Only allow valid types or revert to previous value
-    const isValidType = C_TYPES.includes(value);
-    const hasMatch = filteredTypes.length > 0;
-
-    let finalValue: string;
-    if (isValidType) {
-      // Input exactly matches a valid type
-      finalValue = value;
-    } else if (hasMatch) {
-      // Input doesn't exactly match, but there are filtered matches - use best match
-      finalValue = getBestMatch();
-    } else {
-      // No matches at all - revert to previous valid value
-      finalValue = currentValue;
-    }
-
-    node[key] = finalValue as T[K];
-    setInputValue(finalValue);
-    onEdit(node, key);
-    setShowDropdown(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (showDropdown && selectedIndex >= 0) {
-        e.stopPropagation();
-        commitValue(filteredTypes[selectedIndex]);
-      } else {
-        commitValue(inputValue);
-      }
-    } else if (e.key === "Escape") {
-      if (showDropdown) {
-        e.stopPropagation();
-      }
-      setShowDropdown(false);
-      setSelectedIndex(-1);
-      setInputValue(currentValue);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!showDropdown) {
-        setShowDropdown(true);
-        setSelectedIndex(0);
-      } else {
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredTypes.length - 1));
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (showDropdown) {
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
-      }
-    }
-  };
-
-  const width = `${inputValue.length === 0 ? currentValue.length : inputValue.length}ch`;
-
-  return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <input
-        ref={inputRef}
-        className={`inline-editor ${className ?? ""}`}
-        style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
-          width,
-        }}
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          setShowDropdown(true);
-          setSelectedIndex(-1);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          setSelectedKey(key);
-          setSelectedNodeId(node.id);
-          setParentNodeInfo(parentInfo);
-          setShowDropdown(true);
-        }}
-        onBlur={() => {
-          // Delay to allow dropdown clicks
-          setTimeout(() => {
-            commitValue(inputValue);
-          }, 150);
-        }}
-        placeholder={currentValue}
-        readOnly={mode === "view"}
-      />
-      {showDropdown && filteredTypes.length > 0 && mode === "edit" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            background: "var(--vscode-dropdown-background)",
-            border: "1px solid var(--vscode-dropdown-border)",
-            borderRadius: "3px",
-            maxHeight: "200px",
-            overflowY: "auto",
-            zIndex: 1000,
-            minWidth: "100%",
-          }}
-        >
-          {filteredTypes.map((type, index) => (
-            <div
-              key={type}
-              style={{
-                padding: "4px 8px",
-                cursor: "pointer",
-                backgroundColor:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionBackground)"
-                    : "transparent",
-                color:
-                  index === selectedIndex
-                    ? "var(--vscode-list-activeSelectionForeground)"
-                    : "inherit",
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent blur
-                commitValue(type);
-              }}
-              onMouseEnter={() => setSelectedIndex(index)}
-            >
-              {type}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import * as Autocomplete from "./selectors/Autocomplete";
+import CallExpressionSelector from "./selectors/CallExpressionSelector";
+import AssignmentSelector from "./selectors/AssignmentSelector";
+import ReferenceSelector from "./selectors/ReferenceSelector";
+import EditableField from "./EditableField";
+import TypeSelector from "./selectors/TypeSelector";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
@@ -278,98 +52,6 @@ function useFocusStructuralNode(nodeId: string) {
   }, [focusRequest, nodeId, clearFocusRequest]);
 
   return nodeRef;
-}
-
-interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
-  node: T;
-  key: K;
-  parentInfo: ParentInfo;
-  className?: string;
-  placeholder: string;
-}
-
-function EditableField<T extends objects.LanguageObject, K extends string & keyof T>({
-  node,
-  key,
-  parentInfo,
-  className,
-  placeholder,
-}: EditableFieldProps<T, K>) {
-  const {
-    selectedNodeId,
-    selectedKey,
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-  } = useLineContext();
-  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
-  const [inputValue, setInputValue] = React.useState(String(node[key] ?? ""));
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const hasFocusedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    setInputValue(String(node[key] ?? ""));
-  }, [node, key]);
-
-  // React to focus requests - only focus once per request
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing input for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-        hasFocusedRef.current = true;
-        // Clear the focus request after handling it
-        clearFocusRequest();
-      }
-    }
-    // Reset the flag when focus request changes
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
-
-  // width in ch units, at least 1ch
-  const width =
-    (inputValue.length === 0 ? placeholder.length : Math.max(1, inputValue.length)) + "ch";
-
-  return (
-    <input
-      ref={inputRef}
-      className={`inline-editor ${className ?? ""}`}
-      style={{
-        ...(isSelected
-          ? {
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-            }
-          : {}),
-        width, // dynamically set width in ch
-      }}
-      value={inputValue}
-      placeholder={placeholder}
-      onChange={(e) => setInputValue(e.target.value)}
-      onFocus={() => {
-        setSelectedKey(key);
-        setSelectedNodeId(node.id);
-        setParentNodeInfo(parentInfo);
-      }}
-      onBlur={() => {
-        node[key] = inputValue as T[K];
-        onEdit(node, key);
-      }}
-      readOnly={mode === "view"}
-    />
-  );
 }
 
 interface ObjectProps {
@@ -503,102 +185,57 @@ export function NodeRender(props: NodeRenderProps): React.ReactNode {
 }
 
 function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
-  const { mode, onRequestAvailableInserts, availableInserts } = useLineContext();
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLSelectElement>(null);
+  const {
+    mode,
+    onRequestAvailableInserts,
+    availableInserts,
+    focusRequest,
+    clearFocusRequest,
+    setSelectedNodeId,
+    setSelectedKey,
+    setParentNodeInfo,
+  } = useLineContext();
 
-  // When in edit mode and Enter is pressed, request available inserts
-  const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("UnknownRender: Requesting available inserts");
-        // Get parent info from the map
-        const parent = props.parentInfo.parent;
-        const key = props.parentInfo.key;
-        onRequestAvailableInserts(parent.id, key);
-        setShowDropdown(true);
+  // Convert availableInserts to AutocompleteOptions
+  const options: Autocomplete.Option<objects.LanguageObject>[] = React.useMemo(() => {
+    if (!availableInserts) return [];
+    return availableInserts.map((insert, idx) => ({
+      value: insert,
+      label: insert.type,
+      key: `${insert.type}-${idx}`,
+      description: <NodeRender node={insert} parentInfo={props.parentInfo} />,
+      onSelect: (selectedInsert: objects.LanguageObject) => {
+        console.log("Selected option to insert:", selectedInsert);
+        // Use the replace callback if provided
+        if (props.callbacks?.onReplace) {
+          props.callbacks.onReplace(props.node, selectedInsert);
+        } else {
+          console.warn("No onReplace callback provided for UnknownRender");
+        }
       },
-    },
-  });
+    }));
+  }, [availableInserts, props.callbacks, props.node, props.parentInfo]);
 
-  // Focus the dropdown when it appears and options are loaded
-  React.useEffect(() => {
-    if (showDropdown && availableInserts && availableInserts.length > 0 && dropdownRef.current) {
-      dropdownRef.current.focus();
-    }
-  }, [showDropdown, availableInserts]);
-
-  const commitSelection = () => {
-    if (!dropdownRef.current) {
-      console.log("Dropdown ref not set");
-      return;
-    }
-
-    const selectedIndex = parseInt(dropdownRef.current.value);
-    if (availableInserts && selectedIndex >= 0) {
-      const selectedOption = availableInserts[selectedIndex];
-      console.log("Selected option to insert:", selectedOption);
-
-      // Use the replace callback if provided
-      if (props.callbacks?.onReplace) {
-        props.callbacks.onReplace(props.node, selectedOption);
-      } else {
-        console.warn("No onReplace callback provided for UnknownRender");
-      }
-
-      setShowDropdown(false);
-    }
-  };
-
-  const handleDropdownKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      commitSelection();
-    } else if (e.key === "Escape") {
-      e.stopPropagation();
-      e.preventDefault();
-      setShowDropdown(false);
-    }
-  };
-
-  const handleDropdownClick = () => {
-    // Commit the selection when user clicks on an option
-    commitSelection();
-  };
+  function handleOnFocus() {
+    onRequestAvailableInserts(props.parentInfo.parent.id, props.parentInfo.key);
+    setSelectedKey("content");
+    setSelectedNodeId(props.node.id);
+    setParentNodeInfo(props.parentInfo);
+  }
 
   const content = (
-    <span onKeyDown={handleKeyDown}>
-      {EditableField({
-        node: props.node,
-        key: "content",
-        parentInfo: props.parentInfo,
-        placeholder: "value",
-      })}
-      {showDropdown && availableInserts && availableInserts.length > 0 && (
-        <select
-          ref={dropdownRef}
-          onKeyDown={handleDropdownKeyDown}
-          onClick={handleDropdownClick}
-          onBlur={() => setShowDropdown(false)}
-          size={Math.min(10, availableInserts.length)}
-          style={{
-            position: "absolute",
-            zIndex: 1000,
-            backgroundColor: "var(--vscode-dropdown-background)",
-            color: "var(--vscode-dropdown-foreground)",
-            border: "1px solid var(--vscode-dropdown-border)",
-          }}
-        >
-          <option value="-1">-- Select an option --</option>
-          {availableInserts.map((option, idx) => (
-            <option key={idx} value={idx}>
-              {option.type}
-            </option>
-          ))}
-        </select>
-      )}
-    </span>
+    <Autocomplete.Field
+      currentValue={""}
+      placeholder="Select type..."
+      options={options}
+      onFocus={handleOnFocus}
+      focusRequest={focusRequest}
+      nodeId={props.node.id}
+      fieldKey="content"
+      clearFocusRequest={clearFocusRequest}
+      isSelected={false}
+      readOnly={mode === "view"}
+    />
   );
 
   return <Object {...props}>{content}</Object>;
@@ -670,7 +307,7 @@ function FunctionDeclarationRender(
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(props.node, "parameterList", i)}
+            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
             callbacks={createArrayFieldCallbacks(
               props.node,
               "parameterList",
@@ -731,7 +368,7 @@ function FunctionDefinitionRender(
           {i > 0 && ", "}
           <NodeRender
             node={param}
-            parentInfo={childInfo(props.node, "parameterList", i)}
+            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
               props.node,
@@ -749,7 +386,7 @@ function FunctionDefinitionRender(
       {props.node.compoundStatement && (
         <NodeRender
           node={props.node.compoundStatement}
-          parentInfo={childInfo(props.node, "compoundStatement")}
+          parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
           // callbacks={} TODO: transform into FunctionDeclaration on delete
         />
       )}
@@ -796,7 +433,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
           <NodeRender
             node={props.node.value}
             display="inline"
-            parentInfo={childInfo(props.node, "value")}
+            parentInfo={parentInfoFromChild(props.node, "value")}
             callbacks={createOptionalFieldCallbacks(
               props.node,
               "value",
@@ -861,7 +498,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             type: "unknown",
             content: "",
           }}
-          parentInfo={childInfo(props.node, "code")}
+          parentInfo={parentInfoFromChild(props.node, "code")}
         />
       ) : (
         <div
@@ -875,7 +512,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             <NodeRender
               key={node.id}
               node={node}
-              parentInfo={childInfo(props.node, "code", i)}
+              parentInfo={parentInfoFromChild(props.node, "code", i)}
               callbacks={createArrayFieldCallbacks(
                 props.node,
                 "code",
@@ -926,7 +563,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
           <NodeRender
             key={node.id}
             node={node}
-            parentInfo={childInfo(props.node, "codeBlock", i)}
+            parentInfo={parentInfoFromChild(props.node, "codeBlock", i)}
             callbacks={createArrayFieldCallbacks(
               props.node,
               "codeBlock",
@@ -980,7 +617,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     (props.node.elseStatement.type === "elseClause" ? (
       <NodeRender
         node={props.node.elseStatement}
-        parentInfo={childInfo(props.node, "elseStatement")}
+        parentInfo={parentInfoFromChild(props.node, "elseStatement")}
         display="inline"
         callbacks={createOptionalFieldCallbacks(
           props.node,
@@ -1014,7 +651,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
             <Object
               display="inline"
               node={ifStatement}
-              parentInfo={childInfo(props.node, "elseStatement")}
+              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
               callbacks={createOptionalFieldCallbacks(
                 props.node,
                 "elseStatement",
@@ -1029,7 +666,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
             </Object>{" "}
             <NodeRender
               node={ifStatement}
-              parentInfo={childInfo(props.node, "elseStatement")}
+              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
               display="inline"
               callbacks={elseClauseCallbacks}
             />
@@ -1047,14 +684,14 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
           node={props.node.condition}
-          parentInfo={childInfo(props.node, "condition")}
+          parentInfo={parentInfoFromChild(props.node, "condition")}
           display="inline"
         />
         <span className="token-keyword">{")"}</span>{" "}
       </span>
       <NodeRender
         node={props.node.body}
-        parentInfo={childInfo(props.node, "body")}
+        parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
       />
       {elseRender}
@@ -1134,7 +771,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       > */}
       <NodeRender
         node={props.node.body}
-        parentInfo={childInfo(props.node, "body")}
+        parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
         callbacks={bodyCallbacks}
       />
@@ -1168,7 +805,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
           {" "}
           <NodeRender
             node={props.node.value}
-            parentInfo={childInfo(props.node, "value")}
+            parentInfo={parentInfoFromChild(props.node, "value")}
             display="inline"
             callbacks={createOptionalFieldCallbacks(
               props.node,
@@ -1205,20 +842,18 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 
   const content = (
     <span onKeyDown={handleKeyDown}>
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
+      <CallExpressionSelector
+        node={props.node}
+        parentInfo={props.parentInfo}
+        className="token-function"
+      />
       <span className="token-delimiter">{"("}</span>
       {props.node.argumentList.map((arg, i) => (
         <React.Fragment key={arg.id}>
           {i > 0 && ", "}
           <NodeRender
             node={arg}
-            parentInfo={childInfo(props.node, "argumentList", i)}
+            parentInfo={parentInfoFromChild(props.node, "argumentList", i)}
             display="inline"
             callbacks={createArrayFieldCallbacks(
               props.node,
@@ -1241,14 +876,14 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 }
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
-  const { nodeMap } = useLineContext();
-  const targetNode = nodeMap.get(props.node.declarationId);
-
-  if (!targetNode || !("identifier" in targetNode)) {
-    return <>{props.node.declarationId}</>;
-  }
-
-  const content = <span className="token-variable">{String(targetNode.identifier)}</span>;
+  const content = (
+    <ReferenceSelector
+      node={props.node}
+      parentInfo={props.parentInfo}
+      className="token-variable"
+      callbacks={props.callbacks}
+    />
+  );
 
   return <Object {...props}>{content}</Object>;
 }
@@ -1257,18 +892,21 @@ function AssignmentExpressionRender(
   props: XRenderProps<objects.AssignmentExpression>
 ): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  const targetNode = nodeMap.get(props.node.idDeclaration);
-
-  if (!targetNode || !("identifier" in targetNode)) {
-    return <>{props.node.idDeclaration}</>;
-  }
-
   const content = (
     <>
-      <span className="token-variable">{String(targetNode.identifier)}</span> {"="}{" "}
+      <span className="token-variable">
+        {
+          <AssignmentSelector
+            node={props.node}
+            parentInfo={props.parentInfo}
+            className="token-variable"
+          />
+        }
+      </span>{" "}
+      {"="}{" "}
       <NodeRender
         node={props.node.value}
-        parentInfo={childInfo(props.node, "value")}
+        parentInfo={parentInfoFromChild(props.node, "value")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus)}
       />
@@ -1319,7 +957,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
     <>
       <NodeRender
         node={props.node.left}
-        parentInfo={childInfo(props.node, "left")}
+        parentInfo={parentInfoFromChild(props.node, "left")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "left", nodeMap, onEdit, requestFocus)}
       />{" "}
@@ -1331,7 +969,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
       })}{" "}
       <NodeRender
         node={props.node.right}
-        parentInfo={childInfo(props.node, "right")}
+        parentInfo={parentInfoFromChild(props.node, "right")}
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "right", nodeMap, onEdit, requestFocus)}
       />

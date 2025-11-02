@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import * as objects from "../../../src/language_objects/cNodes";
+import * as objects from "../../../../src/language_objects/cNodes";
 
 // Type-safe parent info with generics and defaults
 export type ParentInfo<
@@ -55,7 +55,7 @@ export function useLineContext(): LineContextType {
   return ctx;
 }
 
-export function buildMaps(ast: objects.LanguageObject[]): {
+export function buildMaps(ast: objects.SourceFile): {
   nodeMap: Map<string, objects.LanguageObject>;
   parentMap: Map<string, ParentInfo>;
 } {
@@ -134,11 +134,36 @@ export function buildMaps(ast: objects.LanguageObject[]): {
         traverse(elseClause.body, elseClause, "body", 0);
         break;
       }
-      default:
+      case "sourceFile": {
+        const sourceFile = node as objects.SourceFile;
+        sourceFile.code.forEach((stmt, i) => traverse(stmt, sourceFile, "code", i));
+        break;
+      }
+      case "binaryExpression": {
+        const binaryExpr = node as objects.BinaryExpression;
+        traverse(binaryExpr.left, binaryExpr, "left", 0);
+        traverse(binaryExpr.right, binaryExpr, "right", 0);
+        break;
+      }
+      case "preprocInclude":
+      case "comment":
+      case "functionParameter":
+      case "numberLiteral":
+      case "reference":
+      case "stringLiteral":
+      case "unknown":
         break; // leaf nodes
     }
   }
 
-  ast.forEach((node) => traverse(node));
+  traverse(ast);
   return { nodeMap, parentMap };
+}
+
+export function parentInfoFromChild<T extends objects.LanguageObject, K extends string & keyof T>(
+  parent: T,
+  key: K,
+  index: number = 0
+): ParentInfo {
+  return { parent, key, index } as unknown as ParentInfo;
 }
