@@ -67,14 +67,18 @@ export function findDeclarationsInScope(
     // Move up one level
     currentNode = parent;
     const nextParentInfo = parentMap.get(currentNode.id);
-    if (!nextParentInfo) break;
+    if (!nextParentInfo) {
+      break;
+    }
     currentParentInfo = nextParentInfo;
   }
 
   // Remove duplicates (in case a declaration is found multiple times)
   const seen = new Set<string>();
   return declarations.filter((decl) => {
-    if (seen.has(decl.identifier)) return false;
+    if (seen.has(decl.identifier)) {
+      return false;
+    }
     seen.add(decl.identifier);
     return true;
   });

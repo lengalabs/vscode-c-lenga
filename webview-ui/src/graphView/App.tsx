@@ -61,14 +61,19 @@ export default function App() {
               object: objects.BaseLanguageObject,
               parent?: objects.BaseLanguageObject,
               key?: string,
-              index?: number,
+              index?: number
             ) {
               console.log(object.type);
 
               if (parent?.type === "compoundStatement" && key === "codeBlock") {
                 currentLine++;
                 const par = parent as objects.CompoundStatement;
-                if (index && index > 0 && (par.codeBlock[index-1].type == "compoundStatement" || par.codeBlock[index-1].type == "ifStatement")) {
+                if (
+                  index &&
+                  index > 0 &&
+                  (par.codeBlock[index - 1].type === "compoundStatement" ||
+                    par.codeBlock[index - 1].type === "ifStatement")
+                ) {
                   currentLine++;
                 }
               }

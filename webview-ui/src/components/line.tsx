@@ -198,7 +198,9 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 
   // Convert availableInserts to AutocompleteOptions
   const options: Autocomplete.Option<objects.LanguageObject>[] = React.useMemo(() => {
-    if (!availableInserts) return [];
+    if (!availableInserts) {
+      return [];
+    }
     return availableInserts.map((insert, idx) => ({
       value: insert,
       label: insert.type,
@@ -728,7 +730,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
           console.error("Parent node info is undefined for else clause:", props.node.id);
           return;
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
         onEdit(parentNodeInfo.parent, parentNodeInfo.key);
         // Focus the condition (unknown node)
