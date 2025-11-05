@@ -35,7 +35,7 @@ function useFocusStructuralNode(nodeId: string) {
     if (
       focusRequest &&
       focusRequest.nodeId === nodeId &&
-      focusRequest.fieldKey === "" && // Empty string means focus the node itself
+      focusRequest.fieldKey === undefined && // Empty string means focus the node itself
       !hasFocusedRef.current
     ) {
       console.log("Focusing structural node:", nodeId);
@@ -225,6 +225,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 
   const content = (
     <Autocomplete.Field
+      firstField={true}
       currentValue={""}
       placeholder="Select type..."
       options={options}
@@ -254,6 +255,7 @@ function PreprocIncludeRender({
         node,
         key: "content",
         parentInfo,
+        firstField: true,
         className: "token-string",
         placeholder: "file.h",
       })}
@@ -292,6 +294,7 @@ function FunctionDeclarationRender(
         node: props.node,
         key: "returnType",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-type",
       })}{" "}
       {EditableField({
@@ -353,6 +356,7 @@ function FunctionDefinitionRender(
         node: props.node,
         key: "returnType",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-type",
       })}{" "}
       {EditableField({
@@ -417,6 +421,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
         node: props.node,
         key: "primitiveType",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-type",
       })}{" "}
       {EditableField({
@@ -461,6 +466,7 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
         node: props.node,
         key: "paramType",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-type",
       })}{" "}
       {EditableField({
@@ -606,7 +612,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
           nodeMap.set(newElseClause.body.id, newElseClause.body);
           onEdit(props.node, "elseStatement");
           // Focus the newly created else clause
-          requestFocus(newElseClause.id, "");
+          requestFocus({ nodeId: newElseClause.id });
         }
       },
     },
@@ -732,7 +738,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
         (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
         onEdit(parentNodeInfo.parent, parentNodeInfo.key);
         // Focus the condition (unknown node)
-        requestFocus(newIfStatement.condition.id, "content");
+        requestFocus({ nodeId: newIfStatement.condition.id });
       },
     },
   });
@@ -845,6 +851,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
       <CallExpressionSelector
         node={props.node}
         parentInfo={props.parentInfo}
+        firstField={true}
         className="token-function"
       />
       <span className="token-delimiter">{"("}</span>
@@ -880,6 +887,7 @@ function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNod
     <ReferenceSelector
       node={props.node}
       parentInfo={props.parentInfo}
+      firstField={true}
       className="token-variable"
       callbacks={props.callbacks}
     />
@@ -899,6 +907,7 @@ function AssignmentExpressionRender(
           <AssignmentSelector
             node={props.node}
             parentInfo={props.parentInfo}
+            firstField={true}
             className="token-variable"
           />
         }
@@ -923,6 +932,7 @@ function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.
         node: props.node,
         key: "value",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-number",
         placeholder: "0",
       })}
@@ -940,6 +950,7 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
         node: props.node,
         key: "value",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-string",
         placeholder: "text",
       })}
@@ -965,6 +976,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
         node: props.node,
         key: "operator",
         parentInfo: props.parentInfo,
+        firstField: true,
         placeholder: "op",
       })}{" "}
       <NodeRender
@@ -987,6 +999,7 @@ function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
         node: props.node,
         key: "content",
         parentInfo: props.parentInfo,
+        firstField: true,
         className: "token-comment",
         placeholder: "comment",
       })}

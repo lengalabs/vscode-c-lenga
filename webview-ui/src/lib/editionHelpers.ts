@@ -1,14 +1,7 @@
 import * as objects from "../../../src/language_objects/cNodes";
 import { NodeCallbacks } from "../context/line/lineContext";
+import { FocusRequest } from "../context/line/LineProvider";
 
-// Helper to create a new unknown node
-function createUnknownNode(): objects.Unknown {
-  return {
-    id: crypto.randomUUID(),
-    type: "unknown",
-    content: "",
-  };
-}
 // Helper for common insert pattern: insert unknown node into optional field
 export function insertUnknownIntoField<
   T extends objects.LanguageObject,
@@ -18,27 +11,22 @@ export function insertUnknownIntoField<
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K | null) => void,
-  requestFocus?: (nodeId: string, fieldKey: string) => void
+  requestFocus?: (props: FocusRequest) => void
 ): void {
-  const newUnknown = createUnknownNode();
+  const newUnknown = createUnknown(requestFocus);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (node as any)[key] = newUnknown;
   nodeMap.set(newUnknown.id, newUnknown);
   onEdit(node, key);
-  if (requestFocus) {
-    requestFocus(newUnknown.id, "content");
-  }
 }
 // Helper to prepend an unknown node to an array field
 export function prependToArray<T extends objects.LanguageObject, K extends string & keyof T>(
   node: T,
   key: K,
-  constructor: (
-    requestFocus?: (nodeId: string, fieldKey: string) => void
-  ) => objects.LanguageObject,
+  constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
-  requestFocus?: (nodeId: string, fieldKey: string) => void
+  requestFocus?: (props: FocusRequest) => void
 ): void {
   const newUnknown = constructor(requestFocus);
   const array = node[key] as unknown as objects.LanguageObject[];
@@ -51,12 +39,10 @@ export function prependToArray<T extends objects.LanguageObject, K extends strin
 export function appendToArray<T extends objects.LanguageObject, K extends string & keyof T>(
   node: T,
   key: K,
-  constructor: (
-    requestFocus?: (nodeId: string, fieldKey: string) => void
-  ) => objects.LanguageObject,
+  constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
-  requestFocus?: (nodeId: string, fieldKey: string) => void
+  requestFocus?: (props: FocusRequest) => void
 ): void {
   const newNode = constructor(requestFocus);
   const array = node[key] as unknown as objects.LanguageObject[];
@@ -73,12 +59,10 @@ export function createArrayFieldCallbacks<
   parent: T,
   key: K,
   index: number,
-  constructor: (
-    requestFocus?: (nodeId: string, fieldKey: string) => void
-  ) => objects.LanguageObject,
+  constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
   nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
   onEdit: (node: T, key: K) => void,
-  requestFocus: (nodeId: string, fieldKey: string) => void
+  requestFocus: (props: FocusRequest) => void
 ): NodeCallbacks {
   return {
     onInsertSibling: (node: objects.LanguageObject) => {
@@ -90,7 +74,7 @@ export function createArrayFieldCallbacks<
       (parent as any)[key] = newArray;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
-      requestFocus(newUnknown.id, "content");
+      requestFocus({ nodeId: newUnknown.id });
     },
     onInsertSiblingBefore: (node: objects.LanguageObject) => {
       console.log("Inserting sibling before node:", node.id, " at index:", index);
@@ -101,7 +85,7 @@ export function createArrayFieldCallbacks<
       (parent as any)[key] = newArray;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
-      requestFocus(newUnknown.id, "content");
+      requestFocus({ nodeId: newUnknown.id });
     },
     onDelete: (node: objects.LanguageObject) => {
       console.log("Deleting node:", node.id, " at index:", index);
@@ -117,16 +101,10 @@ export function createArrayFieldCallbacks<
         // Try next sibling (same index, since we removed current)
         const nextIndex = Math.min(index, newArray.length - 1);
         const nextNode = newArray[nextIndex];
-        const firstField = getFirstEditableField(nextNode);
-        if (firstField !== null) {
-          requestFocus(nextNode.id, firstField);
-        }
+        requestFocus({ nodeId: nextNode.id });
       } else {
         // Array is now empty, focus parent
-        const parentField = getFirstEditableField(parent);
-        if (parentField !== null) {
-          requestFocus(parent.id, parentField);
-        }
+        requestFocus({ nodeId: parent.id });
       }
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
@@ -141,10 +119,7 @@ export function createArrayFieldCallbacks<
       onEdit(parent, key);
 
       // Auto-focus on the first editable field of the new node
-      const firstField = getFirstEditableField(newNode);
-      if (firstField !== null) {
-        requestFocus(newNode.id, firstField);
-      }
+      requestFocus({ nodeId: newNode.id });
     },
     // Edit mode: insert at beginning or end of array
     onInsertFirst: () => {
@@ -156,7 +131,7 @@ export function createArrayFieldCallbacks<
       (parent as any)[key] = newArray;
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
-      requestFocus(newNode.id, "content");
+      requestFocus({ nodeId: newNode.id });
     },
     onInsertLast: () => {
       console.log("Inserting at end of array:", key);
@@ -167,7 +142,7 @@ export function createArrayFieldCallbacks<
       (parent as any)[key] = newArray;
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
-      requestFocus(newNode.id, "content");
+      requestFocus({ nodeId: newNode.id });
     },
   };
 }
@@ -180,7 +155,7 @@ export function createOptionalFieldCallbacks<
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
-  requestFocus: (nodeId: string, fieldKey: string) => void
+  requestFocus: (props: FocusRequest) => void
 ): NodeCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
@@ -191,10 +166,7 @@ export function createOptionalFieldCallbacks<
       onEdit(parent, key);
 
       // Focus parent after deleting optional field
-      const parentField = getFirstEditableField(parent);
-      if (parentField !== null) {
-        requestFocus(parent.id, parentField);
-      }
+      requestFocus({ nodeId: parent.id });
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing optional field:", key, " old node:", oldNode.id, " with:", newNode.id);
@@ -205,10 +177,7 @@ export function createOptionalFieldCallbacks<
       onEdit(parent, key);
 
       // Auto-focus on the first editable field of the new node
-      const firstField = getFirstEditableField(newNode);
-      if (firstField !== null) {
-        requestFocus(newNode.id, firstField);
-      }
+      requestFocus({ nodeId: newNode.id });
     },
   };
 }
@@ -221,22 +190,18 @@ export function createRequiredFieldCallbacks<
   key: K,
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
-  requestFocus: (nodeId: string, fieldKey: string) => void
+  requestFocus: (props: FocusRequest) => void
 ): NodeCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
       console.log("Replacing required field:", key, " node:", node.id, " with unknown");
-      const newUnknown: objects.Unknown = {
-        id: crypto.randomUUID(),
-        type: "unknown",
-        content: "",
-      };
+      const newUnknown = createUnknown();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = newUnknown;
       nodeMap.delete(node.id);
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
-      requestFocus(newUnknown.id, "content");
+      requestFocus({ nodeId: newUnknown.id });
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing required field:", key, " old node:", oldNode.id, " with:", newNode.id);
@@ -247,30 +212,25 @@ export function createRequiredFieldCallbacks<
       onEdit(parent, key);
 
       // Auto-focus on the first editable field of the new node
-      const firstField = getFirstEditableField(newNode);
-      if (firstField !== null) {
-        requestFocus(newNode.id, firstField);
-      }
+      requestFocus({ nodeId: newNode.id });
     },
   };
 }
 
-export function createUnknown(
-  requestFocus?: (nodeId: string, fieldKey: string) => void
-): objects.Unknown {
+export function createUnknown(requestFocus?: (props: FocusRequest) => void): objects.Unknown {
   const newUnknown: objects.Unknown = {
     id: crypto.randomUUID(),
     type: "unknown",
     content: "",
   };
   if (requestFocus) {
-    requestFocus(newUnknown.id, "content");
+    requestFocus({ nodeId: newUnknown.id });
   }
   return newUnknown;
 }
 
 export function createParameter(
-  requestFocus?: (nodeId: string, fieldKey: string) => void
+  requestFocus?: (props: FocusRequest) => void
 ): objects.FunctionParameter {
   const newParameter: objects.FunctionParameter = {
     id: crypto.randomUUID(),
@@ -279,43 +239,7 @@ export function createParameter(
     identifier: "",
   };
   if (requestFocus) {
-    requestFocus(newParameter.id, "paramType");
+    requestFocus({ nodeId: newParameter.id });
   }
   return newParameter;
-}
-
-// Helper to get the first editable field for a given node type
-export function getFirstEditableField(node: objects.LanguageObject): string | null {
-  switch (node.type) {
-    case "unknown":
-      return "content";
-    case "functionParameter":
-      return "paramType";
-    case "functionDeclaration":
-    case "functionDefinition":
-      return "returnType";
-    case "declaration":
-      return "primitiveType";
-    case "callExpression":
-      return "identifier";
-    case "numberLiteral":
-    case "stringLiteral":
-      return "value";
-    case "binaryExpression":
-      return "operator";
-    case "preprocInclude":
-    case "comment":
-      return "content";
-    // For structural nodes without direct editable fields, use empty string to focus the node itself
-    case "compoundStatement":
-    case "ifStatement":
-    case "elseClause":
-    case "returnStatement":
-      return ""; // Empty string signals to focus the node itself (not a specific field)
-    // These nodes don't support focus
-    case "assignmentExpression":
-    case "reference":
-    default:
-      return null;
-  }
 }

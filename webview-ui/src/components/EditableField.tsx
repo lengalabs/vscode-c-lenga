@@ -6,6 +6,7 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
   node: T;
   key: K;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   className?: string;
   placeholder: string;
 }
@@ -13,7 +14,7 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
 export default function EditableField<
   T extends objects.LanguageObject,
   K extends string & keyof T,
->({ node, key, parentInfo, className, placeholder }: EditableFieldProps<T, K>) {
+>({ node, key, parentInfo, firstField = false, className, placeholder }: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
     selectedKey,
@@ -40,7 +41,7 @@ export default function EditableField<
     if (
       focusRequest &&
       focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
+      (firstField || focusRequest.fieldKey === key) &&
       !hasFocusedRef.current
     ) {
       console.log("Focusing input for node:", node.id, " key:", key);
@@ -56,7 +57,7 @@ export default function EditableField<
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
+  }, [focusRequest, node.id, key, clearFocusRequest, firstField]);
 
   // width in ch units, at least 1ch
   const width =

@@ -31,6 +31,7 @@ interface TypeSelectorProps<T extends objects.LanguageObject, K extends string &
   node: T;
   key: K;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   className?: string;
 }
 
@@ -38,6 +39,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
   node,
   key,
   parentInfo,
+  firstField,
   className,
 }: TypeSelectorProps<T, K>) {
   const {
@@ -92,6 +94,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
 
   return (
     <Autocomplete.Field
+      firstField={firstField}
       currentValue={currentValue}
       placeholder="type"
       options={options}

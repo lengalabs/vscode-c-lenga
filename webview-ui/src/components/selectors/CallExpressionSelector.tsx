@@ -8,10 +8,11 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.CallExpression;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   className?: string;
 }
 
-export default function CallExpressionSelector({ node, parentInfo, className }: Props) {
+export default function CallExpressionSelector({ node, firstField, parentInfo, className }: Props) {
   const {
     onEdit,
     setSelectedNodeId,
@@ -68,6 +69,7 @@ export default function CallExpressionSelector({ node, parentInfo, className }: 
 
   return (
     <Autocomplete.Field
+      firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="function_name"
       options={options}

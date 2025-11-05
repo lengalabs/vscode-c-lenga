@@ -8,11 +8,18 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.Reference;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   callbacks?: NodeCallbacks;
   className?: string;
 }
 
-export default function ReferenceSelector({ node, parentInfo, className, callbacks }: Props) {
+export default function ReferenceSelector({
+  node,
+  parentInfo,
+  firstField,
+  className,
+  callbacks,
+}: Props) {
   const {
     onEdit,
     setSelectedNodeId,
@@ -95,6 +102,7 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
 
   return (
     <Autocomplete.Field
+      firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"
       options={options}

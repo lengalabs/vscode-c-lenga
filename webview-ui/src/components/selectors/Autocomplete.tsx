@@ -1,5 +1,6 @@
 import React from "react";
 import Fuse from "fuse.js";
+import { FocusRequest } from "../../context/line/LineProvider";
 
 export interface Option<T> {
   value: T;
@@ -28,11 +29,12 @@ interface Props<T> {
   onNoMatch?: (inputText: string) => void; // Called when no valid option matches
 
   // Focus management
-  focusRequest: { nodeId: string; fieldKey: string } | null;
+  focusRequest: FocusRequest | null;
   nodeId: string;
   fieldKey: string;
   clearFocusRequest: () => void;
 
+  firstField?: boolean;
   // Styling
   className?: string;
   isSelected?: boolean;
@@ -51,6 +53,7 @@ export function Field<T>({
   nodeId,
   fieldKey,
   clearFocusRequest,
+  firstField = false,
   className,
   isSelected = false,
   readOnly = false,
@@ -82,7 +85,7 @@ export function Field<T>({
     if (
       focusRequest &&
       focusRequest.nodeId === nodeId &&
-      focusRequest.fieldKey === fieldKey &&
+      (firstField || focusRequest.fieldKey === fieldKey) &&
       !hasFocusedRef.current
     ) {
       console.log("Focusing autocomplete field for node:", nodeId, " field:", fieldKey);
@@ -96,7 +99,7 @@ export function Field<T>({
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
+  }, [focusRequest, nodeId, fieldKey, clearFocusRequest, firstField]);
 
   const commitValue = (matchedOption: OptionMatch<T> | null) => {
     if (matchedOption) {

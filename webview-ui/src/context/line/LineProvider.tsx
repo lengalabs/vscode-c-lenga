@@ -19,6 +19,11 @@ interface LineProviderProps {
   children: React.ReactNode;
 }
 
+export interface FocusRequest {
+  nodeId: string;
+  fieldKey?: string;
+}
+
 export default function LineProvider({
   sourceFile,
   onEdit,
@@ -35,15 +40,13 @@ export default function LineProvider({
   const { nodeMap, parentMap } = useMemo(() => buildMaps(sourceFile), [sourceFile]);
 
   // Focus request state - when set, the matching field will focus itself
-  const [focusRequest, setFocusRequest] = useState<{ nodeId: string; fieldKey: string } | null>(
-    null
-  );
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
 
   // Mode state - default to 'view' mode
   const [mode, setMode] = useState<EditorMode>("view");
 
-  const requestFocus = useCallback((nodeId: string, fieldKey: string) => {
-    setFocusRequest({ nodeId, fieldKey });
+  const requestFocus = useCallback((req: FocusRequest) => {
+    setFocusRequest(req);
   }, []);
 
   const clearFocusRequest = useCallback(() => {

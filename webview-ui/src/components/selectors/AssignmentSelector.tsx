@@ -8,10 +8,11 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.AssignmentExpression;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   className?: string;
 }
 
-export default function AssignmentSelector({ node, parentInfo, className }: Props) {
+export default function AssignmentSelector({ node, parentInfo, firstField, className }: Props) {
   const {
     onEdit,
     setSelectedNodeId,
@@ -67,6 +68,7 @@ export default function AssignmentSelector({ node, parentInfo, className }: Prop
 
   return (
     <Autocomplete.Field
+      firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"
       options={options}

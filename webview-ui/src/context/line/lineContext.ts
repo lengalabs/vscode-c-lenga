@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
+import { FocusRequest } from "./LineProvider";
 
 // Type-safe parent info with generics and defaults
 export type ParentInfo<
@@ -38,8 +39,8 @@ export interface LineContextType {
   setSelectedKey: (key: string) => void;
   nodeMap: Map<string, objects.LanguageObject>;
   parentMap: Map<string, ParentInfo>;
-  focusRequest: { nodeId: string; fieldKey: string } | null;
-  requestFocus: (nodeId: string, fieldKey: string) => void;
+  focusRequest: FocusRequest | null;
+  requestFocus: (props: FocusRequest) => void;
   clearFocusRequest: () => void;
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
