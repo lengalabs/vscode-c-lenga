@@ -2,7 +2,7 @@ import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import * as Autocomplete from "./Autocomplete";
-import { EditorMode, ParentInfo, useLineContext } from "../../context/line/lineContext";
+import { ParentInfo, useLineContext } from "../../context/line/lineContext";
 import { NodeRender } from "../line";
 
 interface Props {
@@ -13,17 +13,8 @@ interface Props {
 }
 
 export default function CallExpressionSelector({ node, firstField, parentInfo, className }: Props) {
-  const {
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-    nodeMap,
-    parentMap,
-  } = useLineContext();
+  const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
+    useLineContext();
 
   const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
@@ -72,12 +63,9 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
       placeholder="function_name"
       options={options}
       onFocus={handleFocus}
-      focusRequest={focusRequest}
       nodeId={node.id}
       fieldKey="idDeclaration"
-      clearFocusRequest={clearFocusRequest}
       className={className}
-      readOnly={mode === EditorMode.View}
     />
   );
 }

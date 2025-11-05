@@ -1,6 +1,5 @@
 import React from "react";
 import Fuse from "fuse.js";
-import { FocusRequest } from "../../context/line/LineProvider";
 import { EditorMode, useLineContext } from "../../context/line/lineContext";
 
 export interface Option<T> {
@@ -30,17 +29,12 @@ interface Props<T> {
   onNoMatch?: (inputText: string) => void; // Called when no valid option matches
 
   // Focus management
-  focusRequest: FocusRequest | null;
   nodeId: string;
   fieldKey: string;
-  clearFocusRequest: () => void;
 
   firstField?: boolean;
   // Styling
   className?: string;
-
-  // Mode
-  readOnly?: boolean;
 }
 
 export function Field<T>({

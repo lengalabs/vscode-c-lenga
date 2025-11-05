@@ -188,8 +188,6 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   const {
     onRequestAvailableInserts,
     availableInserts,
-    focusRequest,
-    clearFocusRequest,
     setSelectedNodeId,
     setSelectedKey,
     setParentNodeInfo,
@@ -229,10 +227,8 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
       placeholder="Select type..."
       options={options}
       onFocus={handleOnFocus}
-      focusRequest={focusRequest}
       nodeId={props.node.id}
       fieldKey="content"
-      clearFocusRequest={clearFocusRequest}
     />
   );
 

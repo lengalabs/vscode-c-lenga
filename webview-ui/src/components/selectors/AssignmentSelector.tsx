@@ -2,7 +2,7 @@ import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import * as Autocomplete from "./Autocomplete";
-import { EditorMode, ParentInfo, useLineContext } from "../../context/line/lineContext";
+import { ParentInfo, useLineContext } from "../../context/line/lineContext";
 import { NodeRender } from "../line";
 
 interface Props {
@@ -13,17 +13,8 @@ interface Props {
 }
 
 export default function AssignmentSelector({ node, parentInfo, firstField, className }: Props) {
-  const {
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-    nodeMap,
-    parentMap,
-  } = useLineContext();
+  const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
+    useLineContext();
 
   const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
@@ -71,12 +62,9 @@ export default function AssignmentSelector({ node, parentInfo, firstField, class
       placeholder="reference_name"
       options={options}
       onFocus={handleFocus}
-      focusRequest={focusRequest}
       nodeId={node.id}
       fieldKey="declarationId"
-      clearFocusRequest={clearFocusRequest}
       className={className}
-      readOnly={mode === EditorMode.View}
     />
   );
 }
