@@ -7,7 +7,6 @@ import {
 } from "../context/line/lineContext";
 import * as objects from "../../../src/language_objects/cNodes";
 import "./index.css";
-import { createKeyDownHandler } from "../lib/keyBinds";
 import {
   createArrayFieldCallbacks,
   createOptionalFieldCallbacks,
@@ -17,6 +16,7 @@ import {
   appendToArray,
   createUnknown,
   prependToArray,
+  createKeyDownHandler,
 } from "../lib/editionHelpers";
 import * as Autocomplete from "./selectors/Autocomplete";
 import CallExpressionSelector from "./selectors/CallExpressionSelector";
@@ -69,39 +69,35 @@ export function Object({ node, parentInfo, children, display = "block", callback
   const isSelected = selectedNodeId === node.id;
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    view: {
-      insertSibling: () => {
-        if (isSelected && callbacks?.onInsertSibling) {
-          console.log("Object: Inserting sibling for", node.type);
-          callbacks.onInsertSibling(node);
-        }
-      },
-      insertSiblingBefore: () => {
-        if (isSelected && callbacks?.onInsertSiblingBefore) {
-          console.log("Object: Inserting sibling before", node.type);
-          callbacks.onInsertSiblingBefore(node);
-        }
-      },
-      delete: () => {
-        if (isSelected && callbacks?.onDelete) {
-          console.log("Object: Deleting", node.type);
-          callbacks.onDelete(node);
-        }
-      },
+    insertSibling: () => {
+      if (isSelected && callbacks?.onInsertSibling) {
+        console.log("Object: Inserting sibling for", node.type);
+        callbacks.onInsertSibling(node);
+      }
     },
-    edit: {
-      insertFirst: () => {
-        if (isSelected && callbacks?.onInsertFirst) {
-          console.log("Object: Inserting at beginning for", node.type);
-          callbacks.onInsertFirst();
-        }
-      },
-      insertLast: () => {
-        if (isSelected && callbacks?.onInsertLast) {
-          console.log("Object: Inserting at end for", node.type);
-          callbacks.onInsertLast();
-        }
-      },
+    insertSiblingBefore: () => {
+      if (isSelected && callbacks?.onInsertSiblingBefore) {
+        console.log("Object: Inserting sibling before", node.type);
+        callbacks.onInsertSiblingBefore(node);
+      }
+    },
+    delete: () => {
+      if (isSelected && callbacks?.onDelete) {
+        console.log("Object: Deleting", node.type);
+        callbacks.onDelete(node);
+      }
+    },
+    insertChildFirst: () => {
+      if (isSelected && callbacks?.onInsertFirst) {
+        console.log("Object: Inserting at beginning for", node.type);
+        callbacks.onInsertFirst();
+      }
+    },
+    insertChildLast: () => {
+      if (isSelected && callbacks?.onInsertLast) {
+        console.log("Object: Inserting at end for", node.type);
+        callbacks.onInsertLast();
+      }
     },
   });
 
@@ -320,15 +316,13 @@ function FunctionDeclarationRender(
   nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("FunctionDeclarationRender: Prepending parameter");
-        prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-      },
-      insertLast: () => {
-        console.log("FunctionDeclarationRender: Appending parameter");
-        appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-      },
+    insertChildFirst: () => {
+      console.log("FunctionDeclarationRender: Prepending parameter");
+      prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
+    },
+    insertChildLast: () => {
+      console.log("FunctionDeclarationRender: Appending parameter");
+      appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
   });
 
@@ -374,15 +368,13 @@ function FunctionDefinitionRender(
   nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("FunctionDefinitionRender: Prepending parameter");
-        prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-      },
-      insertLast: () => {
-        console.log("FunctionDefinitionRender: Appending parameter");
-        appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-      },
+    insertChildFirst: () => {
+      console.log("FunctionDefinitionRender: Prepending parameter");
+      prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
+    },
+    insertChildLast: () => {
+      console.log("FunctionDefinitionRender: Appending parameter");
+      appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
   });
 
@@ -433,13 +425,11 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
   nodeMap.set(props.node.id, props.node);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        if (!props.node.value) {
-          console.log("DeclarationRender: Inserting unknown node as value");
-          insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
-        }
-      },
+    insertChildFirst: () => {
+      if (!props.node.value) {
+        console.log("DeclarationRender: Inserting unknown node as value");
+        insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
+      }
     },
   });
 
@@ -514,11 +504,9 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("SourceFileRender: Inserting unknown node");
-        prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
-      },
+    insertChildFirst: () => {
+      console.log("SourceFileRender: Inserting unknown node");
+      prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
     },
   });
 
@@ -570,15 +558,13 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("CompoundStatementRender: Inserting unknown node");
-        prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-      },
-      insertLast: () => {
-        console.log("CompoundStatementRender: Appending unknown node");
-        appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-      },
+    insertChildFirst: () => {
+      console.log("CompoundStatementRender: Inserting unknown node");
+      prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
+    },
+    insertChildLast: () => {
+      console.log("CompoundStatementRender: Appending unknown node");
+      appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
     },
   });
 
@@ -632,27 +618,25 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        if (!props.node.elseStatement) {
-          console.log("IfStatementRender: Inserting else clause");
-          const newElseClause: objects.ElseClause = {
+    insertChildFirst: () => {
+      if (!props.node.elseStatement) {
+        console.log("IfStatementRender: Inserting else clause");
+        const newElseClause: objects.ElseClause = {
+          id: crypto.randomUUID(),
+          type: "elseClause",
+          body: {
             id: crypto.randomUUID(),
-            type: "elseClause",
-            body: {
-              id: crypto.randomUUID(),
-              type: "compoundStatement",
-              codeBlock: [],
-            },
-          };
-          props.node.elseStatement = newElseClause;
-          nodeMap.set(newElseClause.id, newElseClause);
-          nodeMap.set(newElseClause.body.id, newElseClause.body);
-          onEdit(props.node, "elseStatement");
-          // Focus the newly created else clause
-          requestFocus({ nodeId: newElseClause.id });
-        }
-      },
+            type: "compoundStatement",
+            codeBlock: [],
+          },
+        };
+        props.node.elseStatement = newElseClause;
+        nodeMap.set(newElseClause.id, newElseClause);
+        nodeMap.set(newElseClause.body.id, newElseClause.body);
+        onEdit(props.node, "elseStatement");
+        // Focus the newly created else clause
+        requestFocus({ nodeId: newElseClause.id });
+      }
     },
   });
 
@@ -751,33 +735,31 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("ElseClauseRender: Converting to ifStatement");
-        // Convert to ifStatement
-        const newIfStatement: objects.IfStatement = {
+    insertChildFirst: () => {
+      console.log("ElseClauseRender: Converting to ifStatement");
+      // Convert to ifStatement
+      const newIfStatement: objects.IfStatement = {
+        id: crypto.randomUUID(),
+        type: "ifStatement",
+        condition: {
           id: crypto.randomUUID(),
-          type: "ifStatement",
-          condition: {
-            id: crypto.randomUUID(),
-            type: "unknown",
-            content: "",
-          },
-          body: props.node.body,
-        };
-        nodeMap.set(newIfStatement.id, newIfStatement);
-        nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
+          type: "unknown",
+          content: "",
+        },
+        body: props.node.body,
+      };
+      nodeMap.set(newIfStatement.id, newIfStatement);
+      nodeMap.set(newIfStatement.condition.id, newIfStatement.condition);
 
-        if (!parentNodeInfo) {
-          console.error("Parent node info is undefined for else clause:", props.node.id);
-          return;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
-        onEdit(parentNodeInfo.parent, parentNodeInfo.key);
-        // Focus the condition (unknown node)
-        requestFocus({ nodeId: newIfStatement.condition.id });
-      },
+      if (!parentNodeInfo) {
+        console.error("Parent node info is undefined for else clause:", props.node.id);
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
+      onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+      // Focus the condition (unknown node)
+      requestFocus({ nodeId: newIfStatement.condition.id });
     },
   });
 
@@ -831,13 +813,11 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
   const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        if (!props.node.value) {
-          console.log("ReturnStatementRender: Inserting unknown node as return value");
-          insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
-        }
-      },
+    insertChildFirst: () => {
+      if (!props.node.value) {
+        console.log("ReturnStatementRender: Inserting unknown node as return value");
+        insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
+      }
     },
   });
 
@@ -875,11 +855,9 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
   const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
 
   const handleKeyDown = createKeyDownHandler(mode, {
-    edit: {
-      insertFirst: () => {
-        console.log("CallExpressionRender: Appending argument");
-        appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
-      },
+    insertChildFirst: () => {
+      console.log("CallExpressionRender: Appending argument");
+      appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
     },
   });
 

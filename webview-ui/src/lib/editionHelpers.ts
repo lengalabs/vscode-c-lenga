@@ -1,6 +1,7 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { NodeCallbacks } from "../context/line/lineContext";
+import { EditorModeType, NodeCallbacks } from "../context/line/lineContext";
 import { FocusRequest } from "../context/line/LineProvider";
+import { CommandHandlers, getKeyComboString, KEY_MAPPINGS } from "./keyBinds";
 
 // Helper for common insert pattern: insert unknown node into optional field
 export function insertUnknownIntoField<
@@ -214,6 +215,38 @@ export function createRequiredFieldCallbacks<
       // Auto-focus on the first editable field of the new node
       requestFocus({ nodeId: newNode.id });
     },
+  };
+}
+
+export function createKeyDownHandler(
+  mode: EditorModeType,
+  commands: CommandHandlers
+): (e: React.KeyboardEvent) => void {
+  return (e: React.KeyboardEvent) => {
+    console.log("Key down event:", e.key, " Mode:", mode);
+    console.log("KEY_MAPPINGS:", KEY_MAPPINGS);
+    const keyMapping = KEY_MAPPINGS[mode];
+    console.log("Using key mapping:\n", keyMapping);
+    const comboString = getKeyComboString(e);
+
+    const commandName = keyMapping[comboString];
+
+    if (!commandName) {
+      console.warn("No command found for key combo:", comboString);
+      return;
+    }
+    console.log("Executing command:", commandName, " for key combo:", comboString);
+
+    const command = commands[commandName as keyof typeof commands];
+    console.log("Found command handler:", command);
+    if (command) {
+      console.log("Handling key event for command:", commandName);
+      e.preventDefault();
+      e.stopPropagation();
+      command();
+    } else {
+      console.warn("No handler defined for command:", commandName);
+    }
   };
 }
 
