@@ -24,6 +24,7 @@ import AssignmentSelector from "./selectors/AssignmentSelector";
 import ReferenceSelector from "./selectors/ReferenceSelector";
 import EditableField from "./EditableField";
 import TypeSelector from "./selectors/TypeSelector";
+import { FocusRequest } from "../context/line/LineProvider";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
@@ -184,6 +185,56 @@ export function NodeRender(props: NodeRenderProps): React.ReactNode {
   }
 }
 
+type ItemRenderProps<KT extends objects.LanguageObject> = {
+  item: KT;
+  idx: number;
+  nodeRender: React.ReactNode;
+};
+
+function ListFieldRender<
+  T extends objects.LanguageObject, // Object
+  K extends string & keyof T, // Key
+  KT extends objects.LanguageObject, // Value Type
+>(
+  props: XRenderProps<T>,
+  key: K,
+  callbacks: {
+    insertConstructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject;
+  },
+  render: (props: ItemRenderProps<KT>) => React.ReactNode
+): React.ReactNode {
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const list: KT[] = props.node[key] as unknown as KT[];
+  return (
+    <>
+      {list.map((param, i) => (
+        <React.Fragment key={param.id}>
+          {render({
+            item: param,
+            idx: i,
+            nodeRender: (
+              <NodeRender
+                node={param}
+                display={"inline"}
+                parentInfo={parentInfoFromChild(props.node, key, i)}
+                callbacks={createArrayFieldCallbacks(
+                  props.node,
+                  key,
+                  i,
+                  callbacks.insertConstructor,
+                  nodeMap,
+                  onEdit,
+                  requestFocus
+                )}
+              />
+            ),
+          })}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
 function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   const {
     onRequestAvailableInserts,
@@ -298,25 +349,17 @@ function FunctionDeclarationRender(
         placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
-      {props.node.parameterList.map((param, i) => (
-        <React.Fragment key={param.id}>
-          {i > 0 && ", "}
-          <NodeRender
-            node={param}
-            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
-            callbacks={createArrayFieldCallbacks(
-              props.node,
-              "parameterList",
-              i,
-              createParameter,
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-            display="inline"
-          />
-        </React.Fragment>
-      ))}
+      {ListFieldRender(
+        props,
+        "parameterList",
+        { insertConstructor: createParameter },
+        ({ idx, nodeRender }) => (
+          <span>
+            {idx > 0 && ", "}
+            {nodeRender}
+          </span>
+        )
+      )}
       <span className="token-delimiter">{")"}</span>
     </span>
   );
@@ -360,25 +403,17 @@ function FunctionDefinitionRender(
         placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
-      {props.node.parameterList.map((param, i) => (
-        <React.Fragment key={param.id}>
-          {i > 0 && ", "}
-          <NodeRender
-            node={param}
-            parentInfo={parentInfoFromChild(props.node, "parameterList", i)}
-            display="inline"
-            callbacks={createArrayFieldCallbacks(
-              props.node,
-              "parameterList",
-              i,
-              createParameter,
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-          />
-        </React.Fragment>
-      ))}
+      {ListFieldRender(
+        props,
+        "parameterList",
+        { insertConstructor: createParameter },
+        ({ idx, nodeRender }) => (
+          <span>
+            {idx > 0 && ", "}
+            {nodeRender}
+          </span>
+        )
+      )}
       <span className="token-delimiter">{")"}</span>
       {props.node.compoundStatement && (
         <NodeRender
@@ -442,7 +477,6 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
           />
         </>
       )}
-      {";"}
     </span>
   );
 
@@ -558,28 +592,39 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
           paddingLeft: "20px",
         }}
       >
-        {props.node.codeBlock.map((node, i) => (
-          <NodeRender
-            key={node.id}
-            node={node}
-            parentInfo={parentInfoFromChild(props.node, "codeBlock", i)}
-            callbacks={createArrayFieldCallbacks(
-              props.node,
-              "codeBlock",
-              i,
-              createUnknown,
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-          />
-        ))}
+        {ListFieldRender(
+          props,
+          "codeBlock",
+          { insertConstructor: createUnknown },
+          ({ item, nodeRender }) => (
+            <div>
+              {nodeRender} {leadingSemicolon(item) && ";"}
+            </div>
+          )
+        )}
       </div>
       <span className="token-delimiter">{"}"}</span>
     </span>
   );
 
   return <Object {...props}>{content}</Object>;
+}
+
+function leadingSemicolon(node: objects.LanguageObject): boolean {
+  // Determine if a semicolon should be added after this node when in a compound statement
+  switch (node.type) {
+    case "declaration":
+    case "assignmentExpression":
+    case "callExpression":
+    case "binaryExpression":
+    case "numberLiteral":
+    case "stringLiteral":
+    case "unknown":
+    case "returnStatement":
+      return true;
+    default:
+      return false;
+  }
 }
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
@@ -797,7 +842,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
   });
 
   const content = (
-    <div ref={nodeRef as React.RefObject<HTMLDivElement>} tabIndex={0} onKeyDown={handleKeyDown}>
+    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} tabIndex={0} onKeyDown={handleKeyDown}>
       <span className="token-keyword">return</span>
       {props.node.value && (
         <>
@@ -816,8 +861,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
           />
         </>
       )}
-      {";"}
-    </div>
+    </span>
   );
 
   return (
@@ -848,27 +892,18 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
         className="token-function"
       />
       <span className="token-delimiter">{"("}</span>
-      {props.node.argumentList.map((arg, i) => (
-        <React.Fragment key={arg.id}>
-          {i > 0 && ", "}
-          <NodeRender
-            node={arg}
-            parentInfo={parentInfoFromChild(props.node, "argumentList", i)}
-            display="inline"
-            callbacks={createArrayFieldCallbacks(
-              props.node,
-              "argumentList",
-              i,
-              createUnknown,
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-          />
-        </React.Fragment>
-      ))}
+      {ListFieldRender(
+        props,
+        "argumentList",
+        { insertConstructor: createUnknown },
+        ({ idx, nodeRender }) => (
+          <span>
+            {idx > 0 && ", "}
+            {nodeRender}
+          </span>
+        )
+      )}
       <span className="token-delimiter">{")"}</span>
-      {";"}
     </span>
   );
 
