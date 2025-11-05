@@ -1,6 +1,6 @@
 import * as objects from "../../../../src/language_objects/cNodes";
 import * as Autocomplete from "./Autocomplete";
-import { ParentInfo, useLineContext } from "../../context/line/lineContext";
+import { EditorMode, ParentInfo, useLineContext } from "../../context/line/lineContext";
 
 // Valid C types for the type selector
 const C_TYPES = [
@@ -43,8 +43,6 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
   className,
 }: TypeSelectorProps<T, K>) {
   const {
-    selectedNodeId,
-    selectedKey,
     onEdit,
     setSelectedNodeId,
     setSelectedKey,
@@ -54,7 +52,6 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
     mode,
   } = useLineContext();
 
-  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const currentValue = String(node[key] ?? "");
 
   function commitValue(selectedType: string) {
@@ -105,8 +102,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
       fieldKey={key}
       clearFocusRequest={clearFocusRequest}
       className={className}
-      isSelected={!!isSelected}
-      readOnly={mode === "view"}
+      readOnly={mode === EditorMode.View}
     />
   );
 }

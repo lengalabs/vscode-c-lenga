@@ -2,7 +2,7 @@ import React from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { AvailableDeclaration, findDeclarationsInScope } from "../../lib/findDeclarations";
 import * as Autocomplete from "./Autocomplete";
-import { ParentInfo, useLineContext } from "../../context/line/lineContext";
+import { EditorMode, ParentInfo, useLineContext } from "../../context/line/lineContext";
 import { NodeRender } from "../line";
 
 interface Props {
@@ -65,8 +65,6 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
     console.log("Available functions for call expression:", functions);
   };
 
-  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
-
   return (
     <Autocomplete.Field
       firstField={firstField}
@@ -79,8 +77,7 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
       fieldKey="idDeclaration"
       clearFocusRequest={clearFocusRequest}
       className={className}
-      isSelected={!!isSelected}
-      readOnly={mode === "view"}
+      readOnly={mode === EditorMode.View}
     />
   );
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import Fuse from "fuse.js";
 import { FocusRequest } from "../../context/line/LineProvider";
+import { EditorMode, useLineContext } from "../../context/line/lineContext";
 
 export interface Option<T> {
   value: T;
@@ -37,7 +38,6 @@ interface Props<T> {
   firstField?: boolean;
   // Styling
   className?: string;
-  isSelected?: boolean;
 
   // Mode
   readOnly?: boolean;
@@ -49,15 +49,14 @@ export function Field<T>({
   options,
   onFocus,
   onNoMatch,
-  focusRequest,
   nodeId,
   fieldKey,
-  clearFocusRequest,
   firstField = false,
   className,
-  isSelected = false,
-  readOnly = false,
 }: Props<T>) {
+  const { mode, focusRequest, clearFocusRequest } = useLineContext();
+  const readOnly = mode === EditorMode.View;
+
   const [inputValue, setInputValue] = React.useState(currentValue);
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
@@ -180,12 +179,6 @@ export function Field<T>({
         ref={inputRef}
         className={`inline-editor ${className ?? ""}`}
         style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
           width,
         }}
         value={inputValue}

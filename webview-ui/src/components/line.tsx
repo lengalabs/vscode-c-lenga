@@ -186,7 +186,6 @@ export function NodeRender(props: NodeRenderProps): React.ReactNode {
 
 function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   const {
-    mode,
     onRequestAvailableInserts,
     availableInserts,
     focusRequest,
@@ -234,8 +233,6 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
       nodeId={props.node.id}
       fieldKey="content"
       clearFocusRequest={clearFocusRequest}
-      isSelected={false}
-      readOnly={mode === "view"}
     />
   );
 

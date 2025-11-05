@@ -1,5 +1,5 @@
 import React from "react";
-import { EditorMode } from "../context/line/lineContext";
+import { EditorModeType } from "../context/line/lineContext";
 
 /**
  * Keyboard command abstraction for structured editing
@@ -53,7 +53,7 @@ type KeyMapping = {
   [key: string]: string; // serialized combo -> command name
 };
 
-const KEY_MAPPINGS: Record<EditorMode, KeyMapping> = {
+const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
   view: {
     Enter: "insertSibling",
     "Shift+Enter": "insertSiblingBefore",
@@ -79,7 +79,7 @@ function getKeyComboString(e: React.KeyboardEvent): string {
 
 // Helper to create structured keydown handlers with automatic event management
 export function createKeyDownHandler(
-  mode: EditorMode,
+  mode: EditorModeType,
   commands: CommandHandlers
 ): (e: React.KeyboardEvent) => void {
   return (e: React.KeyboardEvent) => {

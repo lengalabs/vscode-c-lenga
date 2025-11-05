@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
-import { buildMaps, LineContext, ParentInfo, EditorMode } from "./lineContext";
+import { buildMaps, LineContext, ParentInfo, EditorMode, EditorModeType } from "./lineContext";
 
 interface LineProviderProps {
   sourceFile: objects.SourceFile;
@@ -43,7 +43,7 @@ export default function LineProvider({
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
 
   // Mode state - default to 'view' mode
-  const [mode, setMode] = useState<EditorMode>("view");
+  const [mode, setMode] = useState<EditorModeType>(EditorMode.View);
 
   const requestFocus = useCallback((req: FocusRequest) => {
     setFocusRequest(req);
@@ -59,19 +59,19 @@ export default function LineProvider({
         return;
       }
 
-      if (event.key === "i" && mode === "view") {
+      if (event.key === "i" && mode === EditorMode.View) {
         event.preventDefault();
-        setMode("edit");
+        setMode(EditorMode.Edit);
         if (selectedNodeId && selectedKey) {
           setFocusRequest({ nodeId: selectedNodeId, fieldKey: selectedKey });
         }
         return;
       }
 
-      if (event.key === "Escape" && mode === "edit") {
+      if (event.key === "Escape" && mode === EditorMode.Edit) {
         event.preventDefault();
         event.stopPropagation();
-        setMode("view");
+        setMode(EditorMode.View);
       }
     };
 

@@ -12,7 +12,13 @@ export type ParentInfo<
   index: number;
 };
 
-export type EditorMode = "view" | "edit";
+type EditorMode = "view" | "edit";
+
+export const EditorMode = {
+  View: "view" as const,
+  Edit: "edit" as const,
+};
+export type EditorModeType = (typeof EditorMode)[keyof typeof EditorMode];
 
 export interface NodeCallbacks {
   onInsertSibling?: (node: objects.LanguageObject) => void;
@@ -42,8 +48,8 @@ export interface LineContextType {
   focusRequest: FocusRequest | null;
   requestFocus: (props: FocusRequest) => void;
   clearFocusRequest: () => void;
-  mode: EditorMode;
-  setMode: (mode: EditorMode) => void;
+  mode: EditorModeType;
+  setMode: (mode: EditorModeType) => void;
 }
 
 export const LineContext = createContext<LineContextType | null>(null);
