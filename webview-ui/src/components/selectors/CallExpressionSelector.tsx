@@ -40,6 +40,7 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
         value: decl,
         label: decl.identifier,
         description: NodeRender({
+          ref: React.createRef<HTMLElement>() as React.RefObject<HTMLElement>,
           node: decl,
           parentInfo,
         }),
@@ -58,6 +59,7 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
 
   return (
     <Autocomplete.Field
+      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
       firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="function_name"

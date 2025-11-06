@@ -1,7 +1,12 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { EditorModeType, NodeCallbacks } from "../context/line/lineContext";
+import { EditorModeType } from "../context/line/lineContext";
 import { FocusRequest } from "../context/line/LineProvider";
-import { CommandHandlers, getKeyComboString, KEY_MAPPINGS } from "./keyBinds";
+import {
+  getKeyComboString,
+  KEY_MAPPINGS,
+  NodeCommandHandlers,
+  NodeEditCallbacks,
+} from "./keyBinds";
 
 // Helper for common insert pattern: insert unknown node into optional field
 export function insertUnknownIntoField<
@@ -64,7 +69,7 @@ export function createArrayFieldCallbacks<
   nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
   onEdit: (node: T, key: K) => void,
   requestFocus: (props: FocusRequest) => void
-): NodeCallbacks {
+): NodeEditCallbacks {
   return {
     onInsertSibling: (node: objects.LanguageObject) => {
       console.log("Inserting sibling after node:", node.id, " at index:", index);
@@ -122,8 +127,9 @@ export function createArrayFieldCallbacks<
       // Auto-focus on the first editable field of the new node
       requestFocus({ nodeId: newNode.id });
     },
+
     // Edit mode: insert at beginning or end of array
-    onInsertFirst: () => {
+    onInsertChildFirst: () => {
       console.log("Inserting at beginning of array:", key);
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newNode = constructor(requestFocus);
@@ -134,7 +140,7 @@ export function createArrayFieldCallbacks<
       onEdit(parent, key);
       requestFocus({ nodeId: newNode.id });
     },
-    onInsertLast: () => {
+    onInsertChildLast: () => {
       console.log("Inserting at end of array:", key);
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newNode = constructor(requestFocus);
@@ -157,7 +163,7 @@ export function createOptionalFieldCallbacks<
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
   requestFocus: (props: FocusRequest) => void
-): NodeCallbacks {
+): NodeEditCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
       console.log("Deleting optional field:", key, " node:", node.id);
@@ -192,7 +198,7 @@ export function createRequiredFieldCallbacks<
   nodeMap: Map<string, objects.LanguageObject>,
   onEdit: (node: T, key: K) => void,
   requestFocus: (props: FocusRequest) => void
-): NodeCallbacks {
+): NodeEditCallbacks {
   return {
     onDelete: (node: objects.LanguageObject) => {
       console.log("Replacing required field:", key, " node:", node.id, " with unknown");
@@ -220,7 +226,7 @@ export function createRequiredFieldCallbacks<
 
 export function createKeyDownHandler(
   mode: EditorModeType,
-  commands: CommandHandlers
+  commands: NodeCommandHandlers
 ): (e: React.KeyboardEvent) => void {
   return (e: React.KeyboardEvent) => {
     console.log("Key down event:", e.key, " Mode:", mode);

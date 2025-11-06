@@ -1,7 +1,7 @@
 import * as objects from "../../../../src/language_objects/cNodes";
 import * as Autocomplete from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../../context/line/lineContext";
-
+import React from "react";
 // Valid C types for the type selector
 const C_TYPES = [
   "void",
@@ -83,6 +83,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
 
   return (
     <Autocomplete.Field
+      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
       firstField={firstField}
       currentValue={currentValue}
       placeholder="type"

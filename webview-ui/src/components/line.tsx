@@ -1,4 +1,4 @@
-import React from "react";
+import React, { RefObject } from "react";
 import {
   useLineContext,
   ParentInfo,
@@ -25,6 +25,8 @@ import ReferenceSelector from "./selectors/ReferenceSelector";
 import EditableField from "./EditableField";
 import TypeSelector from "./selectors/TypeSelector";
 import { FocusRequest } from "../context/line/LineProvider";
+import { createParentNativationCallbacks, ParentRefs } from "../lib/navigationHelpers";
+import { NodeEditCallbacks, NodeNavigationCallbacks } from "../lib/keyBinds";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
 function useFocusStructuralNode(nodeId: string) {
@@ -53,6 +55,31 @@ function useFocusStructuralNode(nodeId: string) {
   }, [focusRequest, nodeId, clearFocusRequest]);
 
   return nodeRef;
+}
+
+function useFocusStructuralNode2(nodeId: string, nodeRef: RefObject<HTMLElement>) {
+  const { focusRequest, clearFocusRequest } = useLineContext();
+  const hasFocusedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.nodeId === nodeId &&
+      focusRequest.fieldKey === undefined && // Empty string means focus the node itself
+      !hasFocusedRef.current
+    ) {
+      console.log("Focusing structural node:", nodeId);
+      if (nodeRef.current) {
+        nodeRef.current.focus();
+        hasFocusedRef.current = true;
+        clearFocusRequest();
+      }
+    }
+    // Reset the flag when focus request changes
+    if (!focusRequest) {
+      hasFocusedRef.current = false;
+    }
+  }, [focusRequest, nodeId, clearFocusRequest, nodeRef]);
 }
 
 interface ObjectProps {
@@ -88,15 +115,45 @@ export function Object({ node, parentInfo, children, display = "block", callback
       }
     },
     insertChildFirst: () => {
-      if (isSelected && callbacks?.onInsertFirst) {
+      if (isSelected && callbacks?.onInsertChildFirst) {
         console.log("Object: Inserting at beginning for", node.type);
-        callbacks.onInsertFirst();
+        callbacks.onInsertChildFirst();
       }
     },
     insertChildLast: () => {
-      if (isSelected && callbacks?.onInsertLast) {
+      if (isSelected && callbacks?.onInsertChildLast) {
         console.log("Object: Inserting at end for", node.type);
-        callbacks.onInsertLast();
+        callbacks.onInsertChildLast();
+      }
+    },
+    navigateToPreviousSibling: () => {
+      if (isSelected && callbacks?.onNavigateToPreviousSibling) {
+        console.log("Object: navigateToPreviousSibling", node.type);
+        callbacks.onNavigateToPreviousSibling();
+      }
+    },
+    navigateToNextSibling: () => {
+      if (isSelected && callbacks?.onNavigateToNextSibling) {
+        console.log("Object: navigateToNextSibling", node.type);
+        callbacks.onNavigateToNextSibling();
+      }
+    },
+    navigateToParent: () => {
+      if (isSelected && callbacks?.onNavigateToParent) {
+        console.log("Object: navigateToParentNode", node.type);
+        callbacks.onNavigateToParent();
+      }
+    },
+    navigateToFirstChild: () => {
+      if (isSelected && callbacks?.onNavigateToFirstChild) {
+        console.log("Object: navigateToFirstChild", node.type);
+        callbacks.onNavigateToFirstChild();
+      }
+    },
+    navigateToLastChild: () => {
+      if (isSelected && callbacks?.onNavigateToLastChild) {
+        console.log("Object: navigateToLastChild", node.type);
+        callbacks.onNavigateToLastChild();
       }
     },
   });
@@ -127,6 +184,7 @@ export function Object({ node, parentInfo, children, display = "block", callback
 
 interface NodeRenderProps {
   node: objects.LanguageObject;
+  ref: React.RefObject<HTMLElement>;
   parentInfo: ParentInfo;
   callbacks?: NodeCallbacks;
   display?: "inline" | "block";
@@ -192,42 +250,108 @@ function ListFieldRender<
   K extends string & keyof T, // Key
   KT extends objects.LanguageObject, // Value Type
 >(
-  props: XRenderProps<T>,
+  parent: XRenderProps<T>,
   key: K,
   callbacks: {
     insertConstructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject;
   },
   render: (props: ItemRenderProps<KT>) => React.ReactNode
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
-  const list: KT[] = props.node[key] as unknown as KT[];
+  const list: KT[] = parent.node[key] as unknown as KT[];
+
+  // Create refs for all items at the top level
+  const itemRefs = React.useRef<Map<string, React.RefObject<HTMLElement>>>(new Map());
+
+  // Create/get refs synchronously during render (not in useEffect)
+  // to avoid race conditions
+  const currentIds = new Set(list.map((item) => item.id));
+
+  // Clean up refs for removed items
+  Array.from(itemRefs.current.keys()).forEach((id) => {
+    if (!currentIds.has(id)) {
+      itemRefs.current.delete(id);
+    }
+  });
+
+  // Create refs for new items
+  list.forEach((item) => {
+    if (!itemRefs.current.has(item.id)) {
+      itemRefs.current.set(item.id, React.createRef<HTMLElement>() as RefObject<HTMLElement>);
+    }
+  });
+
   return (
     <>
-      {list.map((param, i) => (
-        <React.Fragment key={param.id}>
-          {render({
-            item: param,
-            idx: i,
-            nodeRender: (
-              <NodeRender
-                node={param}
-                display={"inline"}
-                parentInfo={parentInfoFromChild(props.node, key, i)}
-                callbacks={createArrayFieldCallbacks(
-                  props.node,
-                  key,
-                  i,
-                  callbacks.insertConstructor,
-                  nodeMap,
-                  onEdit,
-                  requestFocus
-                )}
-              />
-            ),
-          })}
-        </React.Fragment>
-      ))}
+      {list.map((item, i) => {
+        const currentRef = itemRefs.current.get(item.id)!;
+        const previousSibling = i > 0 ? itemRefs.current.get(list[i - 1].id) : undefined;
+        const nextSibling = i < list.length - 1 ? itemRefs.current.get(list[i + 1].id) : undefined;
+        console.log(
+          "Rendering ListItem for item:",
+          item.id,
+          " with refs:",
+          parent.ref,
+          previousSibling,
+          nextSibling
+        );
+        return ListItem<T, K, KT>(parent, key, i, callbacks, item, render, currentRef, {
+          parent: parent.ref,
+          previousSibling,
+          nextSibling,
+        });
+      })}
     </>
+  );
+}
+
+function ListItem<
+  T extends objects.LanguageObject, // Object
+  K extends string & keyof T, // Key
+  KT extends objects.LanguageObject,
+>(
+  parent: XRenderProps<T>,
+  key: K,
+  i: number,
+  callbacks: {
+    insertConstructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject;
+  },
+  item: KT,
+  render: (props: ItemRenderProps<KT>) => React.ReactNode,
+  nodeRef: React.RefObject<HTMLElement>,
+  refs: ParentRefs
+) {
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
+
+  const arrayFieldCallbacks = createArrayFieldCallbacks(
+    parent.node,
+    key,
+    i,
+    callbacks.insertConstructor,
+    nodeMap,
+    onEdit,
+    requestFocus
+  );
+  const parentNavigationCallbacks = createParentNativationCallbacks(refs);
+  const itemCallbacks: NodeEditCallbacks & NodeNavigationCallbacks = {
+    ...arrayFieldCallbacks,
+    ...parentNavigationCallbacks,
+  };
+  return (
+    <React.Fragment key={item.id}>
+      {render({
+        item: item,
+        idx: i,
+        nodeRender: (
+          <NodeRender
+            ref={nodeRef as React.RefObject<HTMLSpanElement>}
+            node={item}
+            display={"inline"}
+            parentInfo={parentInfoFromChild(parent.node, key, i)}
+            callbacks={itemCallbacks}
+          />
+        ),
+      })}
+    </React.Fragment>
   );
 }
 
@@ -247,7 +371,13 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
       value: insert,
       label: insert.type,
       key: `${insert.type}-${idx}`,
-      description: <NodeRender node={insert} parentInfo={props.parentInfo} />,
+      description: (
+        <NodeRender
+          ref={undefined as unknown as React.RefObject<HTMLSpanElement>} // TODO this will probably break
+          node={insert}
+          parentInfo={props.parentInfo}
+        />
+      ),
       onSelect: (selectedInsert: objects.LanguageObject) => {
         console.log("Selected option to insert:", selectedInsert);
         // Use the replace callback if provided
@@ -269,6 +399,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 
   const content = (
     <Autocomplete.Field
+      ref={props.ref as React.RefObject<HTMLInputElement>}
       firstField={true}
       currentValue={""}
       placeholder="Select type..."
@@ -282,19 +413,14 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
   return <Object {...props}>{content}</Object>;
 }
 
-function PreprocIncludeRender({
-  node,
-  parentInfo,
-  callbacks,
-  display = "block",
-}: XRenderProps<objects.PreprocInclude>): React.ReactNode {
+function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): React.ReactNode {
   const content = (
     <>
       <span className="token-keyword">#include</span>{" "}
       {EditableField({
-        node,
+        node: props.node,
         key: "content",
-        parentInfo,
+        parentInfo: props.parentInfo,
         firstField: true,
         className: "token-string",
         placeholder: "file.h",
@@ -302,11 +428,7 @@ function PreprocIncludeRender({
     </>
   );
 
-  return (
-    <Object node={node} parentInfo={parentInfo} callbacks={callbacks} display={display}>
-      {content}
-    </Object>
-  );
+  return <Object {...props}>{content}</Object>;
 }
 
 function FunctionDeclarationRender(
@@ -323,6 +445,21 @@ function FunctionDeclarationRender(
     insertChildLast: () => {
       console.log("FunctionDeclarationRender: Appending parameter");
       appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
+    },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
     },
   });
 
@@ -367,6 +504,8 @@ function FunctionDefinitionRender(
   const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
+  const compoundStatementRef = React.useRef<HTMLElement>(null);
+
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
       console.log("FunctionDefinitionRender: Prepending parameter");
@@ -375,6 +514,21 @@ function FunctionDefinitionRender(
     insertChildLast: () => {
       console.log("FunctionDefinitionRender: Appending parameter");
       appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
+    },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
     },
   });
 
@@ -407,13 +561,12 @@ function FunctionDefinitionRender(
         )
       )}
       <span className="token-delimiter">{")"}</span>
-      {props.node.compoundStatement && (
-        <NodeRender
-          node={props.node.compoundStatement}
-          parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
-          // callbacks={} TODO: transform into FunctionDeclaration on delete
-        />
-      )}
+      <NodeRender
+        ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
+        node={props.node.compoundStatement}
+        parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
+        // callbacks={} TODO: transform into FunctionDeclaration on delete
+      />
     </span>
   );
 
@@ -431,8 +584,24 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
         insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
       }
     },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
   });
 
+  const valueRef = React.useRef<HTMLElement>(null);
   const content = (
     <span onKeyDown={handleKeyDown}>
       {TypeSelector({
@@ -454,6 +623,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
           {" "}
           {"="}{" "}
           <NodeRender
+            ref={valueRef as React.RefObject<HTMLSpanElement>}
             node={props.node.value}
             display="inline"
             parentInfo={parentInfoFromChild(props.node, "value")}
@@ -508,12 +678,30 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
       console.log("SourceFileRender: Inserting unknown node");
       prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
     },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
   });
+
+  const emptyFileRef = React.useRef<HTMLElement>(null);
 
   const content = (
     <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
       {props.node.code.length === 0 ? (
         <UnknownRender
+          ref={emptyFileRef as React.RefObject<HTMLSpanElement>}
           node={{
             id: crypto.randomUUID(),
             type: "unknown",
@@ -529,22 +717,20 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             gap: "1rem",
           }}
         >
-          {props.node.code.map((node, i) => (
-            <NodeRender
-              key={node.id}
-              node={node}
-              parentInfo={parentInfoFromChild(props.node, "code", i)}
-              callbacks={createArrayFieldCallbacks(
-                props.node,
-                "code",
-                i,
-                createUnknown,
-                nodeMap,
-                onEdit,
-                requestFocus
-              )}
-            />
-          ))}
+          {ListFieldRender(
+            {
+              node: props.node,
+              ref: nodeRef as React.RefObject<HTMLSpanElement>,
+              parentInfo: parentInfoFromChild(props.node, "code"),
+            },
+            "code",
+            { insertConstructor: createUnknown },
+            ({ item, nodeRender }) => (
+              <div>
+                {nodeRender} {leadingSemicolon(item) && ";"}
+              </div>
+            )
+          )}
         </div>
       )}
     </span>
@@ -565,6 +751,21 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
     insertChildLast: () => {
       console.log("CompoundStatementRender: Appending unknown node");
       appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
+    },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
     },
   });
 
@@ -615,7 +816,6 @@ function leadingSemicolon(node: objects.LanguageObject): boolean {
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
   const { mode, onEdit, nodeMap, requestFocus } = useLineContext();
-  const nodeRef = useFocusStructuralNode(props.node.id);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
@@ -638,12 +838,30 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         requestFocus({ nodeId: newElseClause.id });
       }
     },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
   });
 
+  useFocusStructuralNode2(props.node.id, props.ref);
+  const elseRef = React.useRef<HTMLElement>(null);
   const elseRender =
     props.node.elseStatement &&
     (props.node.elseStatement.type === "elseClause" ? (
       <NodeRender
+        ref={elseRef as React.RefObject<HTMLSpanElement>}
         node={props.node.elseStatement}
         parentInfo={parentInfoFromChild(props.node, "elseStatement")}
         display="inline"
@@ -693,6 +911,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
               </span>
             </Object>{" "}
             <NodeRender
+              ref={elseRef as React.RefObject<HTMLSpanElement>}
               node={ifStatement}
               parentInfo={parentInfoFromChild(props.node, "elseStatement")}
               display="inline"
@@ -702,15 +921,14 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         );
       })()
     ));
+  const conditionRef = React.useRef<HTMLElement>(null);
+  const bodyRef = React.useRef<HTMLElement>(null);
   const content = (
     <span>
-      <span
-        ref={nodeRef as React.RefObject<HTMLSpanElement>}
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-      >
+      <span ref={props.ref} tabIndex={0} onKeyDown={handleKeyDown}>
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
+          ref={conditionRef as React.RefObject<HTMLSpanElement>}
           node={props.node.condition}
           parentInfo={parentInfoFromChild(props.node, "condition")}
           display="inline"
@@ -718,6 +936,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         <span className="token-keyword">{")"}</span>{" "}
       </span>
       <NodeRender
+        ref={bodyRef as React.RefObject<HTMLSpanElement>}
         node={props.node.body}
         parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
@@ -732,7 +951,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
   const { mode, onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
-  const nodeRef = useFocusStructuralNode(props.node.id);
+  useFocusStructuralNode2(props.node.id, props.ref);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
@@ -761,6 +980,21 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       // Focus the condition (unknown node)
       requestFocus({ nodeId: newIfStatement.condition.id });
     },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
   });
 
   // Special callback for body - replaces with empty compound statement instead of null
@@ -779,24 +1013,20 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
     },
   };
 
+  const bodyRef = React.useRef<HTMLElement>(null);
   const content = (
     <>
       <span
-        ref={nodeRef as React.RefObject<HTMLSpanElement>}
+        ref={props.ref as React.RefObject<HTMLSpanElement>}
         className="token-keyword"
         onKeyDown={handleKeyDown}
         tabIndex={0}
       >
         {" else "}
       </span>
-      {/* <Object // TODO wrapp in 
-        node={props.node.body}
-        parentInfo={childInfo(props.node, "body")}
-        display="inline"
-        callbacks={bodyCallbacks}
-      > */}
       <NodeRender
         node={props.node.body}
+        ref={bodyRef as React.RefObject<HTMLSpanElement>}
         parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
         callbacks={bodyCallbacks}
@@ -810,7 +1040,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
   const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
-  const nodeRef = useFocusStructuralNode(props.node.id);
+  useFocusStructuralNode2(props.node.id, props.ref);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
@@ -819,15 +1049,36 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
         insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
       }
     },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
   });
 
+  const valueRef = React.useRef<HTMLElement>(null);
   const content = (
-    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} tabIndex={0} onKeyDown={handleKeyDown}>
+    <span
+      ref={props.ref as React.RefObject<HTMLSpanElement>}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <span className="token-keyword">return</span>
       {props.node.value && (
         <>
           {" "}
           <NodeRender
+            ref={valueRef as React.RefObject<HTMLSpanElement>}
             node={props.node.value}
             parentInfo={parentInfoFromChild(props.node, "value")}
             display="inline"
@@ -858,6 +1109,21 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
     insertChildFirst: () => {
       console.log("CallExpressionRender: Appending argument");
       appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
+    },
+    navigateToPreviousSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToNextSibling: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToParent: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToFirstChild: function (): void {
+      throw new Error("Function not implemented.");
+    },
+    navigateToLastChild: function (): void {
+      throw new Error("Function not implemented.");
     },
   });
 
@@ -906,6 +1172,7 @@ function AssignmentExpressionRender(
   props: XRenderProps<objects.AssignmentExpression>
 ): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const valueRef = React.useRef<HTMLElement>(null);
   const content = (
     <>
       <span className="token-variable">
@@ -920,6 +1187,7 @@ function AssignmentExpressionRender(
       </span>{" "}
       {"="}{" "}
       <NodeRender
+        ref={valueRef as React.RefObject<HTMLSpanElement>}
         node={props.node.value}
         parentInfo={parentInfoFromChild(props.node, "value")}
         display="inline"
@@ -970,9 +1238,12 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
 function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
 
+  const leftRef = React.useRef<HTMLElement>(null);
+  const rightRef = React.useRef<HTMLElement>(null);
   const content = (
     <>
       <NodeRender
+        ref={leftRef as React.RefObject<HTMLSpanElement>}
         node={props.node.left}
         parentInfo={parentInfoFromChild(props.node, "left")}
         display="inline"
@@ -986,6 +1257,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
         placeholder: "op",
       })}{" "}
       <NodeRender
+        ref={rightRef as React.RefObject<HTMLSpanElement>}
         node={props.node.right}
         parentInfo={parentInfoFromChild(props.node, "right")}
         display="inline"

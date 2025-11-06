@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
 import { FocusRequest } from "./LineProvider";
+import { NodeNavigationCallbacks } from "../../lib/keyBinds";
 
 // Type-safe parent info with generics and defaults
 export type ParentInfo<
@@ -20,14 +21,17 @@ export const EditorMode = {
 };
 export type EditorModeType = (typeof EditorMode)[keyof typeof EditorMode];
 
-export interface NodeCallbacks {
+export interface NodeCallbacks extends NodeEditCallbacks, NodeNavigationCallbacks {}
+
+export interface NodeEditCallbacks {
+  // Insertion
   onInsertSibling?: (node: objects.LanguageObject) => void;
   onInsertSiblingBefore?: (node: objects.LanguageObject) => void;
   onDelete?: (node: objects.LanguageObject) => void;
   onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
   // Edit mode: insert at beginning or end of array
-  onInsertFirst?: () => void;
-  onInsertLast?: () => void;
+  onInsertChildFirst?: () => void;
+  onInsertChildLast?: () => void;
 }
 
 export interface LineContextType {

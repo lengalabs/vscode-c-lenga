@@ -32,6 +32,8 @@ interface Props<T> {
   nodeId: string;
   fieldKey: string;
 
+  ref: React.RefObject<HTMLInputElement>;
+
   firstField?: boolean;
   // Styling
   className?: string;
@@ -45,6 +47,7 @@ export function Field<T>({
   onNoMatch,
   nodeId,
   fieldKey,
+  ref,
   firstField = false,
   className,
 }: Props<T>) {
@@ -54,7 +57,6 @@ export function Field<T>({
   const [inputValue, setInputValue] = React.useState(currentValue);
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
   // Filter options based on input
@@ -82,9 +84,9 @@ export function Field<T>({
       !hasFocusedRef.current
     ) {
       console.log("Focusing autocomplete field for node:", nodeId, " field:", fieldKey);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      if (ref.current) {
+        ref.current.focus();
+        ref.current.select();
         hasFocusedRef.current = true;
         clearFocusRequest();
       }
@@ -92,7 +94,7 @@ export function Field<T>({
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, nodeId, fieldKey, clearFocusRequest, firstField]);
+  }, [focusRequest, nodeId, fieldKey, clearFocusRequest, firstField, ref]);
 
   const commitValue = (matchedOption: OptionMatch<T> | null) => {
     if (matchedOption) {
@@ -170,7 +172,7 @@ export function Field<T>({
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <input
-        ref={inputRef}
+        ref={ref}
         className={`inline-editor ${className ?? ""}`}
         style={{
           width,

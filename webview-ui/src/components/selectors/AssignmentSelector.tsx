@@ -40,6 +40,7 @@ export default function AssignmentSelector({ node, parentInfo, firstField, class
           value: decl,
           label: decl.identifier,
           description: NodeRender({
+            ref: React.createRef<HTMLElement>() as React.RefObject<HTMLElement>,
             node: decl,
             parentInfo,
           }),
@@ -57,6 +58,7 @@ export default function AssignmentSelector({ node, parentInfo, firstField, class
 
   return (
     <Autocomplete.Field
+      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
       firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"

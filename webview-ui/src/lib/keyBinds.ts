@@ -18,9 +18,9 @@ export interface NodeEditCallbacks {
 
 // Navigation
 export interface NodeParentNavigationCallbacks {
+  onNavigateToParent?: () => void;
   onNavigateToPreviousSibling?: () => void;
   onNavigateToNextSibling?: () => void;
-  onNavigateToParent?: () => void;
 }
 
 export interface NodeNavigationCallbacks extends NodeParentNavigationCallbacks {
@@ -66,23 +66,30 @@ export interface NodeNavigationCallbacks extends NodeParentNavigationCallbacks {
  *   });
  */
 // Command types that render functions can use
-type CommandHandler = () => void;
-export interface CommandHandlers {
+type Callback = () => void;
+
+export interface NodeCommandHandlers
+  extends NodeEditCommandHandlers,
+    NodeNavigationCommandHandlers {}
+
+export interface NodeEditCommandHandlers {
   // Insertion
-  insertSibling?: CommandHandler;
-  insertSiblingBefore?: CommandHandler;
-  insertChildFirst?: CommandHandler;
-  insertChildLast?: CommandHandler;
+  insertSibling?: Callback;
+  insertSiblingBefore?: Callback;
+  insertChildFirst?: Callback;
+  insertChildLast?: Callback;
 
   // Deletion
-  delete?: CommandHandler;
+  delete?: Callback;
+}
 
+export interface NodeNavigationCommandHandlers {
   // Navigation
-  previousSibling?: CommandHandler;
-  nextSibling?: CommandHandler;
-  parentNode?: CommandHandler;
-  firstChild?: CommandHandler;
-  lastChild?: CommandHandler;
+  navigateToPreviousSibling: Callback;
+  navigateToNextSibling: Callback;
+  navigateToParent: Callback;
+  navigateToFirstChild: Callback;
+  navigateToLastChild: Callback;
 }
 // Key combination to command name mapping
 type KeyMapping = {
@@ -99,11 +106,11 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     // Deletion
     Delete: "delete",
     // Navigation
-    ArrowUp: "previousSibling",
-    ArrowDown: "nextSibling",
-    ArrowLeft: "parentNode",
-    ArrowRight: "firstChild",
-    "Shift+ArrowRight": "lastChild",
+    ArrowUp: "navigateToPreviousSibling",
+    ArrowDown: "navigateToNextSibling",
+    ArrowLeft: "navigateToParentNode",
+    ArrowRight: "navigateToFirstChild",
+    "Shift+ArrowRight": "navigateToLastChild",
   },
   edit: {
     Delete: "delete",
