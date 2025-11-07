@@ -30,35 +30,7 @@ import { createParentNativationCallbacks, ParentRefs } from "../lib/navigationHe
 import { NodeEditCallbacks, NodeNavigationCallbacks } from "../lib/keyBinds";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
-function useFocusStructuralNode(nodeId: string) {
-  const { focusRequest, clearFocusRequest } = useLineContext();
-  const nodeRef = React.useRef<HTMLElement>(null);
-  const hasFocusedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    if (
-      focusRequest &&
-      focusRequest.nodeId === nodeId &&
-      focusRequest.fieldKey === undefined && // Empty string means focus the node itself
-      !hasFocusedRef.current
-    ) {
-      console.log("Focusing structural node:", nodeId);
-      if (nodeRef.current) {
-        nodeRef.current.focus();
-        hasFocusedRef.current = true;
-        clearFocusRequest();
-      }
-    }
-    // Reset the flag when focus request changes
-    if (!focusRequest) {
-      hasFocusedRef.current = false;
-    }
-  }, [focusRequest, nodeId, clearFocusRequest]);
-
-  return nodeRef;
-}
-
-function useFocusStructuralNode2(nodeId: string, nodeRef: RefObject<HTMLElement>) {
+function useFocusStructuralNode(nodeId: string, nodeRef: RefObject<HTMLElement>) {
   const { focusRequest, clearFocusRequest } = useLineContext();
   const hasFocusedRef = React.useRef(false);
 
@@ -637,7 +609,7 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
 export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
   const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
   const nodeRef = React.useRef<HTMLElement>(null);
-  useFocusStructuralNode2(props.node.id, nodeRef as React.RefObject<HTMLElement>);
+  useFocusStructuralNode(props.node.id, nodeRef as React.RefObject<HTMLElement>);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
@@ -700,7 +672,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
   const { onEdit, nodeMap, requestFocus } = useLineContext();
-  const nodeRef = useFocusStructuralNode(props.node.id);
+  useFocusStructuralNode(props.node.id, props.ref);
 
   const childCallbacks = createParentArrayFieldCallbacks(
     props.node,
@@ -714,7 +686,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
   return (
     <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
       {
-        <span ref={nodeRef as React.RefObject<HTMLSpanElement>} tabIndex={0}>
+        <span ref={props.ref} tabIndex={0}>
           <span className="token-delimiter">{"{"}</span>
           <div
             style={{
@@ -784,7 +756,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     },
   };
 
-  useFocusStructuralNode2(props.node.id, props.ref);
+  useFocusStructuralNode(props.node.id, props.ref);
   const elseRef = React.useRef<HTMLElement>(null);
   const elseRender =
     props.node.elseStatement &&
@@ -879,7 +851,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
   const { onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
-  useFocusStructuralNode2(props.node.id, props.ref);
+  useFocusStructuralNode(props.node.id, props.ref);
 
   const callbacks = {
     onInsertChildFirst: () => {
@@ -950,7 +922,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  useFocusStructuralNode2(props.node.id, props.ref);
+  useFocusStructuralNode(props.node.id, props.ref);
 
   const callbacks = createParentOptionalFieldCallbacks(
     props.node,
