@@ -125,7 +125,7 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     // Navigation
     ArrowUp: "navigateToPreviousSibling",
     ArrowDown: "navigateToNextSibling",
-    ArrowLeft: "navigateToParentNode",
+    ArrowLeft: "navigateToParent",
     ArrowRight: "navigateToFirstChild",
     "Shift+ArrowRight": "navigateToLastChild",
   },
