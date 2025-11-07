@@ -15,19 +15,15 @@ export interface ChildRefs {
 export interface Refs extends ParentRefs, ChildRefs {}
 
 export function createParentNativationCallbacks(refs: ParentRefs): NodeParentNavigationCallbacks {
-  console.log("Creating Parent Navigation Callbacks with refs:", refs);
   const onNavigateToParent = () => {
-    console.log("called onNavigateToParent");
     refs.parent?.current?.focus();
   };
   const callbacks: NodeParentNavigationCallbacks = {
     onNavigateToParent,
     onNavigateToPreviousSibling: () => {
-      console.log("called onNavigateToPreviousSibling");
       (focusOn(refs.previousSibling?.current) ?? onNavigateToParent)();
     },
     onNavigateToNextSibling: () => {
-      console.log("called onNavigateToNextSibling");
       (focusOn(refs.nextSibling?.current) ?? onNavigateToParent)();
     },
   };

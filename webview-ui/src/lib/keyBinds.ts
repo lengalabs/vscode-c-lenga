@@ -4,26 +4,35 @@ import { EditorModeType } from "../context/line/lineContext";
 
 export interface NodeCallbacks extends NodeEditCallbacks, NodeNavigationCallbacks {}
 
-export interface NodeEditCallbacks {
+export interface NodeEditCallbacks extends NodeChildEditCallbacks, NodeParentEditCallbacks {}
+
+export interface NodeParentEditCallbacks {
   // Insertion
   onInsertSibling?: (node: objects.LanguageObject) => void;
   onInsertSiblingBefore?: (node: objects.LanguageObject) => void;
-  onInsertChildFirst?: () => void;
-  onInsertChildLast?: () => void;
   onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
 
   // Deletion
   onDelete?: (node: objects.LanguageObject) => void;
 }
 
+export interface NodeChildEditCallbacks {
+  onInsertChildFirst?: () => void;
+  onInsertChildLast?: () => void;
+}
+
 // Navigation
+export interface NodeNavigationCallbacks
+  extends NodeParentNavigationCallbacks,
+    NodeChildNavigationCallbacks {}
+
 export interface NodeParentNavigationCallbacks {
   onNavigateToParent?: () => void;
   onNavigateToPreviousSibling?: () => void;
   onNavigateToNextSibling?: () => void;
 }
 
-export interface NodeNavigationCallbacks extends NodeParentNavigationCallbacks {
+export interface NodeChildNavigationCallbacks {
   onNavigateToFirstChild?: () => void;
   onNavigateToLastChild?: () => void;
 }

@@ -4,6 +4,7 @@ import { FocusRequest } from "../context/line/LineProvider";
 import {
   getKeyComboString,
   KEY_MAPPINGS,
+  NodeChildEditCallbacks,
   NodeCommandHandlers,
   NodeEditCallbacks,
 } from "./keyBinds";
@@ -127,7 +128,21 @@ export function createArrayFieldCallbacks<
       // Auto-focus on the first editable field of the new node
       requestFocus({ nodeId: newNode.id });
     },
+  };
+}
 
+export function createParentArrayFieldCallbacks<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  parent: T,
+  key: K,
+  constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (props: FocusRequest) => void
+): NodeChildEditCallbacks {
+  return {
     // Edit mode: insert at beginning or end of array
     onInsertChildFirst: () => {
       console.log("Inserting at beginning of array:", key);
@@ -153,6 +168,7 @@ export function createArrayFieldCallbacks<
     },
   };
 }
+
 // Helper to create callbacks for optional single-value fields (delete sets to null)
 export function createOptionalFieldCallbacks<
   T extends objects.LanguageObject,
@@ -188,6 +204,40 @@ export function createOptionalFieldCallbacks<
     },
   };
 }
+
+export function createParentOptionalFieldCallbacks<
+  T extends objects.LanguageObject,
+  K extends string & keyof T,
+>(
+  parent: T,
+  key: K,
+  constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
+  nodeMap: Map<string, objects.LanguageObject>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (props: FocusRequest) => void
+): NodeChildEditCallbacks {
+  return {
+    onInsertChildFirst: () => {
+      console.log("Inserting into optional field:", key);
+      const newNode = constructor(requestFocus);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newNode;
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
+      requestFocus({ nodeId: newNode.id });
+    },
+    onInsertChildLast: () => {
+      console.log("Inserting into optional field:", key);
+      const newNode = constructor(requestFocus);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newNode;
+      nodeMap.set(newNode.id, newNode);
+      onEdit(parent, key);
+      requestFocus({ nodeId: newNode.id });
+    },
+  };
+}
+
 // Helper to create callbacks for required single-value fields (delete replaces with unknown)
 export function createRequiredFieldCallbacks<
   T extends objects.LanguageObject,

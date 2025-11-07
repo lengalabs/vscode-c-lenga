@@ -17,6 +17,8 @@ import {
   createUnknown,
   prependToArray,
   createKeyDownHandler,
+  createParentArrayFieldCallbacks,
+  createParentOptionalFieldCallbacks,
 } from "../lib/editionHelpers";
 import * as Autocomplete from "./selectors/Autocomplete";
 import CallExpressionSelector from "./selectors/CallExpressionSelector";
@@ -97,61 +99,63 @@ export function Object({ node, parentInfo, children, display = "block", callback
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertSibling: () => {
-      if (isSelected && callbacks?.onInsertSibling) {
+      if (callbacks?.onInsertSibling) {
         console.log("Object: Inserting sibling for", node.type);
         callbacks.onInsertSibling(node);
       }
     },
     insertSiblingBefore: () => {
-      if (isSelected && callbacks?.onInsertSiblingBefore) {
+      if (callbacks?.onInsertSiblingBefore) {
         console.log("Object: Inserting sibling before", node.type);
         callbacks.onInsertSiblingBefore(node);
       }
     },
     delete: () => {
-      if (isSelected && callbacks?.onDelete) {
+      if (callbacks?.onDelete) {
         console.log("Object: Deleting", node.type);
         callbacks.onDelete(node);
       }
     },
     insertChildFirst: () => {
-      if (isSelected && callbacks?.onInsertChildFirst) {
+      console.log("insertChildFirst: callbacks:", callbacks);
+      if (callbacks?.onInsertChildFirst) {
         console.log("Object: Inserting at beginning for", node.type);
         callbacks.onInsertChildFirst();
       }
     },
     insertChildLast: () => {
-      if (isSelected && callbacks?.onInsertChildLast) {
+      console.log("insertChildLast: callbacks:", callbacks);
+      if (callbacks?.onInsertChildLast) {
         console.log("Object: Inserting at end for", node.type);
         callbacks.onInsertChildLast();
       }
     },
     navigateToPreviousSibling: () => {
-      if (isSelected && callbacks?.onNavigateToPreviousSibling) {
+      if (callbacks?.onNavigateToPreviousSibling) {
         console.log("Object: navigateToPreviousSibling", node.type);
         callbacks.onNavigateToPreviousSibling();
       }
     },
     navigateToNextSibling: () => {
-      if (isSelected && callbacks?.onNavigateToNextSibling) {
+      if (callbacks?.onNavigateToNextSibling) {
         console.log("Object: navigateToNextSibling", node.type);
         callbacks.onNavigateToNextSibling();
       }
     },
     navigateToParent: () => {
-      if (isSelected && callbacks?.onNavigateToParent) {
+      if (callbacks?.onNavigateToParent) {
         console.log("Object: navigateToParentNode", node.type);
         callbacks.onNavigateToParent();
       }
     },
     navigateToFirstChild: () => {
-      if (isSelected && callbacks?.onNavigateToFirstChild) {
+      if (callbacks?.onNavigateToFirstChild) {
         console.log("Object: navigateToFirstChild", node.type);
         callbacks.onNavigateToFirstChild();
       }
     },
     navigateToLastChild: () => {
-      if (isSelected && callbacks?.onNavigateToLastChild) {
+      if (callbacks?.onNavigateToLastChild) {
         console.log("Object: navigateToLastChild", node.type);
         callbacks.onNavigateToLastChild();
       }
@@ -286,14 +290,7 @@ function ListFieldRender<
         const currentRef = itemRefs.current.get(item.id)!;
         const previousSibling = i > 0 ? itemRefs.current.get(list[i - 1].id) : undefined;
         const nextSibling = i < list.length - 1 ? itemRefs.current.get(list[i + 1].id) : undefined;
-        console.log(
-          "Rendering ListItem for item:",
-          item.id,
-          " with refs:",
-          parent.ref,
-          previousSibling,
-          nextSibling
-        );
+
         return ListItem<T, K, KT>(parent, key, i, callbacks, item, render, currentRef, {
           parent: parent.ref,
           previousSibling,
@@ -440,73 +437,52 @@ function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): Reac
 function FunctionDeclarationRender(
   props: XRenderProps<objects.FunctionDeclaration>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
-  const handleKeyDown = createKeyDownHandler(mode, {
+  const insertChildCallbacks = {
     insertChildFirst: () => {
-      console.log("FunctionDeclarationRender: Prepending parameter");
       prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
     insertChildLast: () => {
-      console.log("FunctionDeclarationRender: Appending parameter");
       appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  };
 
   const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
 
   return (
-    <Object {...props}>
-      {
-        <span onKeyDown={handleKeyDown}>
-          {TypeSelector({
-            ref: returnTypeRef,
-            node: props.node,
-            key: "returnType",
-            parentInfo: props.parentInfo,
-            firstField: true,
-            className: "token-type",
-          })}{" "}
-          {EditableField({
-            ref: identifierRef,
-            node: props.node,
-            key: "identifier",
-            parentInfo: props.parentInfo,
-            className: "token-function",
-            placeholder: "function_name",
-          })}
-          <span className="token-delimiter">{"("}</span>
-          {ListFieldRender(
-            props,
-            "parameterList",
-            { insertConstructor: createParameter },
-            ({ idx, nodeRender }) => (
-              <span>
-                {idx > 0 && ", "}
-                {nodeRender}
-              </span>
-            )
-          )}
-          <span className="token-delimiter">{")"}</span>
-        </span>
-      }
+    <Object {...props} callbacks={{ ...props.callbacks, ...insertChildCallbacks }}>
+      {TypeSelector({
+        ref: returnTypeRef,
+        node: props.node,
+        key: "returnType",
+        parentInfo: props.parentInfo,
+        firstField: true,
+        className: "token-type",
+      })}{" "}
+      {EditableField({
+        ref: identifierRef,
+        node: props.node,
+        key: "identifier",
+        parentInfo: props.parentInfo,
+        className: "token-function",
+        placeholder: "function_name",
+      })}
+      <span className="token-delimiter">{"("}</span>
+      {ListFieldRender(
+        props,
+        "parameterList",
+        { insertConstructor: createParameter },
+        ({ idx, nodeRender }) => (
+          <span>
+            {idx > 0 && ", "}
+            {nodeRender}
+          </span>
+        )
+      )}
+      <span className="token-delimiter">{")"}</span>
     </Object>
   );
 }
@@ -514,116 +490,80 @@ function FunctionDeclarationRender(
 function FunctionDefinitionRender(
   props: XRenderProps<objects.FunctionDefinition>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
   const compoundStatementRef = React.useRef<HTMLElement>(null);
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
-      console.log("FunctionDefinitionRender: Prepending parameter");
+  const childCallbacks = {
+    onInsertChildFirst: () => {
       prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
-    insertChildLast: () => {
-      console.log("FunctionDefinitionRender: Appending parameter");
+    onInsertChildLast: () => {
       appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
     },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  };
 
   const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   return (
-    <Object {...props}>
-      {
-        <span onKeyDown={handleKeyDown}>
-          {TypeSelector({
-            node: props.node,
-            key: "returnType",
-            ref: returnTypeRef,
-            parentInfo: props.parentInfo,
-            firstField: true,
-            className: "token-type",
-          })}{" "}
-          {EditableField({
-            node: props.node,
-            key: "identifier",
-            ref: identifierRef,
-            parentInfo: props.parentInfo,
-            className: "token-function",
-            placeholder: "function_name",
-          })}
-          <span className="token-delimiter">{"("}</span>
-          {ListFieldRender(
-            props,
-            "parameterList",
-            { insertConstructor: createParameter },
-            ({ idx, nodeRender }) => (
-              <span>
-                {idx > 0 && ", "}
-                {nodeRender}
-              </span>
-            )
-          )}
-          <span className="token-delimiter">{")"}</span>
-          <NodeRender
-            ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
-            node={props.node.compoundStatement}
-            parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
-          />
-        </span>
-      }
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
+      {TypeSelector({
+        node: props.node,
+        key: "returnType",
+        ref: returnTypeRef,
+        parentInfo: props.parentInfo,
+        firstField: true,
+        className: "token-type",
+      })}{" "}
+      {EditableField({
+        node: props.node,
+        key: "identifier",
+        ref: identifierRef,
+        parentInfo: props.parentInfo,
+        className: "token-function",
+        placeholder: "function_name",
+      })}
+      <span className="token-delimiter">{"("}</span>
+      {ListFieldRender(
+        props,
+        "parameterList",
+        { insertConstructor: createParameter },
+        ({ idx, nodeRender }) => (
+          <span>
+            {idx > 0 && ", "}
+            {nodeRender}
+          </span>
+        )
+      )}
+      <span className="token-delimiter">{")"}</span>
+      <NodeRender
+        ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
+        node={props.node.compoundStatement}
+        parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
+      />
     </Object>
   );
 }
 
 function DeclarationRender(props: XRenderProps<objects.Declaration>): React.ReactNode {
-  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(props.node.id, props.node);
-
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
-      if (!props.node.value) {
-        console.log("DeclarationRender: Inserting unknown node as value");
-        insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
-      }
-    },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  const childCallbacks = createParentOptionalFieldCallbacks(
+    props.node,
+    "value",
+    createUnknown,
+    nodeMap,
+    onEdit,
+    requestFocus
+  );
 
   const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   const valueRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <span onKeyDown={handleKeyDown}>
+
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
       {TypeSelector({
         node: props.node,
         key: "primitiveType",
@@ -659,10 +599,8 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
           />
         </>
       )}
-    </span>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>): React.ReactNode {
@@ -672,7 +610,7 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks }}>
       {
         <>
           {TypeSelector({
@@ -707,23 +645,16 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
       console.log("SourceFileRender: Inserting unknown node");
       prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
     },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
+    insertChildLast: () => {
+      console.log("SourceFileRender: Inserting unknown node");
+      appendToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
     },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
+    navigateToPreviousSibling: () => {},
+    navigateToNextSibling: () => {},
+    navigateToParent: () => {},
+    navigateToFirstChild: () => {},
+    navigateToLastChild: () => {},
   });
-
   const emptyFileRef = React.useRef<HTMLElement>(null);
 
   const content = (
@@ -769,61 +700,46 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
 }
 
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
-  const { onEdit, nodeMap, mode, requestFocus } = useLineContext();
+  const { onEdit, nodeMap, requestFocus } = useLineContext();
   const nodeRef = useFocusStructuralNode(props.node.id);
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
-      console.log("CompoundStatementRender: Inserting unknown node");
-      prependToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-    },
-    insertChildLast: () => {
-      console.log("CompoundStatementRender: Appending unknown node");
-      appendToArray(props.node, "codeBlock", createUnknown, nodeMap, onEdit, requestFocus);
-    },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
-
-  const content = (
-    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
-      <span className="token-delimiter">{"{"}</span>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          paddingLeft: "20px",
-        }}
-      >
-        {ListFieldRender(
-          props,
-          "codeBlock",
-          { insertConstructor: createUnknown },
-          ({ item, nodeRender }) => (
-            <div>
-              {nodeRender} {leadingSemicolon(item) && ";"}
-            </div>
-          )
-        )}
-      </div>
-      <span className="token-delimiter">{"}"}</span>
-    </span>
+  const childCallbacks = createParentArrayFieldCallbacks(
+    props.node,
+    "codeBlock",
+    createUnknown,
+    nodeMap,
+    onEdit,
+    requestFocus
   );
 
-  return <Object {...props}>{content}</Object>;
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
+      {
+        <span ref={nodeRef as React.RefObject<HTMLSpanElement>} tabIndex={0}>
+          <span className="token-delimiter">{"{"}</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              paddingLeft: "20px",
+            }}
+          >
+            {ListFieldRender(
+              props,
+              "codeBlock",
+              { insertConstructor: createUnknown },
+              ({ item, nodeRender }) => (
+                <div>
+                  {nodeRender} {leadingSemicolon(item) && ";"}
+                </div>
+              )
+            )}
+          </div>
+          <span className="token-delimiter">{"}"}</span>
+        </span>
+      }
+    </Object>
+  );
 }
 
 function leadingSemicolon(node: objects.LanguageObject): boolean {
@@ -844,10 +760,10 @@ function leadingSemicolon(node: objects.LanguageObject): boolean {
 }
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
-  const { mode, onEdit, nodeMap, requestFocus } = useLineContext();
+  const { onEdit, nodeMap, requestFocus } = useLineContext();
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
+  const callbacks = {
+    onInsertChildFirst: () => {
       if (!props.node.elseStatement) {
         console.log("IfStatementRender: Inserting else clause");
         const newElseClause: objects.ElseClause = {
@@ -867,22 +783,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         requestFocus({ nodeId: newElseClause.id });
       }
     },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  };
 
   useFocusStructuralNode2(props.node.id, props.ref);
   const elseRef = React.useRef<HTMLElement>(null);
@@ -952,9 +853,10 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     ));
   const conditionRef = React.useRef<HTMLElement>(null);
   const bodyRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <span>
-      <span ref={props.ref} tabIndex={0} onKeyDown={handleKeyDown}>
+
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
+      <span ref={props.ref} tabIndex={0}>
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
           ref={conditionRef as React.RefObject<HTMLSpanElement>}
@@ -971,19 +873,17 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         display="inline"
       />
       {elseRender}
-    </span>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
-  const { mode, onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
+  const { onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
   useFocusStructuralNode2(props.node.id, props.ref);
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
+  const callbacks = {
+    onInsertChildFirst: () => {
       console.log("ElseClauseRender: Converting to ifStatement");
       // Convert to ifStatement
       const newIfStatement: objects.IfStatement = {
@@ -1009,22 +909,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       // Focus the condition (unknown node)
       requestFocus({ nodeId: newIfStatement.condition.id });
     },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  };
 
   // Special callback for body - replaces with empty compound statement instead of null
   const bodyCallbacks: NodeCallbacks = {
@@ -1043,12 +928,12 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
   };
 
   const bodyRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <>
+
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
       <span
         ref={props.ref as React.RefObject<HTMLSpanElement>}
         className="token-keyword"
-        onKeyDown={handleKeyDown}
         tabIndex={0}
       >
         {" else "}
@@ -1060,11 +945,8 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
         display="inline"
         callbacks={bodyCallbacks}
       />
-      {/* </Object> */}
-    </>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
