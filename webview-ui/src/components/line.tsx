@@ -10,7 +10,6 @@ import "./index.css";
 import {
   createArrayFieldCallbacks,
   createOptionalFieldCallbacks,
-  insertUnknownIntoField,
   createRequiredFieldCallbacks,
   createParameter,
   appendToArray,
@@ -950,96 +949,63 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 }
 
 function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): React.ReactNode {
-  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
   useFocusStructuralNode2(props.node.id, props.ref);
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
-      if (!props.node.value) {
-        console.log("ReturnStatementRender: Inserting unknown node as return value");
-        insertUnknownIntoField(props.node, "value", nodeMap, onEdit, requestFocus);
-      }
-    },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
-
-  const valueRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <span
-      ref={props.ref as React.RefObject<HTMLSpanElement>}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-    >
-      <span className="token-keyword">return</span>
-      {props.node.value && (
-        <>
-          {" "}
-          <NodeRender
-            ref={valueRef as React.RefObject<HTMLSpanElement>}
-            node={props.node.value}
-            parentInfo={parentInfoFromChild(props.node, "value")}
-            display="inline"
-            callbacks={createOptionalFieldCallbacks(
-              props.node,
-              "value",
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
-          />
-        </>
-      )}
-    </span>
+  const callbacks = createParentOptionalFieldCallbacks(
+    props.node,
+    "value",
+    createUnknown,
+    nodeMap,
+    onEdit,
+    requestFocus
   );
 
+  const valueRef = React.useRef<HTMLElement>(null);
+
   return (
-    <Object {...props} display="inline">
-      {content}
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }} display="inline">
+      {
+        <span ref={props.ref as React.RefObject<HTMLSpanElement>} tabIndex={0}>
+          <span className="token-keyword">return</span>
+          {props.node.value && (
+            <>
+              {" "}
+              <NodeRender
+                ref={valueRef as React.RefObject<HTMLSpanElement>}
+                node={props.node.value}
+                parentInfo={parentInfoFromChild(props.node, "value")}
+                display="inline"
+                callbacks={createOptionalFieldCallbacks(
+                  props.node,
+                  "value",
+                  nodeMap,
+                  onEdit,
+                  requestFocus
+                )}
+              />
+            </>
+          )}
+        </span>
+      }
     </Object>
   );
 }
 
 function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus, mode } = useLineContext();
+  const { nodeMap, onEdit, requestFocus } = useLineContext();
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertChildFirst: () => {
-      console.log("CallExpressionRender: Appending argument");
-      appendToArray(props.node, "argumentList", createUnknown, nodeMap, onEdit, requestFocus);
-    },
-    navigateToPreviousSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToNextSibling: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToParent: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToFirstChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-    navigateToLastChild: function (): void {
-      throw new Error("Function not implemented.");
-    },
-  });
+  const callbacks = createParentArrayFieldCallbacks(
+    props.node,
+    "argumentList",
+    createUnknown,
+    nodeMap,
+    onEdit,
+    requestFocus
+  );
 
-  const content = (
-    <span onKeyDown={handleKeyDown}>
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
       <CallExpressionSelector
         node={props.node}
         ref={props.ref}
@@ -1060,25 +1026,25 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
         )
       )}
       <span className="token-delimiter">{")"}</span>
-    </span>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
-  const content = (
-    <ReferenceSelector
-      node={props.node}
-      ref={props.ref}
-      parentInfo={props.parentInfo}
-      firstField={true}
-      className="token-variable"
-      callbacks={props.callbacks}
-    />
+  return (
+    <Object {...props}>
+      {
+        <ReferenceSelector
+          node={props.node}
+          ref={props.ref}
+          parentInfo={props.parentInfo}
+          firstField={true}
+          className="token-variable"
+          callbacks={props.callbacks}
+        />
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function AssignmentExpressionRender(
@@ -1086,8 +1052,9 @@ function AssignmentExpressionRender(
 ): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
   const valueRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <>
+
+  return (
+    <Object {...props}>
       <span className="token-variable">
         {
           <AssignmentSelector
@@ -1107,35 +1074,29 @@ function AssignmentExpressionRender(
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus)}
       />
-    </>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.ReactNode {
   return (
     <Object {...props}>
-      {
-        <>
-          {EditableField({
-            node: props.node,
-            key: "value",
-            ref: props.ref as React.RefObject<HTMLInputElement>,
-            parentInfo: props.parentInfo,
-            firstField: true,
-            className: "token-number",
-            placeholder: "0",
-          })}
-        </>
-      }
+      {EditableField({
+        node: props.node,
+        key: "value",
+        ref: props.ref as React.RefObject<HTMLInputElement>,
+        parentInfo: props.parentInfo,
+        firstField: true,
+        className: "token-number",
+        placeholder: "0",
+      })}
     </Object>
   );
 }
 
 function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.ReactNode {
-  const content = (
-    <>
+  return (
+    <Object {...props}>
       <span className="token-string">{'"'}</span>
       {EditableField({
         node: props.node,
@@ -1147,10 +1108,8 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
         placeholder: "text",
       })}
       <span className="token-string">{'"'}</span>
-    </>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): React.ReactNode {
@@ -1158,8 +1117,9 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
 
   const leftRef = React.useRef<HTMLElement>(null);
   const rightRef = React.useRef<HTMLElement>(null);
-  const content = (
-    <>
+
+  return (
+    <Object {...props}>
       <NodeRender
         ref={leftRef as React.RefObject<HTMLSpanElement>}
         node={props.node.left}
@@ -1182,15 +1142,13 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
         display="inline"
         callbacks={createRequiredFieldCallbacks(props.node, "right", nodeMap, onEdit, requestFocus)}
       />
-    </>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
-  const content = (
-    <>
+  return (
+    <Object {...props}>
       <span className="token-comment">{"//"}</span>{" "}
       {EditableField({
         node: props.node,
@@ -1201,8 +1159,6 @@ function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
         className: "token-comment",
         placeholder: "comment",
       })}
-    </>
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
