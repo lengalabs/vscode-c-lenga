@@ -5,6 +5,7 @@ import { EditorMode, ParentInfo, useLineContext } from "../context/line/lineCont
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
+  ref: React.RefObject<HTMLInputElement>;
   parentInfo: ParentInfo;
   firstField?: boolean;
   className?: string;
@@ -14,7 +15,15 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
 export default function EditableField<
   T extends objects.LanguageObject,
   K extends string & keyof T,
->({ node, key, parentInfo, firstField = false, className, placeholder }: EditableFieldProps<T, K>) {
+>({
+  node,
+  key,
+  ref,
+  parentInfo,
+  firstField = false,
+  className,
+  placeholder,
+}: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
     selectedKey,
@@ -29,7 +38,6 @@ export default function EditableField<
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const initialValue = String(node[key] ?? "");
   const [inputValue, setInputValue] = React.useState(initialValue);
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
   React.useEffect(() => {
@@ -45,9 +53,9 @@ export default function EditableField<
       !hasFocusedRef.current
     ) {
       console.log("Focusing input for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      if (ref.current) {
+        ref.current.focus();
+        ref.current.select();
         hasFocusedRef.current = true;
         // Clear the focus request after handling it
         clearFocusRequest();
@@ -57,7 +65,7 @@ export default function EditableField<
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, node.id, key, clearFocusRequest, firstField]);
+  }, [focusRequest, node.id, key, clearFocusRequest, firstField, ref]);
 
   // width in ch units, at least 1ch
   const width =
@@ -65,7 +73,7 @@ export default function EditableField<
 
   return (
     <input
-      ref={inputRef}
+      ref={ref}
       className={`inline-editor ${className ?? ""}`}
       style={{
         ...(isSelected

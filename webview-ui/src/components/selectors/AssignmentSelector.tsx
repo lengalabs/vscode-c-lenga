@@ -8,11 +8,18 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.AssignmentExpression;
   parentInfo: ParentInfo;
+  ref: React.RefObject<HTMLElement>;
   firstField?: boolean;
   className?: string;
 }
 
-export default function AssignmentSelector({ node, parentInfo, firstField, className }: Props) {
+export default function AssignmentSelector({
+  node,
+  parentInfo,
+  firstField,
+  className,
+  ref,
+}: Props) {
   const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
     useLineContext();
 
@@ -58,7 +65,7 @@ export default function AssignmentSelector({ node, parentInfo, firstField, class
 
   return (
     <Autocomplete.Field
-      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
+      ref={ref as React.RefObject<HTMLInputElement>}
       firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"

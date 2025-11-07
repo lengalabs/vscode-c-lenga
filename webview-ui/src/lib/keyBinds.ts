@@ -83,14 +83,22 @@ export interface NodeEditCommandHandlers {
   delete?: Callback;
 }
 
-export interface NodeNavigationCommandHandlers {
+export interface NodeNavigationCommandHandlers
+  extends NodeParentNavigationCommandHandlers,
+    NodeChildNavigationCommandHandlers {}
+
+export interface NodeParentNavigationCommandHandlers {
   // Navigation
   navigateToPreviousSibling: Callback;
   navigateToNextSibling: Callback;
   navigateToParent: Callback;
+}
+
+export interface NodeChildNavigationCommandHandlers {
   navigateToFirstChild: Callback;
   navigateToLastChild: Callback;
 }
+
 // Key combination to command name mapping
 type KeyMapping = {
   [key: string]: string;

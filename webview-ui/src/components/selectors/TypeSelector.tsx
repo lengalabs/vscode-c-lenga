@@ -31,6 +31,7 @@ interface TypeSelectorProps<T extends objects.LanguageObject, K extends string &
   node: T;
   key: K;
   parentInfo: ParentInfo;
+  ref: React.RefObject<HTMLElement>;
   firstField?: boolean;
   className?: string;
 }
@@ -40,6 +41,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
   key,
   parentInfo,
   firstField,
+  ref,
   className,
 }: TypeSelectorProps<T, K>) {
   const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo } = useLineContext();
@@ -83,7 +85,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
 
   return (
     <Autocomplete.Field
-      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
+      ref={ref as React.RefObject<HTMLInputElement>}
       firstField={firstField}
       currentValue={currentValue}
       placeholder="type"

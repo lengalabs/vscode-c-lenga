@@ -397,38 +397,44 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
     setParentNodeInfo(props.parentInfo);
   }
 
-  const content = (
-    <Autocomplete.Field
-      ref={props.ref as React.RefObject<HTMLInputElement>}
-      firstField={true}
-      currentValue={""}
-      placeholder="Select type..."
-      options={options}
-      onFocus={handleOnFocus}
-      nodeId={props.node.id}
-      fieldKey="content"
-    />
+  return (
+    <Object {...props}>
+      {
+        <Autocomplete.Field
+          ref={props.ref as React.RefObject<HTMLInputElement>}
+          firstField={true}
+          currentValue={""}
+          placeholder="Select type..."
+          options={options}
+          onFocus={handleOnFocus}
+          nodeId={props.node.id}
+          fieldKey="content"
+        />
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): React.ReactNode {
-  const content = (
-    <>
-      <span className="token-keyword">#include</span>{" "}
-      {EditableField({
-        node: props.node,
-        key: "content",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-string",
-        placeholder: "file.h",
-      })}
-    </>
+  const contentRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  return (
+    <Object {...props}>
+      {
+        <>
+          <span className="token-keyword">#include</span>{" "}
+          {EditableField({
+            node: props.node,
+            key: "content",
+            parentInfo: props.parentInfo,
+            firstField: true,
+            className: "token-string",
+            placeholder: "file.h",
+            ref: contentRef,
+          })}
+        </>
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function FunctionDeclarationRender(
@@ -463,39 +469,46 @@ function FunctionDeclarationRender(
     },
   });
 
-  const content = (
-    <span onKeyDown={handleKeyDown}>
-      {TypeSelector({
-        node: props.node,
-        key: "returnType",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-type",
-      })}{" "}
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
-      <span className="token-delimiter">{"("}</span>
-      {ListFieldRender(
-        props,
-        "parameterList",
-        { insertConstructor: createParameter },
-        ({ idx, nodeRender }) => (
-          <span>
-            {idx > 0 && ", "}
-            {nodeRender}
-          </span>
-        )
-      )}
-      <span className="token-delimiter">{")"}</span>
-    </span>
-  );
+  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
 
-  return <Object {...props}>{content}</Object>;
+  return (
+    <Object {...props}>
+      {
+        <span onKeyDown={handleKeyDown}>
+          {TypeSelector({
+            ref: returnTypeRef,
+            node: props.node,
+            key: "returnType",
+            parentInfo: props.parentInfo,
+            firstField: true,
+            className: "token-type",
+          })}{" "}
+          {EditableField({
+            ref: identifierRef,
+            node: props.node,
+            key: "identifier",
+            parentInfo: props.parentInfo,
+            className: "token-function",
+            placeholder: "function_name",
+          })}
+          <span className="token-delimiter">{"("}</span>
+          {ListFieldRender(
+            props,
+            "parameterList",
+            { insertConstructor: createParameter },
+            ({ idx, nodeRender }) => (
+              <span>
+                {idx > 0 && ", "}
+                {nodeRender}
+              </span>
+            )
+          )}
+          <span className="token-delimiter">{")"}</span>
+        </span>
+      }
+    </Object>
+  );
 }
 
 function FunctionDefinitionRender(
@@ -532,45 +545,50 @@ function FunctionDefinitionRender(
     },
   });
 
-  const content = (
-    <span onKeyDown={handleKeyDown}>
-      {TypeSelector({
-        node: props.node,
-        key: "returnType",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-type",
-      })}{" "}
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
-      <span className="token-delimiter">{"("}</span>
-      {ListFieldRender(
-        props,
-        "parameterList",
-        { insertConstructor: createParameter },
-        ({ idx, nodeRender }) => (
-          <span>
-            {idx > 0 && ", "}
-            {nodeRender}
-          </span>
-        )
-      )}
-      <span className="token-delimiter">{")"}</span>
-      <NodeRender
-        ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
-        node={props.node.compoundStatement}
-        parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
-        // callbacks={} TODO: transform into FunctionDeclaration on delete
-      />
-    </span>
+  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  return (
+    <Object {...props}>
+      {
+        <span onKeyDown={handleKeyDown}>
+          {TypeSelector({
+            node: props.node,
+            key: "returnType",
+            ref: returnTypeRef,
+            parentInfo: props.parentInfo,
+            firstField: true,
+            className: "token-type",
+          })}{" "}
+          {EditableField({
+            node: props.node,
+            key: "identifier",
+            ref: identifierRef,
+            parentInfo: props.parentInfo,
+            className: "token-function",
+            placeholder: "function_name",
+          })}
+          <span className="token-delimiter">{"("}</span>
+          {ListFieldRender(
+            props,
+            "parameterList",
+            { insertConstructor: createParameter },
+            ({ idx, nodeRender }) => (
+              <span>
+                {idx > 0 && ", "}
+                {nodeRender}
+              </span>
+            )
+          )}
+          <span className="token-delimiter">{")"}</span>
+          <NodeRender
+            ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
+            node={props.node.compoundStatement}
+            parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
+          />
+        </span>
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function DeclarationRender(props: XRenderProps<objects.Declaration>): React.ReactNode {
@@ -601,12 +619,15 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
     },
   });
 
+  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   const valueRef = React.useRef<HTMLElement>(null);
   const content = (
     <span onKeyDown={handleKeyDown}>
       {TypeSelector({
         node: props.node,
         key: "primitiveType",
+        ref: returnTypeRef,
         parentInfo: props.parentInfo,
         firstField: true,
         className: "token-type",
@@ -614,6 +635,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
       {EditableField({
         node: props.node,
         key: "identifier",
+        ref: identifierRef,
         parentInfo: props.parentInfo,
         className: "token-variable",
         placeholder: "name",
@@ -647,31 +669,38 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   const { nodeMap } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
-  const content = (
-    <>
-      {TypeSelector({
-        node: props.node,
-        key: "paramType",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-type",
-      })}{" "}
-      {EditableField({
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-variable",
-        placeholder: "name",
-      })}
-    </>
+  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  return (
+    <Object {...props}>
+      {
+        <>
+          {TypeSelector({
+            node: props.node,
+            key: "paramType",
+            ref: returnTypeRef,
+            parentInfo: props.parentInfo,
+            firstField: true,
+            className: "token-type",
+          })}{" "}
+          {EditableField({
+            node: props.node,
+            key: "identifier",
+            ref: identifierRef,
+            parentInfo: props.parentInfo,
+            className: "token-variable",
+            placeholder: "name",
+          })}
+        </>
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
   const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
-  const nodeRef = useFocusStructuralNode(props.node.id);
+  const nodeRef = React.useRef<HTMLElement>(null);
+  useFocusStructuralNode2(props.node.id, nodeRef as React.RefObject<HTMLElement>);
 
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
@@ -1131,6 +1160,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
     <span onKeyDown={handleKeyDown}>
       <CallExpressionSelector
         node={props.node}
+        ref={props.ref}
         parentInfo={props.parentInfo}
         firstField={true}
         className="token-function"
@@ -1158,6 +1188,7 @@ function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNod
   const content = (
     <ReferenceSelector
       node={props.node}
+      ref={props.ref}
       parentInfo={props.parentInfo}
       firstField={true}
       className="token-variable"
@@ -1179,6 +1210,7 @@ function AssignmentExpressionRender(
         {
           <AssignmentSelector
             node={props.node}
+            ref={props.ref}
             parentInfo={props.parentInfo}
             firstField={true}
             className="token-variable"
@@ -1200,20 +1232,23 @@ function AssignmentExpressionRender(
 }
 
 function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.ReactNode {
-  const content = (
-    <>
-      {EditableField({
-        node: props.node,
-        key: "value",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-number",
-        placeholder: "0",
-      })}
-    </>
+  return (
+    <Object {...props}>
+      {
+        <>
+          {EditableField({
+            node: props.node,
+            key: "value",
+            ref: props.ref as React.RefObject<HTMLInputElement>,
+            parentInfo: props.parentInfo,
+            firstField: true,
+            className: "token-number",
+            placeholder: "0",
+          })}
+        </>
+      }
+    </Object>
   );
-
-  return <Object {...props}>{content}</Object>;
 }
 
 function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.ReactNode {
@@ -1223,6 +1258,7 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
       {EditableField({
         node: props.node,
         key: "value",
+        ref: props.ref as React.RefObject<HTMLInputElement>,
         parentInfo: props.parentInfo,
         firstField: true,
         className: "token-string",
@@ -1252,6 +1288,7 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
       {EditableField({
         node: props.node,
         key: "operator",
+        ref: props.ref as React.RefObject<HTMLInputElement>,
         parentInfo: props.parentInfo,
         firstField: true,
         placeholder: "op",
@@ -1276,6 +1313,7 @@ function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
       {EditableField({
         node: props.node,
         key: "content",
+        ref: props.ref as React.RefObject<HTMLInputElement>,
         parentInfo: props.parentInfo,
         firstField: true,
         className: "token-comment",

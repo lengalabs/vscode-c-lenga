@@ -9,6 +9,7 @@ interface Props {
   node: objects.Reference;
   parentInfo: ParentInfo;
   firstField?: boolean;
+  ref: React.RefObject<HTMLElement>;
   callbacks?: NodeCallbacks;
   className?: string;
 }
@@ -17,6 +18,7 @@ export default function ReferenceSelector({
   node,
   parentInfo,
   firstField,
+  ref,
   className,
   callbacks,
 }: Props) {
@@ -92,7 +94,7 @@ export default function ReferenceSelector({
 
   return (
     <Autocomplete.Field
-      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
+      ref={ref as React.RefObject<HTMLInputElement>}
       firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"

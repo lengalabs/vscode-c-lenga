@@ -8,11 +8,18 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.CallExpression;
   parentInfo: ParentInfo;
+  ref: React.RefObject<HTMLElement>;
   firstField?: boolean;
   className?: string;
 }
 
-export default function CallExpressionSelector({ node, firstField, parentInfo, className }: Props) {
+export default function CallExpressionSelector({
+  node,
+  firstField,
+  parentInfo,
+  className,
+  ref,
+}: Props) {
   const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
     useLineContext();
 
@@ -59,7 +66,7 @@ export default function CallExpressionSelector({ node, firstField, parentInfo, c
 
   return (
     <Autocomplete.Field
-      ref={React.createRef<HTMLInputElement>() as React.RefObject<HTMLInputElement>} // TODO receive by props
+      ref={ref as React.RefObject<HTMLInputElement>}
       firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="function_name"
