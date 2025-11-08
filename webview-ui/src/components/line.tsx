@@ -136,6 +136,18 @@ export function Object({ node, parentInfo, children, display = "block", callback
         callbacks.onNavigateToLastChild();
       }
     },
+    moveNodeUp: () => {
+      if (callbacks?.onMoveUp) {
+        console.log("Object: moveNodeUp", node.type);
+        callbacks.onMoveUp(node);
+      }
+    },
+    moveNodeDown: () => {
+      if (callbacks?.onMoveDown) {
+        console.log("Object: moveNodeDown", node.type);
+        callbacks.onMoveDown(node);
+      }
+    },
   });
 
   const Element = display === "inline" ? "span" : "div";

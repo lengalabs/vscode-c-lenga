@@ -14,6 +14,10 @@ export interface NodeParentEditCallbacks {
 
   // Deletion
   onDelete?: (node: objects.LanguageObject) => void;
+
+  // Movement
+  onMoveUp?: (node: objects.LanguageObject) => void;
+  onMoveDown?: (node: objects.LanguageObject) => void;
 }
 
 export interface NodeChildEditCallbacks {
@@ -54,6 +58,9 @@ export interface NodeChildNavigationCallbacks {
  *     - parentNode: Navigate to parent node (mapped to ArrowLeft)
  *     - firstChild: Navigate to first child (mapped to ArrowRight)
  *     - lastChild: Navigate to last child (mapped to Shift+ArrowRight)
+ *   - Movement (for array elements):
+ *     - moveNodeUp: Move current node up in array (mapped to Alt+ArrowUp)
+ *     - moveNodeDown: Move current node down in array (mapped to Alt+ArrowDown)
  *
  * - Edit mode (for array fields):
  *   - insertChildFirst: Insert new element at beginning (mapped to Enter key)
@@ -90,6 +97,10 @@ export interface NodeEditCommandHandlers {
 
   // Deletion
   delete?: Callback;
+
+  // Movement
+  moveNodeUp?: Callback;
+  moveNodeDown?: Callback;
 }
 
 export interface NodeNavigationCommandHandlers
@@ -128,6 +139,9 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     ArrowLeft: "navigateToParent",
     ArrowRight: "navigateToFirstChild",
     "Shift+ArrowRight": "navigateToLastChild",
+    // Permutation
+    "Alt+ArrowUp": "moveNodeUp",
+    "Alt+ArrowDown": "moveNodeDown",
   },
   edit: {
     Delete: "delete",

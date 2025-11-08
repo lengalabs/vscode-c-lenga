@@ -32,6 +32,9 @@ export interface NodeEditCallbacks {
   // Edit mode: insert at beginning or end of array
   onInsertChildFirst?: () => void;
   onInsertChildLast?: () => void;
+  // Movement
+  onMoveUp?: (node: objects.LanguageObject) => void;
+  onMoveDown?: (node: objects.LanguageObject) => void;
 }
 
 export interface LineContextType {

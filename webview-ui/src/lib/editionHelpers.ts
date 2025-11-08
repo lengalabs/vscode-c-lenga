@@ -128,6 +128,48 @@ export function createArrayFieldCallbacks<
       // Auto-focus on the first editable field of the new node
       requestFocus({ nodeId: newNode.id });
     },
+    onMoveUp: (node: objects.LanguageObject) => {
+      console.log("Moving node up:", node.id, " from index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      
+      // Can't move up if already at the beginning
+      if (index === 0) {
+        console.log("Node is already at the beginning, cannot move up");
+        return;
+      }
+
+      const newArray = [...field];
+      // Swap with previous item
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      onEdit(parent, key);
+      
+      // Keep focus on the moved node
+      requestFocus({ nodeId: node.id });
+    },
+    onMoveDown: (node: objects.LanguageObject) => {
+      console.log("Moving node down:", node.id, " from index:", index);
+      const field = parent[key] as unknown as objects.LanguageObject[];
+      
+      // Can't move down if already at the end
+      if (index === field.length - 1) {
+        console.log("Node is already at the end, cannot move down");
+        return;
+      }
+
+      const newArray = [...field];
+      // Swap with next item
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (parent as any)[key] = newArray;
+      onEdit(parent, key);
+      
+      // Keep focus on the moved node
+      requestFocus({ nodeId: node.id });
+    },
   };
 }
 
