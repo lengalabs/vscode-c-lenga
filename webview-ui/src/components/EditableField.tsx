@@ -1,11 +1,13 @@
 import React from "react";
 import * as objects from "../../../src/language_objects/cNodes";
-import { ParentInfo, useLineContext } from "../context/line/lineContext";
+import { EditorMode, ParentInfo, useLineContext } from "../context/line/lineContext";
 
 interface EditableFieldProps<T extends objects.LanguageObject, K extends string & keyof T> {
   node: T;
   key: K;
+  ref: React.RefObject<HTMLInputElement>;
   parentInfo: ParentInfo;
+  firstField?: boolean;
   className?: string;
   placeholder: string;
 }
@@ -13,7 +15,15 @@ interface EditableFieldProps<T extends objects.LanguageObject, K extends string 
 export default function EditableField<
   T extends objects.LanguageObject,
   K extends string & keyof T,
->({ node, key, parentInfo, className, placeholder }: EditableFieldProps<T, K>) {
+>({
+  node,
+  key,
+  ref,
+  parentInfo,
+  firstField = false,
+  className,
+  placeholder,
+}: EditableFieldProps<T, K>) {
   const {
     selectedNodeId,
     selectedKey,
@@ -28,7 +38,6 @@ export default function EditableField<
   const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const initialValue = String(node[key] ?? "");
   const [inputValue, setInputValue] = React.useState(initialValue);
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
   React.useEffect(() => {
@@ -40,13 +49,13 @@ export default function EditableField<
     if (
       focusRequest &&
       focusRequest.nodeId === node.id &&
-      focusRequest.fieldKey === key &&
+      (firstField || focusRequest.fieldKey === key) &&
       !hasFocusedRef.current
     ) {
       console.log("Focusing input for node:", node.id, " key:", key);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      if (ref.current) {
+        ref.current.focus();
+        ref.current.select();
         hasFocusedRef.current = true;
         // Clear the focus request after handling it
         clearFocusRequest();
@@ -56,7 +65,7 @@ export default function EditableField<
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, node.id, key, clearFocusRequest]);
+  }, [focusRequest, node.id, key, clearFocusRequest, firstField, ref]);
 
   // width in ch units, at least 1ch
   const width =
@@ -64,7 +73,7 @@ export default function EditableField<
 
   return (
     <input
-      ref={inputRef}
+      ref={ref}
       className={`inline-editor ${className ?? ""}`}
       style={{
         ...(isSelected
@@ -89,7 +98,7 @@ export default function EditableField<
           onEdit(node, key);
         }
       }}
-      readOnly={mode === "view"}
+      readOnly={mode === EditorMode.View}
     />
   );
 }

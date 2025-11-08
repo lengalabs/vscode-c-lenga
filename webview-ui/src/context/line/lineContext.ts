@@ -1,5 +1,7 @@
 import { createContext, useContext } from "react";
 import * as objects from "../../../../src/language_objects/cNodes";
+import { FocusRequest } from "./LineProvider";
+import { NodeNavigationCallbacks } from "../../lib/keyBinds";
 
 // Type-safe parent info with generics and defaults
 export type ParentInfo<
@@ -11,16 +13,32 @@ export type ParentInfo<
   index: number;
 };
 
-export type EditorMode = "view" | "edit";
+type EditorMode = "view" | "edit";
 
-export interface NodeCallbacks {
+export const EditorMode = {
+  View: "view" as const,
+  Edit: "edit" as const,
+};
+export type EditorModeType = (typeof EditorMode)[keyof typeof EditorMode];
+
+export interface NodeCallbacks extends NodeEditCallbacks, NodeNavigationCallbacks {}
+
+export interface NodeEditCallbacks {
+  // Insertion
   onInsertSibling?: (node: objects.LanguageObject) => void;
   onInsertSiblingBefore?: (node: objects.LanguageObject) => void;
   onDelete?: (node: objects.LanguageObject) => void;
   onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
   // Edit mode: insert at beginning or end of array
-  onInsertFirst?: () => void;
-  onInsertLast?: () => void;
+  onInsertChildFirst?: () => void;
+  onInsertChildLast?: () => void;
+  // Movement
+  onMoveUp?: (node: objects.LanguageObject) => void;
+  onMoveDown?: (node: objects.LanguageObject) => void;
+  onMoveToParentPreviousSibling?: (node: objects.LanguageObject) => void;
+  onMoveToParentNextSibling?: (node: objects.LanguageObject) => void;
+  onMoveIntoNextSiblingsFirstChild?: (node: objects.LanguageObject) => void;
+  onMoveIntoPreviousSiblingsLastChild?: (node: objects.LanguageObject) => void;
 }
 
 export interface LineContextType {
@@ -38,11 +56,11 @@ export interface LineContextType {
   setSelectedKey: (key: string) => void;
   nodeMap: Map<string, objects.LanguageObject>;
   parentMap: Map<string, ParentInfo>;
-  focusRequest: { nodeId: string; fieldKey: string } | null;
-  requestFocus: (nodeId: string, fieldKey: string) => void;
+  focusRequest: FocusRequest | null;
+  requestFocus: (props: FocusRequest) => void;
   clearFocusRequest: () => void;
-  mode: EditorMode;
-  setMode: (mode: EditorMode) => void;
+  mode: EditorModeType;
+  setMode: (mode: EditorModeType) => void;
 }
 
 export const LineContext = createContext<LineContextType | null>(null);

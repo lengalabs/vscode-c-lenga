@@ -8,22 +8,22 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.Reference;
   parentInfo: ParentInfo;
+  firstField?: boolean;
+  ref: React.RefObject<HTMLElement>;
   callbacks?: NodeCallbacks;
   className?: string;
 }
 
-export default function ReferenceSelector({ node, parentInfo, className, callbacks }: Props) {
-  const {
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-    nodeMap,
-    parentMap,
-  } = useLineContext();
+export default function ReferenceSelector({
+  node,
+  parentInfo,
+  firstField,
+  ref,
+  className,
+  callbacks,
+}: Props) {
+  const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
+    useLineContext();
 
   const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
@@ -47,6 +47,7 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
         value: decl,
         label: decl.identifier,
         description: NodeRender({
+          ref: React.createRef<HTMLElement>() as React.RefObject<HTMLElement>,
           node: decl,
           parentInfo,
         }),
@@ -91,21 +92,17 @@ export default function ReferenceSelector({ node, parentInfo, className, callbac
     console.log("Available declarations for reference:", declarations);
   };
 
-  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "declarationId";
-
   return (
     <Autocomplete.Field
+      ref={ref as React.RefObject<HTMLInputElement>}
+      firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="reference_name"
       options={options}
       onFocus={handleFocus}
-      focusRequest={focusRequest}
       nodeId={node.id}
       fieldKey="declarationId"
-      clearFocusRequest={clearFocusRequest}
       className={className}
-      isSelected={!!isSelected}
-      readOnly={mode === "view"}
     />
   );
 }

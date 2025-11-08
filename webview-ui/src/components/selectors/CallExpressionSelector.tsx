@@ -8,21 +8,20 @@ import { NodeRender } from "../line";
 interface Props {
   node: objects.CallExpression;
   parentInfo: ParentInfo;
+  ref: React.RefObject<HTMLElement>;
+  firstField?: boolean;
   className?: string;
 }
 
-export default function CallExpressionSelector({ node, parentInfo, className }: Props) {
-  const {
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-    nodeMap,
-    parentMap,
-  } = useLineContext();
+export default function CallExpressionSelector({
+  node,
+  firstField,
+  parentInfo,
+  className,
+  ref,
+}: Props) {
+  const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo, nodeMap, parentMap } =
+    useLineContext();
 
   const [options, setOptions] = React.useState<Autocomplete.Option<AvailableDeclaration>[]>([]);
 
@@ -48,6 +47,7 @@ export default function CallExpressionSelector({ node, parentInfo, className }: 
         value: decl,
         label: decl.identifier,
         description: NodeRender({
+          ref: React.createRef<HTMLElement>() as React.RefObject<HTMLElement>,
           node: decl,
           parentInfo,
         }),
@@ -64,21 +64,17 @@ export default function CallExpressionSelector({ node, parentInfo, className }: 
     console.log("Available functions for call expression:", functions);
   };
 
-  const isSelected = focusRequest?.nodeId === node.id && focusRequest?.fieldKey === "idDeclaration";
-
   return (
     <Autocomplete.Field
+      ref={ref as React.RefObject<HTMLInputElement>}
+      firstField={firstField}
       currentValue={currentIdentifier}
       placeholder="function_name"
       options={options}
       onFocus={handleFocus}
-      focusRequest={focusRequest}
       nodeId={node.id}
       fieldKey="idDeclaration"
-      clearFocusRequest={clearFocusRequest}
       className={className}
-      isSelected={!!isSelected}
-      readOnly={mode === "view"}
     />
   );
 }

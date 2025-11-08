@@ -6,7 +6,6 @@ import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
 import { ParentInfo, useLineContext } from "../context/line/lineContext";
 import DebugMenu from "../components/DebugMenu";
-import { getFirstEditableField } from "../lib/editionHelpers";
 import DebugProvider from "../context/debug/DebugProvider";
 import LineProvider from "../context/line/LineProvider";
 
@@ -18,12 +17,9 @@ function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile })
   useEffect(() => {
     if (!hasRequestedRef.current && sourceFile.code.length > 0) {
       const firstNode = sourceFile.code[0];
-      const firstField = getFirstEditableField(firstNode);
-      if (firstField !== null) {
-        console.log("Requesting initial focus on first node:", firstNode.id, "field:", firstField);
-        requestFocus(firstNode.id, firstField);
-        hasRequestedRef.current = true;
-      }
+      console.log("Requesting initial focus on first node:", firstNode.id);
+      requestFocus({ nodeId: firstNode.id });
+      hasRequestedRef.current = true;
     }
   }, [sourceFile, requestFocus]);
 

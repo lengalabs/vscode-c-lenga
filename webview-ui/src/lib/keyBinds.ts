@@ -1,5 +1,49 @@
 import React from "react";
-import { EditorMode } from "../context/line/lineContext";
+import * as objects from "../../../src/language_objects/cNodes";
+import { EditorModeType } from "../context/line/lineContext";
+
+export interface NodeCallbacks extends NodeEditCallbacks, NodeNavigationCallbacks {}
+
+export interface NodeEditCallbacks extends NodeChildEditCallbacks, NodeParentEditCallbacks {}
+
+export interface NodeParentEditCallbacks {
+  // Insertion
+  onInsertSibling?: (node: objects.LanguageObject) => void;
+  onInsertSiblingBefore?: (node: objects.LanguageObject) => void;
+  onReplace?: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => void;
+
+  // Deletion
+  onDelete?: (node: objects.LanguageObject) => void;
+
+  // Movement
+  onMoveUp?: (node: objects.LanguageObject) => void;
+  onMoveDown?: (node: objects.LanguageObject) => void;
+  onMoveToParentPreviousSibling?: (node: objects.LanguageObject) => void;
+  onMoveToParentNextSibling?: (node: objects.LanguageObject) => void;
+  onMoveIntoNextSiblingsFirstChild?: (node: objects.LanguageObject) => void;
+  onMoveIntoPreviousSiblingsLastChild?: (node: objects.LanguageObject) => void;
+}
+
+export interface NodeChildEditCallbacks {
+  onInsertChildFirst?: () => void;
+  onInsertChildLast?: () => void;
+}
+
+// Navigation
+export interface NodeNavigationCallbacks
+  extends NodeParentNavigationCallbacks,
+    NodeChildNavigationCallbacks {}
+
+export interface NodeParentNavigationCallbacks {
+  onNavigateToParent?: () => void;
+  onNavigateToPreviousSibling?: () => void;
+  onNavigateToNextSibling?: () => void;
+}
+
+export interface NodeChildNavigationCallbacks {
+  onNavigateToFirstChild?: () => void;
+  onNavigateToLastChild?: () => void;
+}
 
 /**
  * Keyboard command abstraction for structured editing
@@ -12,10 +56,23 @@ import { EditorMode } from "../context/line/lineContext";
  *   - insertSibling: Create a sibling node after (mapped to Enter key)
  *   - insertSiblingBefore: Create a sibling node before (mapped to Shift+Enter)
  *   - delete: Remove the current node (mapped to Delete key)
+ *   - Navigation:
+ *     - previousSibling: Navigate to previous sibling (mapped to ArrowUp)
+ *     - nextSibling: Navigate to next sibling (mapped to ArrowDown)
+ *     - parentNode: Navigate to parent node (mapped to ArrowLeft)
+ *     - firstChild: Navigate to first child (mapped to ArrowRight)
+ *     - lastChild: Navigate to last child (mapped to Shift+ArrowRight)
+ *   - Movement (for array elements):
+ *     - moveNodeUp: Move current node up in array (mapped to Alt+ArrowUp)
+ *     - moveNodeDown: Move current node down in array (mapped to Alt+ArrowDown)
+ *     - moveNodeToParentPreviousSibling: Move node to become previous sibling of parent (mapped to Alt+ArrowLeft)
+ *     - moveNodeToParentNextSibling: Move node to become next sibling of parent (mapped to Alt+Shift+ArrowLeft)
+ *     - moveNodeIntoNextSiblingsFirstChild: Move node into next sibling's first position (mapped to Alt+ArrowRight)
+ *     - moveNodeIntoPreviousSiblingsLastChild: Move node into previous sibling's last position (mapped to Alt+Shift+ArrowRight)
  *
  * - Edit mode (for array fields):
- *   - insertFirst: Insert new element at beginning (mapped to Enter key)
- *   - insertLast: Insert new element at end (mapped to Shift+Enter key)
+ *   - insertChildFirst: Insert new element at beginning (mapped to Enter key)
+ *   - insertChildLast: Insert new element at end (mapped to Shift+Enter key)
  *   - delete: Remove content (mapped to Delete key)
  *
  * - Edit mode (for single fields):
@@ -29,46 +86,89 @@ import { EditorMode } from "../context/line/lineContext";
  *
  * Usage:
  *   const handleKeyDown = createKeyDownHandler(mode, {
- *     edit: {
- *       insertFirst: () => { ... }
- *     }
+ *     insertChildFirst: () => { ... }
  *   });
  */
 // Command types that render functions can use
-type CommandHandler = () => void;
-interface CommandHandlers {
-  view?: {
-    insertSibling?: CommandHandler;
-    insertSiblingBefore?: CommandHandler;
-    delete?: CommandHandler;
-  };
-  edit?: {
-    insertFirst?: CommandHandler; // For array fields
-    insertLast?: CommandHandler; // For array fields
-    delete?: CommandHandler;
-  };
+type Callback = () => void;
+
+export interface NodeCommandHandlers
+  extends NodeEditCommandHandlers,
+    NodeNavigationCommandHandlers {}
+
+export interface NodeEditCommandHandlers {
+  // Insertion
+  insertSibling?: Callback;
+  insertSiblingBefore?: Callback;
+  insertChildFirst?: Callback;
+  insertChildLast?: Callback;
+
+  // Deletion
+  delete?: Callback;
+
+  // Movement
+  moveNodeUp?: Callback;
+  moveNodeDown?: Callback;
+  moveNodeToParentPreviousSibling?: Callback;
+  moveNodeToParentNextSibling?: Callback;
+  moveNodeIntoNextSiblingsFirstChild?: Callback;
+  moveNodeIntoPreviousSiblingsLastChild?: Callback;
 }
+
+export interface NodeNavigationCommandHandlers
+  extends NodeParentNavigationCommandHandlers,
+    NodeChildNavigationCommandHandlers {}
+
+export interface NodeParentNavigationCommandHandlers {
+  // Navigation
+  navigateToPreviousSibling: Callback;
+  navigateToNextSibling: Callback;
+  navigateToParent: Callback;
+}
+
+export interface NodeChildNavigationCommandHandlers {
+  navigateToFirstChild: Callback;
+  navigateToLastChild: Callback;
+}
+
 // Key combination to command name mapping
 type KeyMapping = {
-  [key: string]: string; // serialized combo -> command name
+  [key: string]: string;
 };
 
-const KEY_MAPPINGS: Record<EditorMode, KeyMapping> = {
+export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
   view: {
+    // Insertion
     Enter: "insertSibling",
     "Shift+Enter": "insertSiblingBefore",
+    "Ctrl+Enter": "insertChildFirst",
+    "Ctrl+Shift+Enter": "insertChildLast",
+    // Deletion
     Delete: "delete",
+    // Navigation
+    ArrowUp: "navigateToPreviousSibling",
+    ArrowDown: "navigateToNextSibling",
+    ArrowLeft: "navigateToParent",
+    ArrowRight: "navigateToFirstChild",
+    "Shift+ArrowRight": "navigateToLastChild",
+    // Permutation
+    "Alt+ArrowUp": "moveNodeUp",
+    "Alt+ArrowDown": "moveNodeDown",
+    "Alt+ArrowLeft": "moveNodeToParentPreviousSibling", // Move to become previous sibling of parent
+    "Alt+Shift+ArrowLeft": "moveNodeToParentNextSibling", // Move to become next sibling of parent
+    "Alt+Shift+ArrowDown": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
+    "Alt+ArrowRight": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
+    "Alt+Shift+ArrowUp": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
+    "Alt+Shift+ArrowRight": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
   },
   edit: {
-    Enter: "insertFirst",
-    "Shift+Enter": "insertLast",
     Delete: "delete",
   },
 };
 
 // Helper to serialize key event to string for lookup
 // Modifiers are always in alphabetical order: Alt+Ctrl+Shift+Key
-function getKeyComboString(e: React.KeyboardEvent): string {
+export function getKeyComboString(e: React.KeyboardEvent): string {
   const parts: string[] = [];
   if (e.altKey) {
     parts.push("Alt");
@@ -81,32 +181,4 @@ function getKeyComboString(e: React.KeyboardEvent): string {
   }
   parts.push(e.key);
   return parts.join("+");
-}
-
-// Helper to create structured keydown handlers with automatic event management
-export function createKeyDownHandler(
-  mode: EditorMode,
-  commands: CommandHandlers
-): (e: React.KeyboardEvent) => void {
-  return (e: React.KeyboardEvent) => {
-    const modeCommands = commands[mode];
-    if (!modeCommands) {
-      return;
-    }
-
-    const keyMapping = KEY_MAPPINGS[mode];
-    const comboString = getKeyComboString(e);
-    const commandName = keyMapping[comboString];
-
-    if (!commandName) {
-      return;
-    }
-
-    const command = modeCommands[commandName as keyof typeof modeCommands];
-    if (command) {
-      e.preventDefault();
-      e.stopPropagation();
-      command();
-    }
-  };
 }

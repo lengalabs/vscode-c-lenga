@@ -1,7 +1,7 @@
 import * as objects from "../../../../src/language_objects/cNodes";
 import * as Autocomplete from "./Autocomplete";
 import { ParentInfo, useLineContext } from "../../context/line/lineContext";
-
+import React from "react";
 // Valid C types for the type selector
 const C_TYPES = [
   "void",
@@ -31,6 +31,8 @@ interface TypeSelectorProps<T extends objects.LanguageObject, K extends string &
   node: T;
   key: K;
   parentInfo: ParentInfo;
+  ref: React.RefObject<HTMLElement>;
+  firstField?: boolean;
   className?: string;
 }
 
@@ -38,21 +40,12 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
   node,
   key,
   parentInfo,
+  firstField,
+  ref,
   className,
 }: TypeSelectorProps<T, K>) {
-  const {
-    selectedNodeId,
-    selectedKey,
-    onEdit,
-    setSelectedNodeId,
-    setSelectedKey,
-    setParentNodeInfo,
-    focusRequest,
-    clearFocusRequest,
-    mode,
-  } = useLineContext();
+  const { onEdit, setSelectedNodeId, setSelectedKey, setParentNodeInfo } = useLineContext();
 
-  const isSelected = selectedNodeId === node.id && selectedKey && selectedKey === key;
   const currentValue = String(node[key] ?? "");
 
   function commitValue(selectedType: string) {
@@ -92,18 +85,16 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
 
   return (
     <Autocomplete.Field
+      ref={ref as React.RefObject<HTMLInputElement>}
+      firstField={firstField}
       currentValue={currentValue}
       placeholder="type"
       options={options}
       onNoMatch={handleNoMatch}
       onFocus={handleFocus}
-      focusRequest={focusRequest}
       nodeId={node.id}
       fieldKey={key}
-      clearFocusRequest={clearFocusRequest}
       className={className}
-      isSelected={!!isSelected}
-      readOnly={mode === "view"}
     />
   );
 }

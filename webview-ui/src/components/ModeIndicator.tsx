@@ -1,11 +1,11 @@
 import { useState, KeyboardEvent } from "react";
-import { useLineContext } from "../context/line/lineContext";
+import { EditorMode, useLineContext } from "../context/line/lineContext";
 
 export default function ModeIndicator() {
   const { mode, setMode } = useLineContext();
   const [isHovered, setIsHovered] = useState(false);
   const toggleMode = () => {
-    setMode(mode === "view" ? "edit" : "view");
+    setMode(mode === EditorMode.View ? EditorMode.Edit : EditorMode.View);
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -15,7 +15,9 @@ export default function ModeIndicator() {
   };
   const keyHintId = "mode-indicator-keybind";
   const keyHint =
-    mode === "view" ? "Press I to switch to edit mode" : "Press Esc to return to view mode";
+    mode === EditorMode.View
+      ? "Press I to switch to edit mode"
+      : "Press Esc to return to view mode";
 
   return (
     <div
@@ -42,16 +44,16 @@ export default function ModeIndicator() {
         style={{
           padding: "5px 10px",
           backgroundColor:
-            mode === "view"
+            mode === EditorMode.View
               ? "var(--vscode-editorInfo-background)"
               : "var(--vscode-editorWarning-background)",
           color:
-            mode === "view"
+            mode === EditorMode.View
               ? "var(--vscode-editorInfo-foreground)"
               : "var(--vscode-editorWarning-foreground)",
           border:
             "1px solid " +
-            (mode === "view"
+            (mode === EditorMode.View
               ? "var(--vscode-editorInfo-border)"
               : "var(--vscode-editorWarning-border)"),
           borderRadius: "3px",
@@ -61,7 +63,7 @@ export default function ModeIndicator() {
           transition: "box-shadow 0.15s ease, transform 0.15s ease, filter 0.15s ease",
           boxShadow: isHovered
             ? `0 0 0 2px ${
-                mode === "view"
+                mode === EditorMode.View
                   ? "var(--vscode-editorInfo-border)"
                   : "var(--vscode-editorWarning-border)"
               }`

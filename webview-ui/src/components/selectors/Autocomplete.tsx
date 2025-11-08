@@ -1,5 +1,6 @@
 import React from "react";
 import Fuse from "fuse.js";
+import { EditorMode, useLineContext } from "../../context/line/lineContext";
 
 export interface Option<T> {
   value: T;
@@ -28,17 +29,14 @@ interface Props<T> {
   onNoMatch?: (inputText: string) => void; // Called when no valid option matches
 
   // Focus management
-  focusRequest: { nodeId: string; fieldKey: string } | null;
   nodeId: string;
   fieldKey: string;
-  clearFocusRequest: () => void;
 
+  ref: React.RefObject<HTMLInputElement>;
+
+  firstField?: boolean;
   // Styling
   className?: string;
-  isSelected?: boolean;
-
-  // Mode
-  readOnly?: boolean;
 }
 
 export function Field<T>({
@@ -47,18 +45,18 @@ export function Field<T>({
   options,
   onFocus,
   onNoMatch,
-  focusRequest,
   nodeId,
   fieldKey,
-  clearFocusRequest,
+  ref,
+  firstField = false,
   className,
-  isSelected = false,
-  readOnly = false,
 }: Props<T>) {
+  const { mode, focusRequest, clearFocusRequest } = useLineContext();
+  const readOnly = mode === EditorMode.View;
+
   const [inputValue, setInputValue] = React.useState(currentValue);
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const hasFocusedRef = React.useRef(false);
 
   // Filter options based on input
@@ -82,13 +80,13 @@ export function Field<T>({
     if (
       focusRequest &&
       focusRequest.nodeId === nodeId &&
-      focusRequest.fieldKey === fieldKey &&
+      (firstField || focusRequest.fieldKey === fieldKey) &&
       !hasFocusedRef.current
     ) {
       console.log("Focusing autocomplete field for node:", nodeId, " field:", fieldKey);
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
+      if (ref.current) {
+        ref.current.focus();
+        ref.current.select();
         hasFocusedRef.current = true;
         clearFocusRequest();
       }
@@ -96,7 +94,7 @@ export function Field<T>({
     if (!focusRequest) {
       hasFocusedRef.current = false;
     }
-  }, [focusRequest, nodeId, fieldKey, clearFocusRequest]);
+  }, [focusRequest, nodeId, fieldKey, clearFocusRequest, firstField, ref]);
 
   const commitValue = (matchedOption: OptionMatch<T> | null) => {
     if (matchedOption) {
@@ -174,15 +172,9 @@ export function Field<T>({
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <input
-        ref={inputRef}
+        ref={ref}
         className={`inline-editor ${className ?? ""}`}
         style={{
-          ...(isSelected
-            ? {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                boxShadow: "inset 0 -1px 0 0 rgba(163, 209, 252, 0.5)",
-              }
-            : {}),
           width,
         }}
         value={inputValue}

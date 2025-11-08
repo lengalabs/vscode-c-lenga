@@ -1,6 +1,7 @@
 import { FunctionDefinition } from "../../../../src/language_objects/cNodes";
 import { NodeRender } from "../../components/line";
 import { ParentInfo } from "../../context/line/lineContext";
+import React from "react";
 import { Position, Handle } from "@xyflow/react";
 
 export type FunctionFlowNode = {
@@ -17,7 +18,12 @@ export function FunctionNode({
 }) {
   return (
     <div className="function-node">
-      <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
+      <NodeRender
+        ref={React.createRef<HTMLElement>() as React.RefObject<HTMLElement>}
+        node={data.func}
+        key={data.func.id}
+        parentInfo={data.parentInfo}
+      />
 
       <Handle
         type="target"
