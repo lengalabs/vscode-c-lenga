@@ -15,8 +15,6 @@ export function FunctionNode({
 }: {
   data: { func: FunctionDefinition; handlerPositions: number[]; parentInfo: ParentInfo };
 }) {
-  const lineHeight = 22;
-
   return (
     <div className="function-node">
       <NodeRender node={data.func} key={data.func.id} parentInfo={data.parentInfo} />
@@ -37,7 +35,7 @@ export function FunctionNode({
           position={Position.Right}
           style={{
             position: "absolute",
-            top: callPosition * lineHeight,
+            top: `calc(${callPosition + 0.5} * var(--vscode-editor-line-height, 1.2) * var(--vscode-editor-font-size, 14px))`,
             right: 0,
             visibility: "hidden",
             transform: "translateY(50%)",

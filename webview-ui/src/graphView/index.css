@@ -7,10 +7,43 @@ body,
   width: 100%;
 }
 
-
 .function-node {
   background-color: var(--vscode-editor-background);
   padding: 5px;
   border: 3px solid grey;
   border-radius: 10px;
+}
+
+html body .react-flow {
+  --xy-background-pattern-dots-color-default: var(--vscode-editorIndentGuide-background, #91919a);
+  --xy-background-pattern-line-color-default: var(--vscode-editorIndentGuide-background, #eee);
+  --xy-background-pattern-cross-color-default: var(--vscode-editorIndentGuide-background, #e2e2e2);
+
+  --xy-node-background-color-default: var(--vscode-editor-background);
+  --xy-node-border-default: 1px solid var(--vscode-editor-lineHighlightBorder);
+  --xy-node-color-default: var(--vscode-editor-foreground);
+
+  --xy-selection-background-color-default: var(--vscode-editor-selectionBackground);
+  --xy-selection-border-default: 1px dotted
+    var(--vscode-editor-selectionHighlightBorder, rgba(0, 89, 220, 0.8));
+
+  --xy-controls-button-background-color-default: var(--vscode-editorWidget-background);
+  --xy-controls-button-background-color-hover-default: var(--vscode-editorHoverWidget-background);
+  --xy-controls-button-color-default: var(--vscode-editorWidget-foreground);
+  --xy-controls-button-color-hover-default: var(--vscode-editorWidget-foreground);
+  --xy-controls-button-border-color-default: var(--vscode-editorWidget-border);
+  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.35);
+}
+
+html body .react-flow__minimap {
+  box-shadow: 0 0 0 1px var(--vscode-editorWidget-border);
+  border-radius: 2px;
+  background-color: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 255, 0.08));
+}
+
+html body .react-flow__minimap-mask {
+  fill: var(--vscode-editor-background);
+  fill-opacity: 0.7;
+  stroke: var(--vscode-editor-selectionHighlightBorder, rgba(0, 89, 220, 0.8));
+  stroke-width: 1.5;
 }

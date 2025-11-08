@@ -70,9 +70,15 @@ const KEY_MAPPINGS: Record<EditorMode, KeyMapping> = {
 // Modifiers are always in alphabetical order: Alt+Ctrl+Shift+Key
 function getKeyComboString(e: React.KeyboardEvent): string {
   const parts: string[] = [];
-  if (e.altKey) parts.push("Alt");
-  if (e.ctrlKey) parts.push("Ctrl");
-  if (e.shiftKey) parts.push("Shift");
+  if (e.altKey) {
+    parts.push("Alt");
+  }
+  if (e.ctrlKey) {
+    parts.push("Ctrl");
+  }
+  if (e.shiftKey) {
+    parts.push("Shift");
+  }
   parts.push(e.key);
   return parts.join("+");
 }
