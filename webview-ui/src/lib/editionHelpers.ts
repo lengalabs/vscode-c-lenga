@@ -455,6 +455,24 @@ export function createArrayFieldCallbacks<
       }
       console.log("Cannot move into previous sibling's children");
     },
+    onMoveToParentPreviousSibling: (node: objects.LanguageObject) => {
+      console.log("Moving node to parent's previous sibling:", node.id, " from index:", index);
+      const parentInfo = parentMap.get(parent.id);
+      
+      if (parentInfo && moveNodeToParentSibling(node, parent, key, index, parentInfo, "before", parentMap, onEdit, requestFocus)) {
+        return; // Successfully moved to parent sibling
+      }
+      console.log("Cannot move to parent's previous sibling");
+    },
+    onMoveToParentNextSibling: (node: objects.LanguageObject) => {
+      console.log("Moving node to parent's next sibling:", node.id, " from index:", index);
+      const parentInfo = parentMap.get(parent.id);
+      
+      if (parentInfo && moveNodeToParentSibling(node, parent, key, index, parentInfo, "after", parentMap, onEdit, requestFocus)) {
+        return; // Successfully moved to parent sibling
+      }
+      console.log("Cannot move to parent's next sibling");
+    },
   };
 }
 

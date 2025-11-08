@@ -160,6 +160,18 @@ export function Object({ node, parentInfo, children, display = "block", callback
         callbacks.onMoveIntoPreviousSiblingsLastChild(node);
       }
     },
+    moveNodeToParentPreviousSibling: () => {
+      if (callbacks?.onMoveToParentPreviousSibling) {
+        console.log("Object: moveNodeToParentPreviousSibling", node.type);
+        callbacks.onMoveToParentPreviousSibling(node);
+      }
+    },
+    moveNodeToParentNextSibling: () => {
+      if (callbacks?.onMoveToParentNextSibling) {
+        console.log("Object: moveNodeToParentNextSibling", node.type);
+        callbacks.onMoveToParentNextSibling(node);
+      }
+    },
   });
 
   const Element = display === "inline" ? "span" : "div";
