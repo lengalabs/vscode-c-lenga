@@ -157,7 +157,9 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     "Alt+ArrowLeft": "moveNodeToParentPreviousSibling", // Move to become previous sibling of parent
     "Alt+Shift+ArrowLeft": "moveNodeToParentNextSibling", // Move to become next sibling of parent
     "Alt+Shift+ArrowDown": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
+    "Alt+ArrowRight": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
     "Alt+Shift+ArrowUp": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
+    "Alt+Shift+ArrowRight": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
   },
   edit: {
     Delete: "delete",
