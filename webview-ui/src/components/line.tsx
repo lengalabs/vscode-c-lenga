@@ -814,17 +814,23 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     lastChild: elseRef as React.RefObject<HTMLElement>,
   });
 
-  const conditionCallbacks = createParentNavigationCallbacks({
-    parent: props.ref as React.RefObject<HTMLElement>,
-    previousSibling: props.ref as React.RefObject<HTMLElement>,
-    nextSibling: bodyRef as React.RefObject<HTMLElement>,
-  });
+  const conditionCallbacks = {
+    ...createRequiredFieldCallbacks(props.node, "condition", nodeMap, onEdit, requestFocus),
+    ...createParentNavigationCallbacks({
+      parent: props.ref as React.RefObject<HTMLElement>,
+      previousSibling: props.ref as React.RefObject<HTMLElement>,
+      nextSibling: bodyRef as React.RefObject<HTMLElement>,
+    }),
+  };
 
-  const bodyCallbacks = createParentNavigationCallbacks({
-    parent: props.ref as React.RefObject<HTMLElement>,
-    previousSibling: conditionRef as React.RefObject<HTMLElement>,
-    nextSibling: elseRef as React.RefObject<HTMLElement>,
-  });
+  const bodyCallbacks = {
+    ...createRequiredFieldCallbacks(props.node, "body", nodeMap, onEdit, requestFocus),
+    ...createParentNavigationCallbacks({
+      parent: props.ref as React.RefObject<HTMLElement>,
+      previousSibling: conditionRef as React.RefObject<HTMLElement>,
+      nextSibling: elseRef as React.RefObject<HTMLElement>,
+    }),
+  };
 
   const elseRender =
     props.node.elseStatement &&
