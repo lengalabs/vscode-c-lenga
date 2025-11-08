@@ -1,5 +1,5 @@
 import * as objects from "../../../src/language_objects/cNodes";
-import { EditorModeType } from "../context/line/lineContext";
+import { EditorModeType, ParentInfo } from "../context/line/lineContext";
 import { FocusRequest } from "../context/line/LineProvider";
 import {
   getKeyComboString,
@@ -58,6 +58,83 @@ export function appendToArray<T extends objects.LanguageObject, K extends string
   onEdit(node, key);
 }
 
+// Helper function to move a node to become a sibling of its parent
+function moveNodeToParentSibling<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: objects.LanguageObject,
+  currentParent: T,
+  currentKey: K,
+  currentIndex: number,
+  currentParentInfo: ParentInfo,
+  direction: "before" | "after",
+  parentMap: Map<string, ParentInfo>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (props: FocusRequest) => void
+): boolean {
+  // Get the grandparent (parent's parent)
+  const grandparent = currentParentInfo.parent;
+  const grandparentKey = currentParentInfo.key;
+  const parentIndex = currentParentInfo.index;
+
+  // Check if grandparent has an array field that we can insert into
+  const grandparentField = grandparent[grandparentKey as keyof typeof grandparent];
+
+  // Ensure the grandparent field is an array
+  if (!Array.isArray(grandparentField)) {
+    return false; // Cannot move to non-array field
+  }
+
+  // Remove node from current parent
+  const currentField = currentParent[currentKey] as unknown as objects.LanguageObject[];
+  const newCurrentField = [
+    ...currentField.slice(0, currentIndex),
+    ...currentField.slice(currentIndex + 1),
+  ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (currentParent as any)[currentKey] = newCurrentField;
+
+  // Insert node into grandparent array
+  const grandparentArray = [...grandparentField] as objects.LanguageObject[];
+  let insertIndex;
+
+  if (direction === "before") {
+    insertIndex = parentIndex; // Insert before the parent
+  } else {
+    insertIndex = parentIndex + 1; // Insert after the parent
+  }
+
+  grandparentArray.splice(insertIndex, 0, node);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (grandparent as any)[grandparentKey] = grandparentArray;
+
+  // Update parent map for the moved node
+  parentMap.set(node.id, {
+    parent: grandparent,
+    key: grandparentKey,
+    index: insertIndex,
+  } as ParentInfo);
+
+  // Update parent map for nodes that shifted in grandparent array
+  grandparentArray.forEach((sibling, idx) => {
+    if (idx >= insertIndex) {
+      parentMap.set(sibling.id, {
+        parent: grandparent,
+        key: grandparentKey,
+        index: idx,
+      } as ParentInfo);
+    }
+  });
+
+  // Notify changes
+  // onEdit(currentParent, currentKey);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onEdit(grandparent as any, grandparentKey as any);
+
+  // Keep focus on moved node
+  requestFocus({ nodeId: node.id });
+
+  return true;
+}
+
 // Helper to create callbacks for array fields (supports insert & delete)
 export function createArrayFieldCallbacks<
   T extends objects.LanguageObject,
@@ -67,7 +144,8 @@ export function createArrayFieldCallbacks<
   key: K,
   index: number,
   constructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject,
-  nodeMap: Map<string, objects.LanguageObject>, // Should there be a single callback to update the map and notify server onEdit?
+  nodeMap: Map<string, objects.LanguageObject>,
+  parentMap: Map<string, ParentInfo>,
   onEdit: (node: T, key: K) => void,
   requestFocus: (props: FocusRequest) => void
 ): NodeEditCallbacks {
@@ -131,42 +209,76 @@ export function createArrayFieldCallbacks<
     onMoveUp: (node: objects.LanguageObject) => {
       console.log("Moving node up:", node.id, " from index:", index);
       const field = parent[key] as unknown as objects.LanguageObject[];
-      
-      // Can't move up if already at the beginning
+
+      // If at the beginning, try to move to parent's previous sibling
       if (index === 0) {
-        console.log("Node is already at the beginning, cannot move up");
+        const parentInfo = parentMap.get(parent.id);
+        if (
+          parentInfo &&
+          moveNodeToParentSibling(
+            node,
+            parent,
+            key,
+            index,
+            parentInfo,
+            "before",
+            parentMap,
+            onEdit,
+            requestFocus
+          )
+        ) {
+          return; // Successfully moved to parent sibling
+        }
+        console.log("Node is already at the beginning and cannot move to parent sibling");
         return;
       }
 
       const newArray = [...field];
       // Swap with previous item
       [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = newArray;
       onEdit(parent, key);
-      
+
       // Keep focus on the moved node
       requestFocus({ nodeId: node.id });
     },
     onMoveDown: (node: objects.LanguageObject) => {
       console.log("Moving node down:", node.id, " from index:", index);
       const field = parent[key] as unknown as objects.LanguageObject[];
-      
-      // Can't move down if already at the end
+
+      // If at the end, try to move to parent's next sibling
       if (index === field.length - 1) {
-        console.log("Node is already at the end, cannot move down");
+        const parentInfo = parentMap.get(parent.id);
+        if (
+          parentInfo &&
+          moveNodeToParentSibling(
+            node,
+            parent,
+            key,
+            index,
+            parentInfo,
+            "after",
+            parentMap,
+            onEdit,
+            requestFocus
+          )
+        ) {
+          return; // Successfully moved to parent sibling
+        }
+        console.log("Node is already at the end and cannot move to parent sibling");
         return;
       }
 
       const newArray = [...field];
       // Swap with next item
       [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (parent as any)[key] = newArray;
       onEdit(parent, key);
-      
+
       // Keep focus on the moved node
       requestFocus({ nodeId: node.id });
     },

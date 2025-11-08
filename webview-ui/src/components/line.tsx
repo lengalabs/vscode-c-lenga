@@ -312,7 +312,7 @@ function ListItem<
   nodeRef: React.RefObject<HTMLElement>,
   refs: ParentRefs
 ) {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, parentMap, onEdit, requestFocus } = useLineContext();
 
   const arrayFieldCallbacks = createArrayFieldCallbacks(
     parent.node,
@@ -320,6 +320,7 @@ function ListItem<
     i,
     callbacks.insertConstructor,
     nodeMap,
+    parentMap,
     onEdit,
     requestFocus
   );
