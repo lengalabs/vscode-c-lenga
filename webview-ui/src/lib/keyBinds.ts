@@ -18,6 +18,8 @@ export interface NodeParentEditCallbacks {
   // Movement
   onMoveUp?: (node: objects.LanguageObject) => void;
   onMoveDown?: (node: objects.LanguageObject) => void;
+  onMoveIntoNextSiblingsFirstChild?: (node: objects.LanguageObject) => void;
+  onMoveIntoPreviousSiblingsLastChild?: (node: objects.LanguageObject) => void;
 }
 
 export interface NodeChildEditCallbacks {
@@ -61,6 +63,8 @@ export interface NodeChildNavigationCallbacks {
  *   - Movement (for array elements):
  *     - moveNodeUp: Move current node up in array (mapped to Alt+ArrowUp)
  *     - moveNodeDown: Move current node down in array (mapped to Alt+ArrowDown)
+ *     - moveNodeIntoNextSiblingsFirstChild: Move node into next sibling's first position (mapped to Alt+ArrowRight)
+ *     - moveNodeIntoPreviousSiblingsLastChild: Move node into previous sibling's last position (mapped to Alt+Shift+ArrowRight)
  *
  * - Edit mode (for array fields):
  *   - insertChildFirst: Insert new element at beginning (mapped to Enter key)
@@ -101,6 +105,8 @@ export interface NodeEditCommandHandlers {
   // Movement
   moveNodeUp?: Callback;
   moveNodeDown?: Callback;
+  moveNodeIntoNextSiblingsFirstChild?: Callback;
+  moveNodeIntoPreviousSiblingsLastChild?: Callback;
 }
 
 export interface NodeNavigationCommandHandlers
@@ -142,6 +148,8 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     // Permutation
     "Alt+ArrowUp": "moveNodeUp",
     "Alt+ArrowDown": "moveNodeDown",
+    "Alt+Shift+ArrowDown": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
+    "Alt+Shift+ArrowUp": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
   },
   edit: {
     Delete: "delete",

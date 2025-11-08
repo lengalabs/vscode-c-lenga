@@ -125,7 +125,6 @@ function moveNodeToParentSibling<T extends objects.LanguageObject, K extends str
   });
 
   // Notify changes
-  // onEdit(currentParent, currentKey);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onEdit(grandparent as any, grandparentKey as any);
 
@@ -133,6 +132,135 @@ function moveNodeToParentSibling<T extends objects.LanguageObject, K extends str
   requestFocus({ nodeId: node.id });
 
   return true;
+}
+
+// Helper function to move a node into a sibling's children array
+function moveNodeIntoSibling<T extends objects.LanguageObject, K extends string & keyof T>(
+  node: objects.LanguageObject,
+  currentParent: T,
+  currentKey: K,
+  currentIndex: number,
+  targetSiblingIndex: number,
+  position: "first" | "last",
+  parentMap: Map<string, ParentInfo>,
+  onEdit: (node: T, key: K) => void,
+  requestFocus: (props: FocusRequest) => void
+): boolean {
+  const currentField = currentParent[currentKey] as unknown as objects.LanguageObject[];
+
+  // Check if target sibling exists
+  if (
+    targetSiblingIndex < 0 ||
+    targetSiblingIndex >= currentField.length ||
+    targetSiblingIndex === currentIndex
+  ) {
+    return false;
+  }
+
+  const targetSibling = currentField[targetSiblingIndex];
+
+  // Find an array field in the target sibling to move into
+  // We'll look for common array fields that can contain statements
+  const arrayFields = findArrayFieldsInNode(targetSibling);
+
+  if (arrayFields.length === 0) {
+    return false; // Target sibling has no array fields
+  }
+
+  // Use the first available array field (could be made more sophisticated)
+  const targetField = arrayFields[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const targetArray = (targetSibling as any)[targetField] as objects.LanguageObject[];
+
+  // Remove node from current array
+  const newCurrentField = [
+    ...currentField.slice(0, currentIndex),
+    ...currentField.slice(currentIndex + 1),
+  ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (currentParent as any)[currentKey] = newCurrentField;
+
+  // Add node to target sibling's array
+  const newTargetArray = [...targetArray];
+  let insertIndex;
+
+  if (position === "first") {
+    insertIndex = 0;
+    newTargetArray.unshift(node);
+  } else {
+    insertIndex = newTargetArray.length;
+    newTargetArray.push(node);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (targetSibling as any)[targetField] = newTargetArray;
+
+  // Update parent map for the moved node
+  parentMap.set(node.id, {
+    parent: targetSibling,
+    key: targetField,
+    index: insertIndex,
+  } as ParentInfo);
+
+  // Update parent map for nodes that shifted in current array
+  newCurrentField.forEach((sibling, idx) => {
+    if (idx >= currentIndex) {
+      parentMap.set(sibling.id, {
+        parent: currentParent,
+        key: currentKey,
+        index: idx,
+      } as ParentInfo);
+    }
+  });
+
+  // Update parent map for nodes that shifted in target array
+  newTargetArray.forEach((child, idx) => {
+    if (idx >= insertIndex) {
+      parentMap.set(child.id, {
+        parent: targetSibling,
+        key: targetField,
+        index: idx,
+      } as ParentInfo);
+    }
+  });
+
+  // Notify changes
+  onEdit(currentParent, currentKey);
+
+  // Keep focus on moved node
+  requestFocus({ nodeId: node.id });
+
+  return true;
+}
+
+// Helper function to find array fields in a node that can contain child nodes
+function findArrayFieldsInNode(node: objects.LanguageObject): string[] {
+  const arrayFields: string[] = [];
+
+  // Check common array fields based on node type
+  switch (node.type) {
+    case "compoundStatement":
+      arrayFields.push("codeBlock");
+      break;
+    case "functionDeclaration":
+    case "functionDefinition":
+      arrayFields.push("parameterList");
+      break;
+    case "callExpression":
+      arrayFields.push("argumentList");
+      break;
+    case "sourceFile":
+      arrayFields.push("code");
+      break;
+    // Add more cases as needed for other node types that have array children
+  }
+
+  // Filter to only include fields that actually exist and are arrays
+  return arrayFields.filter((field) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fieldValue = (node as any)[field];
+    return Array.isArray(fieldValue);
+  });
 }
 
 // Helper to create callbacks for array fields (supports insert & delete)
@@ -281,6 +409,51 @@ export function createArrayFieldCallbacks<
 
       // Keep focus on the moved node
       requestFocus({ nodeId: node.id });
+    },
+    onMoveIntoNextSiblingsFirstChild: (node: objects.LanguageObject) => {
+      console.log("Moving node into next sibling's first child:", node.id, " from index:", index);
+
+      if (
+        moveNodeIntoSibling(
+          node,
+          parent,
+          key,
+          index,
+          index + 1,
+          "first",
+          parentMap,
+          onEdit,
+          requestFocus
+        )
+      ) {
+        return; // Successfully moved into next sibling
+      }
+      console.log("Cannot move into next sibling's children");
+    },
+    onMoveIntoPreviousSiblingsLastChild: (node: objects.LanguageObject) => {
+      console.log(
+        "Moving node into previous sibling's last child:",
+        node.id,
+        " from index:",
+        index
+      );
+
+      if (
+        moveNodeIntoSibling(
+          node,
+          parent,
+          key,
+          index,
+          index - 1,
+          "last",
+          parentMap,
+          onEdit,
+          requestFocus
+        )
+      ) {
+        return; // Successfully moved into previous sibling
+      }
+      console.log("Cannot move into previous sibling's children");
     },
   };
 }

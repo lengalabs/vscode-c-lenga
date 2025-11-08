@@ -35,6 +35,8 @@ export interface NodeEditCallbacks {
   // Movement
   onMoveUp?: (node: objects.LanguageObject) => void;
   onMoveDown?: (node: objects.LanguageObject) => void;
+  onMoveIntoNextSiblingsFirstChild?: (node: objects.LanguageObject) => void;
+  onMoveIntoPreviousSiblingsLastChild?: (node: objects.LanguageObject) => void;
 }
 
 export interface LineContextType {

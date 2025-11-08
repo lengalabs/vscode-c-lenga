@@ -148,6 +148,18 @@ export function Object({ node, parentInfo, children, display = "block", callback
         callbacks.onMoveDown(node);
       }
     },
+    moveNodeIntoNextSiblingsFirstChild: () => {
+      if (callbacks?.onMoveIntoNextSiblingsFirstChild) {
+        console.log("Object: moveNodeIntoNextSiblingsFirstChild", node.type);
+        callbacks.onMoveIntoNextSiblingsFirstChild(node);
+      }
+    },
+    moveNodeIntoPreviousSiblingsLastChild: () => {
+      if (callbacks?.onMoveIntoPreviousSiblingsLastChild) {
+        console.log("Object: moveNodeIntoPreviousSiblingsLastChild", node.type);
+        callbacks.onMoveIntoPreviousSiblingsLastChild(node);
+      }
+    },
   });
 
   const Element = display === "inline" ? "span" : "div";
