@@ -131,7 +131,7 @@ export function createArrayFieldCallbacks<
   };
 }
 
-export function createParentArrayFieldCallbacks<
+export function createParentArrayFieldEditCallbacks<
   T extends objects.LanguageObject,
   K extends string & keyof T,
 >(

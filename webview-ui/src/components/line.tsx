@@ -16,7 +16,7 @@ import {
   createUnknown,
   prependToArray,
   createKeyDownHandler,
-  createParentArrayFieldCallbacks,
+  createParentArrayFieldEditCallbacks,
   createParentOptionalFieldCallbacks,
 } from "../lib/editionHelpers";
 import * as Autocomplete from "./selectors/Autocomplete";
@@ -26,7 +26,12 @@ import ReferenceSelector from "./selectors/ReferenceSelector";
 import EditableField from "./EditableField";
 import TypeSelector from "./selectors/TypeSelector";
 import { FocusRequest } from "../context/line/LineProvider";
-import { createParentNativationCallbacks, ParentRefs } from "../lib/navigationHelpers";
+import {
+  ChildRefs,
+  createChildNavigationCallbacks,
+  createParentNavigationCallbacks,
+  ParentRefs,
+} from "../lib/navigationHelpers";
 import { NodeEditCallbacks, NodeNavigationCallbacks } from "../lib/keyBinds";
 
 // Hook to handle focus requests for structural nodes (nodes with tabIndex={0})
@@ -231,7 +236,7 @@ function ListFieldRender<
     insertConstructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject;
   },
   render: (props: ItemRenderProps<KT>) => React.ReactNode
-): React.ReactNode {
+): { listRender: React.ReactNode; childRefs: ChildRefs } {
   const list: KT[] = parent.node[key] as unknown as KT[];
 
   // Create refs for all items at the top level
@@ -255,21 +260,28 @@ function ListFieldRender<
     }
   });
 
-  return (
-    <>
-      {list.map((item, i) => {
-        const currentRef = itemRefs.current.get(item.id)!;
-        const previousSibling = i > 0 ? itemRefs.current.get(list[i - 1].id) : undefined;
-        const nextSibling = i < list.length - 1 ? itemRefs.current.get(list[i + 1].id) : undefined;
+  return {
+    childRefs: {
+      firstChild: list.length > 0 ? itemRefs.current.get(list[0].id)! : undefined,
+      lastChild: list.length > 0 ? itemRefs.current.get(list[list.length - 1].id)! : undefined,
+    },
+    listRender: (
+      <>
+        {list.map((item, i) => {
+          const currentRef = itemRefs.current.get(item.id)!;
+          const previousSibling = i > 0 ? itemRefs.current.get(list[i - 1].id) : undefined;
+          const nextSibling =
+            i < list.length - 1 ? itemRefs.current.get(list[i + 1].id) : undefined;
 
-        return ListItem<T, K, KT>(parent, key, i, callbacks, item, render, currentRef, {
-          parent: parent.ref,
-          previousSibling,
-          nextSibling,
-        });
-      })}
-    </>
-  );
+          return ListItem<T, K, KT>(parent, key, i, callbacks, item, render, currentRef, {
+            parent: parent.ref,
+            previousSibling,
+            nextSibling,
+          });
+        })}
+      </>
+    ),
+  };
 }
 
 function ListItem<
@@ -299,7 +311,7 @@ function ListItem<
     onEdit,
     requestFocus
   );
-  const parentNavigationCallbacks = createParentNativationCallbacks(refs);
+  const parentNavigationCallbacks = createParentNavigationCallbacks(refs);
   const itemCallbacks: NodeEditCallbacks & NodeNavigationCallbacks = {
     ...arrayFieldCallbacks,
     ...parentNavigationCallbacks,
@@ -420,11 +432,27 @@ function FunctionDeclarationRender(
     },
   };
 
-  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
 
+  const { listRender, childRefs } = ListFieldRender(
+    props,
+    "parameterList",
+    { insertConstructor: createParameter },
+    ({ idx, nodeRender }) => (
+      <span>
+        {idx > 0 && ", "}
+        {nodeRender}
+      </span>
+    )
+  );
+
+  const movementCallbacks = createChildNavigationCallbacks(childRefs);
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...insertChildCallbacks }}>
+    <Object
+      {...props}
+      callbacks={{ ...props.callbacks, ...insertChildCallbacks, ...movementCallbacks }}
+    >
       {TypeSelector({
         ref: returnTypeRef,
         node: props.node,
@@ -442,17 +470,7 @@ function FunctionDeclarationRender(
         placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
-      {ListFieldRender(
-        props,
-        "parameterList",
-        { insertConstructor: createParameter },
-        ({ idx, nodeRender }) => (
-          <span>
-            {idx > 0 && ", "}
-            {nodeRender}
-          </span>
-        )
-      )}
+      {listRender}
       <span className="token-delimiter">{")"}</span>
     </Object>
   );
@@ -466,19 +484,39 @@ function FunctionDefinitionRender(
 
   const compoundStatementRef = React.useRef<HTMLElement>(null);
 
-  const childCallbacks = {
-    onInsertChildFirst: () => {
-      prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-    },
-    onInsertChildLast: () => {
-      appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-    },
-  };
+  const childCallbacks = createParentArrayFieldEditCallbacks(
+    props.node,
+    "parameterList",
+    createParameter,
+    nodeMap,
+    onEdit,
+    requestFocus
+  );
 
-  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+
+  const { listRender, childRefs } = ListFieldRender(
+    props,
+    "parameterList",
+    { insertConstructor: createParameter },
+    ({ idx, nodeRender }) => (
+      <span>
+        {idx > 0 && ", "}
+        {nodeRender}
+      </span>
+    )
+  );
+
+  const movementCallbacks = createChildNavigationCallbacks(childRefs);
+
+  const compoundStatementCallbacks = createParentNavigationCallbacks({
+    parent: props.ref,
+    previousSibling: undefined,
+    nextSibling: undefined,
+  });
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
       {TypeSelector({
         node: props.node,
         key: "returnType",
@@ -496,22 +534,13 @@ function FunctionDefinitionRender(
         placeholder: "function_name",
       })}
       <span className="token-delimiter">{"("}</span>
-      {ListFieldRender(
-        props,
-        "parameterList",
-        { insertConstructor: createParameter },
-        ({ idx, nodeRender }) => (
-          <span>
-            {idx > 0 && ", "}
-            {nodeRender}
-          </span>
-        )
-      )}
+      {listRender}
       <span className="token-delimiter">{")"}</span>
       <NodeRender
         ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
         node={props.node.compoundStatement}
         parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
+        callbacks={compoundStatementCallbacks}
       />
     </Object>
   );
@@ -519,19 +548,27 @@ function FunctionDefinitionRender(
 
 function DeclarationRender(props: XRenderProps<objects.Declaration>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
-  nodeMap.set(props.node.id, props.node);
-  const childCallbacks = createParentOptionalFieldCallbacks(
-    props.node,
-    "value",
-    createUnknown,
-    nodeMap,
-    onEdit,
-    requestFocus
-  );
 
-  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   const valueRef = React.useRef<HTMLElement>(null);
+
+  nodeMap.set(props.node.id, props.node);
+
+  const childCallbacks = {
+    ...createParentOptionalFieldCallbacks(
+      props.node,
+      "value",
+      createUnknown,
+      nodeMap,
+      onEdit,
+      requestFocus
+    ),
+    ...createChildNavigationCallbacks({
+      firstChild: props.node.value && (valueRef as React.RefObject<HTMLElement>),
+      lastChild: props.node.value && (valueRef as React.RefObject<HTMLElement>),
+    }),
+  };
 
   return (
     <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
@@ -560,13 +597,12 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
             node={props.node.value}
             display="inline"
             parentInfo={parentInfoFromChild(props.node, "value")}
-            callbacks={createOptionalFieldCallbacks(
-              props.node,
-              "value",
-              nodeMap,
-              onEdit,
-              requestFocus
-            )}
+            callbacks={{
+              ...createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus),
+              ...createParentNavigationCallbacks({
+                parent: props.ref,
+              }),
+            }}
           />
         </>
       )}
@@ -578,7 +614,7 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   const { nodeMap } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
-  const returnTypeRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   return (
     <Object {...props} callbacks={{ ...props.callbacks }}>
@@ -611,6 +647,25 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
   const nodeRef = React.useRef<HTMLElement>(null);
   useFocusStructuralNode(props.node.id, nodeRef as React.RefObject<HTMLElement>);
 
+  const emptyFileRef = React.useRef<HTMLElement>(null);
+
+  const { listRender, childRefs } = ListFieldRender(
+    {
+      node: props.node,
+      ref: nodeRef as React.RefObject<HTMLSpanElement>,
+      parentInfo: parentInfoFromChild(props.node, "code"),
+    },
+    "code",
+    { insertConstructor: createUnknown },
+    ({ item, nodeRender }) => (
+      <div>
+        {nodeRender} {leadingSemicolon(item) && ";"}
+      </div>
+    )
+  );
+
+  const movementCallbacks = createChildNavigationCallbacks(childRefs);
+
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
       console.log("SourceFileRender: Inserting unknown node");
@@ -623,10 +678,13 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
     navigateToPreviousSibling: () => {},
     navigateToNextSibling: () => {},
     navigateToParent: () => {},
-    navigateToFirstChild: () => {},
-    navigateToLastChild: () => {},
+    navigateToFirstChild: movementCallbacks.onNavigateToFirstChild
+      ? movementCallbacks.onNavigateToFirstChild
+      : () => {},
+    navigateToLastChild: movementCallbacks.onNavigateToLastChild
+      ? movementCallbacks.onNavigateToLastChild
+      : () => {},
   });
-  const emptyFileRef = React.useRef<HTMLElement>(null);
 
   const content = (
     <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
@@ -648,20 +706,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
             gap: "1rem",
           }}
         >
-          {ListFieldRender(
-            {
-              node: props.node,
-              ref: nodeRef as React.RefObject<HTMLSpanElement>,
-              parentInfo: parentInfoFromChild(props.node, "code"),
-            },
-            "code",
-            { insertConstructor: createUnknown },
-            ({ item, nodeRender }) => (
-              <div>
-                {nodeRender} {leadingSemicolon(item) && ";"}
-              </div>
-            )
-          )}
+          {listRender}
         </div>
       )}
     </span>
@@ -674,7 +719,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
   const { onEdit, nodeMap, requestFocus } = useLineContext();
   useFocusStructuralNode(props.node.id, props.ref);
 
-  const childCallbacks = createParentArrayFieldCallbacks(
+  const childCallbacks = createParentArrayFieldEditCallbacks(
     props.node,
     "codeBlock",
     createUnknown,
@@ -682,9 +727,20 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
     onEdit,
     requestFocus
   );
+  const { listRender, childRefs } = ListFieldRender(
+    props,
+    "codeBlock",
+    { insertConstructor: createUnknown },
+    ({ item, nodeRender }) => (
+      <div>
+        {nodeRender} {leadingSemicolon(item) && ";"}
+      </div>
+    )
+  );
+  const movementCallbacks = createChildNavigationCallbacks(childRefs);
 
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks }}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
       {
         <span ref={props.ref} tabIndex={0}>
           <span className="token-delimiter">{"{"}</span>
@@ -695,16 +751,7 @@ function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>)
               paddingLeft: "20px",
             }}
           >
-            {ListFieldRender(
-              props,
-              "codeBlock",
-              { insertConstructor: createUnknown },
-              ({ item, nodeRender }) => (
-                <div>
-                  {nodeRender} {leadingSemicolon(item) && ";"}
-                </div>
-              )
-            )}
+            {listRender}
           </div>
           <span className="token-delimiter">{"}"}</span>
         </span>
@@ -756,77 +803,129 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     },
   };
 
-  useFocusStructuralNode(props.node.id, props.ref);
-  const elseRef = React.useRef<HTMLElement>(null);
-  const elseRender =
-    props.node.elseStatement &&
-    (props.node.elseStatement.type === "elseClause" ? (
-      <NodeRender
-        ref={elseRef as React.RefObject<HTMLSpanElement>}
-        node={props.node.elseStatement}
-        parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-        display="inline"
-        callbacks={createOptionalFieldCallbacks(
-          props.node,
-          "elseStatement",
-          nodeMap,
-          onEdit,
-          requestFocus
-        )}
-      />
-    ) : (
-      (() => {
-        const ifStatement = props.node.elseStatement;
-        const elseClauseCallbacks = {
-          onDelete: (node: objects.LanguageObject) => {
-            console.log("Converting if else to else: ", node.id);
-            // Replace the ifStatement with the elseStatement body
-            const newElseClause: objects.ElseClause = {
-              id: crypto.randomUUID(),
-              type: "elseClause",
-              body: ifStatement.body,
-            };
-            props.node.elseStatement = newElseClause;
-            nodeMap.set(newElseClause.id, newElseClause);
-            nodeMap.delete(ifStatement.id);
-            onEdit(props.node, "elseStatement");
-          },
-        };
-        return (
-          <>
-            {" "}
-            <Object
-              display="inline"
-              node={ifStatement}
-              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-              callbacks={createOptionalFieldCallbacks(
-                props.node,
-                "elseStatement",
-                nodeMap,
-                onEdit,
-                requestFocus
-              )}
-            >
-              <span className="token-keyword" tabIndex={0}>
-                else
-              </span>
-            </Object>{" "}
-            <NodeRender
-              ref={elseRef as React.RefObject<HTMLSpanElement>}
-              node={ifStatement}
-              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-              display="inline"
-              callbacks={elseClauseCallbacks}
-            />
-          </>
-        );
-      })()
-    ));
+  const elseIfRef = React.useRef<HTMLElement>(null);
   const conditionRef = React.useRef<HTMLElement>(null);
   const bodyRef = React.useRef<HTMLElement>(null);
+  useFocusStructuralNode(props.node.id, props.ref);
+  const elseRef = React.useRef<HTMLElement>(null);
+
+  const ifCallbacks = createChildNavigationCallbacks({
+    firstChild: conditionRef as React.RefObject<HTMLElement>,
+    lastChild: elseRef as React.RefObject<HTMLElement>,
+  });
+
+  const conditionCallbacks = createParentNavigationCallbacks({
+    parent: props.ref as React.RefObject<HTMLElement>,
+    previousSibling: props.ref as React.RefObject<HTMLElement>,
+    nextSibling: bodyRef as React.RefObject<HTMLElement>,
+  });
+
+  const bodyCallbacks = createParentNavigationCallbacks({
+    parent: props.ref as React.RefObject<HTMLElement>,
+    previousSibling: conditionRef as React.RefObject<HTMLElement>,
+    nextSibling: elseRef as React.RefObject<HTMLElement>,
+  });
+
+  const elseRender =
+    props.node.elseStatement &&
+    (props.node.elseStatement.type === "elseClause"
+      ? (() => {
+          const elseCallbacks = createParentNavigationCallbacks({
+            parent: props.ref as React.RefObject<HTMLElement>,
+            previousSibling: conditionRef as React.RefObject<HTMLElement>,
+            nextSibling: undefined,
+          });
+          return (
+            <NodeRender
+              ref={elseRef as React.RefObject<HTMLSpanElement>}
+              node={props.node.elseStatement}
+              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
+              display="inline"
+              callbacks={{
+                ...createOptionalFieldCallbacks(
+                  props.node,
+                  "elseStatement",
+                  nodeMap,
+                  onEdit,
+                  requestFocus
+                ),
+                ...elseCallbacks,
+              }}
+            />
+          );
+        })()
+      : (() => {
+          const elseMovementCallbacks = createParentNavigationCallbacks({
+            parent: elseIfRef as React.RefObject<HTMLElement>,
+            previousSibling: conditionRef as React.RefObject<HTMLElement>,
+            nextSibling: undefined,
+          });
+          const ifElseCallbacks = {
+            ...createParentNavigationCallbacks({
+              parent: props.ref as React.RefObject<HTMLElement>,
+              previousSibling: conditionRef as React.RefObject<HTMLElement>,
+              nextSibling: undefined,
+            }),
+            ...createChildNavigationCallbacks({
+              firstChild: elseRef as React.RefObject<HTMLElement>,
+              lastChild: elseRef as React.RefObject<HTMLElement>,
+            }),
+          };
+          const ifStatement = props.node.elseStatement;
+          const elseClauseCallbacks = {
+            onDelete: (node: objects.LanguageObject) => {
+              console.log("Converting if else to else: ", node.id);
+              // Replace the ifStatement with the elseStatement body
+              const newElseClause: objects.ElseClause = {
+                id: crypto.randomUUID(),
+                type: "elseClause",
+                body: ifStatement.body,
+              };
+              props.node.elseStatement = newElseClause;
+              nodeMap.set(newElseClause.id, newElseClause);
+              nodeMap.delete(ifStatement.id);
+              onEdit(props.node, "elseStatement");
+            },
+          };
+          return (
+            <>
+              {" "}
+              <Object
+                display="inline"
+                node={ifStatement}
+                parentInfo={parentInfoFromChild(props.node, "elseStatement")}
+                callbacks={{
+                  ...createOptionalFieldCallbacks(
+                    props.node,
+                    "elseStatement",
+                    nodeMap,
+                    onEdit,
+                    requestFocus
+                  ),
+                  ...ifElseCallbacks,
+                }}
+              >
+                <span
+                  className="token-keyword"
+                  tabIndex={0}
+                  ref={elseRef as React.RefObject<HTMLElement>}
+                >
+                  else
+                </span>
+              </Object>{" "}
+              <NodeRender
+                ref={elseIfRef as React.RefObject<HTMLSpanElement>}
+                node={ifStatement}
+                parentInfo={parentInfoFromChild(props.node, "elseStatement")}
+                display="inline"
+                callbacks={{ ...elseClauseCallbacks, ...elseMovementCallbacks }}
+              />
+            </>
+          );
+        })());
 
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks, ...ifCallbacks }}>
       <span ref={props.ref} tabIndex={0}>
         <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
         <NodeRender
@@ -834,6 +933,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
           node={props.node.condition}
           parentInfo={parentInfoFromChild(props.node, "condition")}
           display="inline"
+          callbacks={conditionCallbacks}
         />
         <span className="token-keyword">{")"}</span>{" "}
       </span>
@@ -842,6 +942,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         node={props.node.body}
         parentInfo={parentInfoFromChild(props.node, "body")}
         display="inline"
+        callbacks={bodyCallbacks}
       />
       {elseRender}
     </Object>
@@ -924,7 +1025,8 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
   const { nodeMap, onEdit, requestFocus } = useLineContext();
   useFocusStructuralNode(props.node.id, props.ref);
 
-  const callbacks = createParentOptionalFieldCallbacks(
+  const valueRef = React.useRef<HTMLElement>(null);
+  const editingCallbacks = createParentOptionalFieldCallbacks(
     props.node,
     "value",
     createUnknown,
@@ -932,11 +1034,23 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
     onEdit,
     requestFocus
   );
+  const movementCallbacks = createChildNavigationCallbacks({
+    firstChild: valueRef as React.RefObject<HTMLElement>,
+    lastChild: valueRef as React.RefObject<HTMLElement>,
+  });
 
-  const valueRef = React.useRef<HTMLElement>(null);
-
+  const valueCallbacks = {
+    ...createOptionalFieldCallbacks(props.node, "value", nodeMap, onEdit, requestFocus),
+    ...createParentNavigationCallbacks({
+      parent: props.ref,
+    }),
+  };
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }} display="inline">
+    <Object
+      {...props}
+      callbacks={{ ...props.callbacks, ...editingCallbacks, ...movementCallbacks }}
+      display="inline"
+    >
       {
         <span ref={props.ref as React.RefObject<HTMLSpanElement>} tabIndex={0}>
           <span className="token-keyword">return</span>
@@ -948,13 +1062,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
                 node={props.node.value}
                 parentInfo={parentInfoFromChild(props.node, "value")}
                 display="inline"
-                callbacks={createOptionalFieldCallbacks(
-                  props.node,
-                  "value",
-                  nodeMap,
-                  onEdit,
-                  requestFocus
-                )}
+                callbacks={valueCallbacks}
               />
             </>
           )}
@@ -967,7 +1075,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
 function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
 
-  const callbacks = createParentArrayFieldCallbacks(
+  const callbacks = createParentArrayFieldEditCallbacks(
     props.node,
     "argumentList",
     createUnknown,
@@ -976,8 +1084,20 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
     requestFocus
   );
 
+  const { listRender, childRefs } = ListFieldRender(
+    props,
+    "argumentList",
+    { insertConstructor: createUnknown },
+    ({ idx, nodeRender }) => (
+      <span>
+        {idx > 0 && ", "}
+        {nodeRender}
+      </span>
+    )
+  );
+  const movementCallbacks = createChildNavigationCallbacks(childRefs);
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks, ...movementCallbacks }}>
       <CallExpressionSelector
         node={props.node}
         ref={props.ref}
@@ -986,17 +1106,7 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
         className="token-function"
       />
       <span className="token-delimiter">{"("}</span>
-      {ListFieldRender(
-        props,
-        "argumentList",
-        { insertConstructor: createUnknown },
-        ({ idx, nodeRender }) => (
-          <span>
-            {idx > 0 && ", "}
-            {nodeRender}
-          </span>
-        )
-      )}
+      {listRender}
       <span className="token-delimiter">{")"}</span>
     </Object>
   );

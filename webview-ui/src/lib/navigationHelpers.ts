@@ -1,5 +1,5 @@
 import React from "react";
-import { NodeParentNavigationCallbacks } from "./keyBinds";
+import { NodeChildNavigationCallbacks, NodeParentNavigationCallbacks } from "./keyBinds";
 
 export interface ParentRefs {
   previousSibling?: React.RefObject<HTMLElement>;
@@ -14,7 +14,7 @@ export interface ChildRefs {
 
 export interface Refs extends ParentRefs, ChildRefs {}
 
-export function createParentNativationCallbacks(refs: ParentRefs): NodeParentNavigationCallbacks {
+export function createParentNavigationCallbacks(refs: ParentRefs): NodeParentNavigationCallbacks {
   const onNavigateToParent = () => {
     refs.parent?.current?.focus();
   };
@@ -25,6 +25,18 @@ export function createParentNativationCallbacks(refs: ParentRefs): NodeParentNav
     },
     onNavigateToNextSibling: () => {
       (focusOn(refs.nextSibling?.current) ?? onNavigateToParent)();
+    },
+  };
+  return callbacks;
+}
+
+export function createChildNavigationCallbacks(refs: ChildRefs): NodeChildNavigationCallbacks {
+  const callbacks: NodeChildNavigationCallbacks = {
+    onNavigateToFirstChild: () => {
+      focusOn(refs.firstChild?.current)?.();
+    },
+    onNavigateToLastChild: () => {
+      focusOn(refs.lastChild?.current)?.();
     },
   };
   return callbacks;
