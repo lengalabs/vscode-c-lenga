@@ -10,13 +10,14 @@ import {
   MarkerType,
 } from "@xyflow/react";
 
-import "@xyflow/react/dist/style.css";
 import { FunctionNode, FunctionFlowNode } from "./nodes/FunctionNode";
 import * as objects from "../../../src/language_objects/cNodes";
 import LineProvider from "../context/line/LineProvider";
 import { vscode } from "../vscode";
 import { visitNodes } from "../lib/nodeVisiting";
 import { ParentInfo, parentInfoFromChild } from "../context/line/lineContext";
+
+import "@xyflow/react/dist/style.css";
 
 const nodeTypes = { function: FunctionNode };
 
@@ -59,11 +60,29 @@ export default function App() {
             function mapper(
               object: objects.BaseLanguageObject,
               parent?: objects.BaseLanguageObject,
-              key?: string
+              key?: string,
+              index?: number
             ) {
               console.log(object.type);
 
               if (parent?.type === "compoundStatement" && key === "codeBlock") {
+                currentLine++;
+                const par = parent as objects.CompoundStatement;
+                if (
+                  index &&
+                  index > 0 &&
+                  (par.codeBlock[index - 1].type === "compoundStatement" ||
+                    par.codeBlock[index - 1].type === "ifStatement")
+                ) {
+                  currentLine++;
+                }
+              }
+
+              if (parent?.type === "ifStatement" && key === "elseStatement") {
+                currentLine++;
+              }
+
+              if (object.type === "compoundStatement") {
                 currentLine++;
               }
 
@@ -160,7 +179,6 @@ export default function App() {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
-        style={{ width: "100%", height: "100%" }}
       >
         <Controls />
         <MiniMap />

@@ -6,7 +6,7 @@ import * as vscode from "vscode";
  */
 export function transpileFile(path: vscode.Uri) {
   let transpilerProcess: cp.ChildProcessWithoutNullStreams;
-  var transpilerPath: string = "transpiler"; //TODO: Make this command configurable ?
+  var transpilerPath: string = "transpile"; //TODO: Make this command configurable ?
 
   transpilerProcess = cp.spawn(transpilerPath, [path.fsPath.toString()]);
 

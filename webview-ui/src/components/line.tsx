@@ -383,7 +383,9 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 
   // Convert availableInserts to AutocompleteOptions
   const options: Autocomplete.Option<objects.LanguageObject>[] = React.useMemo(() => {
-    if (!availableInserts) return [];
+    if (!availableInserts) {
+      return [];
+    }
     return availableInserts.map((insert, idx) => ({
       value: insert,
       label: insert.type,
@@ -1022,7 +1024,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
       onEdit(parentNodeInfo.parent, parentNodeInfo.key);
       // Focus the condition (unknown node)
-      requestFocus({ nodeId: newIfStatement.condition.id });
+      requestFocus({ nodeId: newIfStatement.condition.id, fieldKey: "content" });
     },
   };
 

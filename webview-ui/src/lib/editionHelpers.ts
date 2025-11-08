@@ -283,7 +283,7 @@ export function createArrayFieldCallbacks<
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newUnknown = constructor(requestFocus);
       const newArray = [...field.slice(0, index + 1), newUnknown, ...field.slice(index + 1)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
@@ -294,7 +294,7 @@ export function createArrayFieldCallbacks<
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newUnknown = constructor(requestFocus);
       const newArray = [...field.slice(0, index), newUnknown, ...field.slice(index)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.set(newUnknown.id, newUnknown);
       onEdit(parent, key);
@@ -304,7 +304,7 @@ export function createArrayFieldCallbacks<
       console.log("Deleting node:", node.id, " at index:", index);
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newArray = [...field.slice(0, index), ...field.slice(index + 1)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.delete(node.id);
       onEdit(parent, key);
@@ -325,7 +325,7 @@ export function createArrayFieldCallbacks<
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newArray = [...field];
       newArray[index] = newNode;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
@@ -520,7 +520,7 @@ export function createParentArrayFieldEditCallbacks<
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newNode = constructor(requestFocus);
       const newArray = [newNode, ...field];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
@@ -531,7 +531,7 @@ export function createParentArrayFieldEditCallbacks<
       const field = parent[key] as unknown as objects.LanguageObject[];
       const newNode = constructor(requestFocus);
       const newArray = [...field, newNode];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newArray;
       nodeMap.set(newNode.id, newNode);
       onEdit(parent, key);
@@ -554,7 +554,7 @@ export function createOptionalFieldCallbacks<
   return {
     onDelete: (node: objects.LanguageObject) => {
       console.log("Deleting optional field:", key, " node:", node.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = null;
       nodeMap.delete(node.id);
       onEdit(parent, key);
@@ -564,7 +564,7 @@ export function createOptionalFieldCallbacks<
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing optional field:", key, " old node:", oldNode.id, " with:", newNode.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newNode;
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
@@ -633,7 +633,7 @@ export function createRequiredFieldCallbacks<
     },
     onReplace: (oldNode: objects.LanguageObject, newNode: objects.LanguageObject) => {
       console.log("Replacing required field:", key, " old node:", oldNode.id, " with:", newNode.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parent as any)[key] = newNode;
       nodeMap.delete(oldNode.id);
       nodeMap.set(newNode.id, newNode);
