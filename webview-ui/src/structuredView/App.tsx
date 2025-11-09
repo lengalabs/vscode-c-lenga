@@ -10,18 +10,29 @@ import DebugProvider from "../context/debug/DebugProvider";
 import LineProvider from "../context/line/LineProvider";
 
 // Component that handles initial focus request
-function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile }) {
+function InitialFocusHandler({
+  sourceFile,
+  firstElementCreatorRef: emptyFileRef,
+}: {
+  sourceFile: objects.SourceFile;
+  firstElementCreatorRef: React.RefObject<HTMLElement>;
+}) {
   const { requestFocus } = useLineContext();
   const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasRequestedRef.current && sourceFile.code.length > 0) {
-      const firstNode = sourceFile.code[0];
-      console.log("Requesting initial focus on first node:", firstNode.id);
-      requestFocus({ nodeId: firstNode.id });
-      hasRequestedRef.current = true;
-    }
-  }, [sourceFile, requestFocus]);
+    if (!hasRequestedRef.current)
+      if (sourceFile.code.length === 0) {
+        console.log("Requesting initial focus on empty file creator");
+        emptyFileRef.current?.focus();
+        hasRequestedRef.current = true;
+      } else {
+        const firstNode = sourceFile.code[0];
+        console.log("Requesting initial focus on first node:", firstNode.id);
+        requestFocus({ nodeId: firstNode.id });
+        hasRequestedRef.current = true;
+      }
+  }, [sourceFile, requestFocus, emptyFileRef]);
 
   return null;
 }
@@ -80,6 +91,8 @@ export default function App() {
     vscode.postMessage(message);
   };
 
+  const firstElementCreatorRef = useRef<HTMLElement>(null);
+
   return (
     <div style={{ height: "100%" }}>
       <DebugProvider debug={debug}>
@@ -99,9 +112,15 @@ export default function App() {
             }}
             setParentNodeInfo={setParentNodeInfo}
           >
-            <InitialFocusHandler sourceFile={sourceFile} />
+            <InitialFocusHandler
+              sourceFile={sourceFile}
+              firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
+            />
             <ModeIndicator />
-            <SourceFileRender node={sourceFile} />
+            <SourceFileRender
+              node={sourceFile}
+              firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
+            />
             <DebugMenu />
           </LineProvider>
         ) : (

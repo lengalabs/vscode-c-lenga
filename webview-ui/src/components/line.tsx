@@ -790,7 +790,10 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
   );
 }
 
-export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
+export function SourceFileRender(props: {
+  node: objects.SourceFile;
+  firstElementCreatorRef: React.RefObject<HTMLElement>;
+}): React.ReactNode {
   const { onEdit, mode, requestFocus } = useLineContext();
   const nodeRef = React.useRef<HTMLElement>(null);
   useFocusStructuralNode(props.node.id, nodeRef as React.RefObject<HTMLElement>);
@@ -834,12 +837,10 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
     },
   });
 
-  const firstElementCreatorRef = React.useRef<HTMLElement>(null);
-
   return (
     <div
       onClick={() => {
-        firstElementCreatorRef.current?.focus();
+        props.firstElementCreatorRef.current?.focus();
       }}
       style={{
         height: "100%",
@@ -849,7 +850,7 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
         <span
           tabIndex={0}
           onKeyDown={handleKeyDown}
-          ref={firstElementCreatorRef}
+          ref={props.firstElementCreatorRef}
           onClick={(e) => {
             insertFirstChild();
             e.stopPropagation();
