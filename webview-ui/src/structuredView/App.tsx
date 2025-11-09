@@ -81,7 +81,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <div style={{ height: "100%" }}>
       <DebugProvider debug={debug}>
         {sourceFile ? (
           <LineProvider
@@ -108,6 +108,6 @@ export default function App() {
           <p>loading...</p>
         )}
       </DebugProvider>
-    </>
+    </div>
   );
 }

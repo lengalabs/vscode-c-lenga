@@ -12,9 +12,7 @@ import {
   createOptionalFieldCallbacks,
   createRequiredFieldCallbacks,
   createParameter,
-  appendToArray,
   createUnknown,
-  prependToArray,
   createKeyDownHandler,
   createParentArrayFieldEditCallbacks,
   createParentOptionalFieldCallbacks,
@@ -793,13 +791,11 @@ function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>)
 }
 
 export function SourceFileRender(props: { node: objects.SourceFile }): React.ReactNode {
-  const { nodeMap, onEdit, mode, requestFocus } = useLineContext();
+  const { onEdit, mode, requestFocus } = useLineContext();
   const nodeRef = React.useRef<HTMLElement>(null);
   useFocusStructuralNode(props.node.id, nodeRef as React.RefObject<HTMLElement>);
 
-  const emptyFileRef = React.useRef<HTMLElement>(null);
-
-  const { listRender, childRefs } = ListFieldRender(
+  const { listRender } = ListFieldRender(
     {
       node: props.node,
       ref: nodeRef as React.RefObject<HTMLSpanElement>,
@@ -814,55 +810,65 @@ export function SourceFileRender(props: { node: objects.SourceFile }): React.Rea
     )
   );
 
-  const movementCallbacks = createChildNavigationCallbacks(childRefs);
-
+  const insertFirstChild = () => {
+    if (props.node.code.length === 0) {
+      console.log("SourceFileRender: Inserting unknown node");
+      const newChild = createUnknown();
+      props.node.code.push(newChild);
+      onEdit(props.node, "code");
+      requestFocus({ nodeId: newChild.id });
+    }
+  };
   const handleKeyDown = createKeyDownHandler(mode, {
     insertChildFirst: () => {
-      console.log("SourceFileRender: Inserting unknown node");
-      prependToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
+      insertFirstChild();
     },
     insertChildLast: () => {
-      console.log("SourceFileRender: Inserting unknown node");
-      appendToArray(props.node, "code", createUnknown, nodeMap, onEdit, requestFocus);
+      insertFirstChild();
     },
-    navigateToPreviousSibling: () => {},
-    navigateToNextSibling: () => {},
-    navigateToParent: () => {},
-    navigateToFirstChild: movementCallbacks.onNavigateToFirstChild
-      ? movementCallbacks.onNavigateToFirstChild
-      : () => {},
-    navigateToLastChild: movementCallbacks.onNavigateToLastChild
-      ? movementCallbacks.onNavigateToLastChild
-      : () => {},
+    insertSibling: () => {
+      insertFirstChild();
+    },
+    insertSiblingBefore: () => {
+      insertFirstChild();
+    },
   });
 
-  const content = (
-    <span ref={nodeRef as React.RefObject<HTMLSpanElement>} onKeyDown={handleKeyDown} tabIndex={0}>
-      {props.node.code.length === 0 ? (
-        <UnknownRender
-          ref={emptyFileRef as React.RefObject<HTMLSpanElement>}
-          node={{
-            id: crypto.randomUUID(),
-            type: "unknown",
-            content: "",
-          }}
-          parentInfo={parentInfoFromChild(props.node, "code")}
-        />
-      ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
+  const firstElementCreatorRef = React.useRef<HTMLElement>(null);
+
+  return (
+    <div
+      onClick={() => {
+        firstElementCreatorRef.current?.focus();
+      }}
+      style={{
+        height: "100%",
+      }}
+    >
+      {props.node.code.length === 0 && (
+        <span
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          ref={firstElementCreatorRef}
+          onClick={(e) => {
+            insertFirstChild();
+            e.stopPropagation();
           }}
         >
-          {listRender}
-        </div>
+          Press enter to insert an object
+        </span>
       )}
-    </span>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
+        {listRender}
+      </div>
+    </div>
   );
-
-  return content;
 }
 
 function CompoundStatementRender(props: XRenderProps<objects.CompoundStatement>): React.ReactNode {
