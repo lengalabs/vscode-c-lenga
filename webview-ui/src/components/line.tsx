@@ -456,72 +456,19 @@ function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): Reac
   );
 }
 
-function FunctionDeclarationRender(
-  props: XRenderProps<objects.FunctionDeclaration>
-): React.ReactNode {
+// Helper function to render the common function signature (return type, name, parameters)
+function FunctionSignatureRender<
+  T extends objects.FunctionDeclaration | objects.FunctionDefinition,
+>(
+  props: XRenderProps<T>,
+  additionalContent?: React.ReactNode
+): {
+  signatureRender: React.ReactNode;
+  childCallbacks: NodeCallbacks;
+  movementCallbacks: NodeCallbacks;
+} {
   const { nodeMap, onEdit, requestFocus } = useLineContext();
   nodeMap.set(props.node.id, props.node);
-
-  const insertChildCallbacks = {
-    insertChildFirst: () => {
-      prependToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-    },
-    insertChildLast: () => {
-      appendToArray(props.node, "parameterList", createParameter, nodeMap, onEdit, requestFocus);
-    },
-  };
-
-  const returnTypeRef = props.ref;
-  const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
-
-  const { listRender, childRefs } = ListFieldRender(
-    props,
-    "parameterList",
-    { insertConstructor: createParameter },
-    ({ idx, nodeRender }) => (
-      <span>
-        {idx > 0 && ", "}
-        {nodeRender}
-      </span>
-    )
-  );
-
-  const movementCallbacks = createChildNavigationCallbacks(childRefs);
-  return (
-    <Object
-      {...props}
-      callbacks={{ ...props.callbacks, ...insertChildCallbacks, ...movementCallbacks }}
-    >
-      {TypeSelector({
-        ref: returnTypeRef,
-        node: props.node,
-        key: "returnType",
-        parentInfo: props.parentInfo,
-        firstField: true,
-        className: "token-type",
-      })}{" "}
-      {EditableField({
-        ref: identifierRef,
-        node: props.node,
-        key: "identifier",
-        parentInfo: props.parentInfo,
-        className: "token-function",
-        placeholder: "function_name",
-      })}
-      <span className="token-delimiter">{"("}</span>
-      {listRender}
-      <span className="token-delimiter">{")"}</span>
-    </Object>
-  );
-}
-
-function FunctionDefinitionRender(
-  props: XRenderProps<objects.FunctionDefinition>
-): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
-  nodeMap.set(props.node.id, props.node);
-
-  const compoundStatementRef = React.useRef<HTMLElement>(null);
 
   const childCallbacks = createParentArrayFieldEditCallbacks(
     props.node,
@@ -549,13 +496,8 @@ function FunctionDefinitionRender(
 
   const movementCallbacks = createChildNavigationCallbacks(childRefs);
 
-  const compoundStatementCallbacks = createParentNavigationCallbacks({
-    parent: props.ref,
-    previousSibling: undefined,
-    nextSibling: undefined,
-  });
-  return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
+  const signatureRender = (
+    <>
       {TypeSelector({
         node: props.node,
         key: "returnType",
@@ -575,12 +517,53 @@ function FunctionDefinitionRender(
       <span className="token-delimiter">{"("}</span>
       {listRender}
       <span className="token-delimiter">{")"}</span>
-      <NodeRender
-        ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
-        node={props.node.compoundStatement}
-        parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
-        callbacks={compoundStatementCallbacks}
-      />
+      {additionalContent}
+    </>
+  );
+
+  return { signatureRender, childCallbacks, movementCallbacks };
+}
+
+function FunctionDeclarationRender(
+  props: XRenderProps<objects.FunctionDeclaration>
+): React.ReactNode {
+  const { signatureRender, childCallbacks, movementCallbacks } = FunctionSignatureRender(props);
+
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
+      {signatureRender}
+    </Object>
+  );
+}
+
+function FunctionDefinitionRender(
+  props: XRenderProps<objects.FunctionDefinition>
+): React.ReactNode {
+  const compoundStatementRef = React.useRef<HTMLElement>(null);
+
+  const compoundStatementCallbacks = createParentNavigationCallbacks({
+    parent: props.ref,
+    previousSibling: undefined,
+    nextSibling: undefined,
+  });
+
+  const compoundStatementRender = (
+    <NodeRender
+      ref={compoundStatementRef as React.RefObject<HTMLSpanElement>}
+      node={props.node.compoundStatement}
+      parentInfo={parentInfoFromChild(props.node, "compoundStatement")}
+      callbacks={compoundStatementCallbacks}
+    />
+  );
+
+  const { signatureRender, childCallbacks, movementCallbacks } = FunctionSignatureRender(
+    props,
+    compoundStatementRender
+  );
+
+  return (
+    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
+      {signatureRender}
     </Object>
   );
 }
