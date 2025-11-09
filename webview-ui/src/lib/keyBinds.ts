@@ -32,7 +32,8 @@ export interface NodeChildEditCallbacks {
 // Navigation
 export interface NodeNavigationCallbacks
   extends NodeParentNavigationCallbacks,
-    NodeChildNavigationCallbacks {}
+    NodeChildNavigationCallbacks,
+    NodeFieldNavigationCallbacks {}
 
 export interface NodeParentNavigationCallbacks {
   onNavigateToParent?: () => void;
@@ -43,6 +44,11 @@ export interface NodeParentNavigationCallbacks {
 export interface NodeChildNavigationCallbacks {
   onNavigateToFirstChild?: () => void;
   onNavigateToLastChild?: () => void;
+}
+
+export interface NodeFieldNavigationCallbacks {
+  onNavigateToPreviousField?: () => void;
+  onNavigateToNextField?: () => void;
 }
 
 /**
@@ -62,6 +68,9 @@ export interface NodeChildNavigationCallbacks {
  *     - parentNode: Navigate to parent node (mapped to ArrowLeft)
  *     - firstChild: Navigate to first child (mapped to ArrowRight)
  *     - lastChild: Navigate to last child (mapped to Shift+ArrowRight)
+ *   - Field Navigation:
+ *     - navigateToPreviousField: Navigate to previous field in same object (mapped to Shift+ArrowUp)
+ *     - navigateToNextField: Navigate to next field in same object (mapped to Shift+ArrowDown)
  *   - Movement (for array elements):
  *     - moveNodeUp: Move current node up in array (mapped to Alt+ArrowUp)
  *     - moveNodeDown: Move current node down in array (mapped to Alt+ArrowDown)
@@ -117,18 +126,23 @@ export interface NodeEditCommandHandlers {
 
 export interface NodeNavigationCommandHandlers
   extends NodeParentNavigationCommandHandlers,
-    NodeChildNavigationCommandHandlers {}
+    NodeChildNavigationCommandHandlers,
+    NodeFieldNavigationCommandHandlers {}
 
 export interface NodeParentNavigationCommandHandlers {
-  // Navigation
-  navigateToPreviousSibling: Callback;
-  navigateToNextSibling: Callback;
-  navigateToParent: Callback;
+  navigateToPreviousSibling?: Callback;
+  navigateToNextSibling?: Callback;
+  navigateToParent?: Callback;
 }
 
 export interface NodeChildNavigationCommandHandlers {
-  navigateToFirstChild: Callback;
-  navigateToLastChild: Callback;
+  navigateToFirstChild?: Callback;
+  navigateToLastChild?: Callback;
+}
+
+export interface NodeFieldNavigationCommandHandlers {
+  navigateToPreviousField?: Callback;
+  navigateToNextField?: Callback;
 }
 
 // Key combination to command name mapping
@@ -150,7 +164,8 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
     ArrowDown: "navigateToNextSibling",
     ArrowLeft: "navigateToParent",
     ArrowRight: "navigateToFirstChild",
-    "Shift+ArrowRight": "navigateToLastChild",
+    "Shift+ArrowUp": "navigateToPreviousField",
+    "Shift+ArrowDown": "navigateToNextField",
     // Permutation
     "Alt+ArrowUp": "moveNodeUp",
     "Alt+ArrowDown": "moveNodeDown",

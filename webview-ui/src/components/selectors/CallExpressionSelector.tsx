@@ -74,6 +74,7 @@ export default function CallExpressionSelector({
       onFocus={handleFocus}
       nodeId={node.id}
       fieldKey="idDeclaration"
+      parentInfo={parentInfo}
       className={className}
     />
   );

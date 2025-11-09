@@ -59,6 +59,10 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    console.log("SelectedKey updated:", selectedKey);
+  }, [selectedKey]);
+
   const onEdit = <T extends objects.LanguageObject, K extends string & keyof T>(
     node: T,
     key: K | null
@@ -89,7 +93,10 @@ export default function App() {
             selectedKey={selectedKey}
             parentNodeInfo={parentNodeInfo}
             setSelectedNodeId={setSelectedNodeId}
-            setSelectedKey={setSelectedKey}
+            setSelectedKey={(key) => {
+              console.log("setSelectedKey called with key:", key);
+              setSelectedKey(key);
+            }}
             setParentNodeInfo={setParentNodeInfo}
           >
             <InitialFocusHandler sourceFile={sourceFile} />

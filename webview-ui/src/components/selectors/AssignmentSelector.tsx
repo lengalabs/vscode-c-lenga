@@ -73,6 +73,7 @@ export default function AssignmentSelector({
       onFocus={handleFocus}
       nodeId={node.id}
       fieldKey="declarationId"
+      parentInfo={parentInfo}
       className={className}
     />
   );

@@ -31,6 +31,8 @@ import {
   createChildNavigationCallbacks,
   createParentNavigationCallbacks,
   ParentRefs,
+  FieldDefinition,
+  createFieldNavigationCallbacks,
 } from "../lib/navigationHelpers";
 import { NodeEditCallbacks, NodeNavigationCallbacks } from "../lib/keyBinds";
 
@@ -73,106 +75,161 @@ export function Object({ node, parentInfo, children, display = "block", callback
     useLineContext();
   const isSelected = selectedNodeId === node.id;
 
-  const handleKeyDown = createKeyDownHandler(mode, {
-    insertSibling: () => {
-      if (callbacks?.onInsertSibling) {
-        console.log("Object: Inserting sibling for", node.type);
-        callbacks.onInsertSibling(node);
-      }
-    },
-    insertSiblingBefore: () => {
-      if (callbacks?.onInsertSiblingBefore) {
-        console.log("Object: Inserting sibling before", node.type);
-        callbacks.onInsertSiblingBefore(node);
-      }
-    },
-    delete: () => {
-      if (callbacks?.onDelete) {
-        console.log("Object: Deleting", node.type);
-        callbacks.onDelete(node);
-      }
-    },
-    insertChildFirst: () => {
-      console.log("insertChildFirst: callbacks:", callbacks);
-      if (callbacks?.onInsertChildFirst) {
-        console.log("Object: Inserting at beginning for", node.type);
-        callbacks.onInsertChildFirst();
-      }
-    },
-    insertChildLast: () => {
-      console.log("insertChildLast: callbacks:", callbacks);
-      if (callbacks?.onInsertChildLast) {
-        console.log("Object: Inserting at end for", node.type);
-        callbacks.onInsertChildLast();
-      }
-    },
-    navigateToPreviousSibling: () => {
-      if (callbacks?.onNavigateToPreviousSibling) {
-        console.log("Object: navigateToPreviousSibling", node.type);
-        callbacks.onNavigateToPreviousSibling();
-      }
-    },
-    navigateToNextSibling: () => {
-      if (callbacks?.onNavigateToNextSibling) {
-        console.log("Object: navigateToNextSibling", node.type);
-        callbacks.onNavigateToNextSibling();
-      }
-    },
-    navigateToParent: () => {
-      if (callbacks?.onNavigateToParent) {
-        console.log("Object: navigateToParentNode", node.type);
-        callbacks.onNavigateToParent();
-      }
-    },
-    navigateToFirstChild: () => {
-      if (callbacks?.onNavigateToFirstChild) {
-        console.log("Object: navigateToFirstChild", node.type);
-        callbacks.onNavigateToFirstChild();
-      }
-    },
-    navigateToLastChild: () => {
-      if (callbacks?.onNavigateToLastChild) {
-        console.log("Object: navigateToLastChild", node.type);
-        callbacks.onNavigateToLastChild();
-      }
-    },
-    moveNodeUp: () => {
-      if (callbacks?.onMoveUp) {
-        console.log("Object: moveNodeUp", node.type);
-        callbacks.onMoveUp(node);
-      }
-    },
-    moveNodeDown: () => {
-      if (callbacks?.onMoveDown) {
-        console.log("Object: moveNodeDown", node.type);
-        callbacks.onMoveDown(node);
-      }
-    },
-    moveNodeIntoNextSiblingsFirstChild: () => {
-      if (callbacks?.onMoveIntoNextSiblingsFirstChild) {
-        console.log("Object: moveNodeIntoNextSiblingsFirstChild", node.type);
-        callbacks.onMoveIntoNextSiblingsFirstChild(node);
-      }
-    },
-    moveNodeIntoPreviousSiblingsLastChild: () => {
-      if (callbacks?.onMoveIntoPreviousSiblingsLastChild) {
-        console.log("Object: moveNodeIntoPreviousSiblingsLastChild", node.type);
-        callbacks.onMoveIntoPreviousSiblingsLastChild(node);
-      }
-    },
-    moveNodeToParentPreviousSibling: () => {
-      if (callbacks?.onMoveToParentPreviousSibling) {
-        console.log("Object: moveNodeToParentPreviousSibling", node.type);
-        callbacks.onMoveToParentPreviousSibling(node);
-      }
-    },
-    moveNodeToParentNextSibling: () => {
-      if (callbacks?.onMoveToParentNextSibling) {
-        console.log("Object: moveNodeToParentNextSibling", node.type);
-        callbacks.onMoveToParentNextSibling(node);
-      }
-    },
-  });
+  const handleKeyDown = createKeyDownHandler(
+    mode,
+    callbacks
+      ? {
+          insertSibling:
+            callbacks.onInsertSibling &&
+            (() => {
+              {
+                console.log("Object: Inserting sibling for", node.type);
+                callbacks.onInsertSibling!(node);
+              }
+            }),
+          insertSiblingBefore:
+            callbacks.onInsertSiblingBefore &&
+            (() => {
+              {
+                console.log("Object: Inserting sibling before", node.type);
+                callbacks.onInsertSiblingBefore!(node);
+              }
+            }),
+          delete:
+            callbacks.onDelete &&
+            (() => {
+              {
+                console.log("Object: Deleting", node.type);
+                callbacks.onDelete!(node);
+              }
+            }),
+          insertChildFirst:
+            callbacks.onInsertChildFirst &&
+            (() => {
+              console.log("insertChildFirst:", callbacks);
+              {
+                console.log("Object: Inserting at beginning for", node.type);
+                callbacks.onInsertChildFirst!();
+              }
+            }),
+          insertChildLast:
+            callbacks.onInsertChildLast &&
+            (() => {
+              console.log("insertChildLast:", callbacks);
+              {
+                console.log("Object: Inserting at end for", node.type);
+                callbacks.onInsertChildLast!();
+              }
+            }),
+          navigateToPreviousSibling:
+            callbacks.onNavigateToPreviousSibling &&
+            (() => {
+              {
+                console.log("Object: navigateToPreviousSibling", node.type);
+                callbacks.onNavigateToPreviousSibling!();
+              }
+            }),
+          navigateToNextSibling:
+            callbacks.onNavigateToNextSibling &&
+            (() => {
+              {
+                console.log("Object: navigateToNextSibling", node.type);
+                callbacks.onNavigateToNextSibling!();
+              }
+            }),
+          navigateToParent:
+            callbacks.onNavigateToParent &&
+            (() => {
+              {
+                console.log("Object: navigateToParentNode", node.type);
+                callbacks.onNavigateToParent!();
+              }
+            }),
+          navigateToFirstChild:
+            callbacks.onNavigateToFirstChild &&
+            (() => {
+              {
+                console.log("Object: navigateToFirstChild", node.type);
+                callbacks.onNavigateToFirstChild!();
+              }
+            }),
+          navigateToLastChild:
+            callbacks.onNavigateToLastChild &&
+            (() => {
+              {
+                console.log("Object: navigateToLastChild", node.type);
+                callbacks.onNavigateToLastChild!();
+              }
+            }),
+          navigateToNextField:
+            callbacks.onNavigateToNextField &&
+            (() => {
+              console.log("navigateToNextField: callbacks :", callbacks);
+              {
+                console.log("Object: navigateToNextField", node.type);
+                callbacks.onNavigateToNextField!();
+              }
+            }),
+          navigateToPreviousField:
+            callbacks.onNavigateToPreviousField &&
+            (() => {
+              console.log("navigateToPreviousField: callbacks:", callbacks);
+              {
+                console.log("Object: navigateToPreviousField", node.type);
+                callbacks.onNavigateToPreviousField!();
+              }
+            }),
+          moveNodeUp:
+            callbacks.onMoveUp &&
+            (() => {
+              {
+                console.log("Object: moveNodeUp", node.type);
+                callbacks.onMoveUp!(node);
+              }
+            }),
+          moveNodeDown:
+            callbacks.onMoveDown &&
+            (() => {
+              {
+                console.log("Object: moveNodeDown", node.type);
+                callbacks.onMoveDown!(node);
+              }
+            }),
+          moveNodeIntoNextSiblingsFirstChild:
+            callbacks.onMoveIntoNextSiblingsFirstChild &&
+            (() => {
+              {
+                console.log("Object: moveNodeIntoNextSiblingsFirstChild", node.type);
+                callbacks.onMoveIntoNextSiblingsFirstChild!(node);
+              }
+            }),
+          moveNodeIntoPreviousSiblingsLastChild:
+            callbacks.onMoveIntoPreviousSiblingsLastChild &&
+            (() => {
+              {
+                console.log("Object: moveNodeIntoPreviousSiblingsLastChild", node.type);
+                callbacks.onMoveIntoPreviousSiblingsLastChild!(node);
+              }
+            }),
+          moveNodeToParentPreviousSibling:
+            callbacks.onMoveToParentPreviousSibling &&
+            (() => {
+              {
+                console.log("Object: moveNodeToParentPreviousSibling", node.type);
+                callbacks.onMoveToParentPreviousSibling!(node);
+              }
+            }),
+          moveNodeToParentNextSibling:
+            callbacks.onMoveToParentNextSibling &&
+            (() => {
+              {
+                console.log("Object: moveNodeToParentNextSibling", node.type);
+                callbacks.onMoveToParentNextSibling!(node);
+              }
+            }),
+        }
+      : {}
+  );
 
   const Element = display === "inline" ? "span" : "div";
 
@@ -429,6 +486,7 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
           onFocus={handleOnFocus}
           nodeId={props.node.id}
           fieldKey="content"
+          parentInfo={props.parentInfo}
         />
       }
     </Object>
@@ -436,9 +494,17 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 }
 
 function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): React.ReactNode {
+  const { selectedKey } = useLineContext();
   const contentRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "content", ref: contentRef as React.RefObject<HTMLElement> },
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       {
         <>
           <span className="token-keyword">#include</span>{" "}
@@ -467,8 +533,9 @@ function FunctionSignatureRender<
   signatureRender: React.ReactNode;
   childCallbacks: NodeCallbacks;
   movementCallbacks: NodeCallbacks;
+  fieldDefinitions: FieldDefinition[];
 } {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, setSelectedKey } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
   const childCallbacks = createParentArrayFieldEditCallbacks(
@@ -483,6 +550,12 @@ function FunctionSignatureRender<
   const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   const listRef = React.useRef<HTMLElement>(null);
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "returnType", ref: returnTypeRef },
+    { key: "identifier", ref: identifierRef as React.RefObject<HTMLElement> },
+    { key: "parameterList", ref: listRef as React.RefObject<HTMLElement> },
+  ];
 
   const { listRender, childRefs } = ListFieldRender(
     props,
@@ -518,7 +591,15 @@ function FunctionSignatureRender<
         placeholder: "function_name",
       })}{" "}
       <Object {...props} display="inline" callbacks={{ ...childCallbacks, ...movementCallbacks }}>
-        <span ref={listRef} tabIndex={0}>
+        <span
+          ref={listRef}
+          tabIndex={0}
+          onFocus={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setSelectedKey("parameterList");
+          }}
+        >
           <span className="token-delimiter">{"("}</span>
           {props.node.parameterList.length > 0 && (
             <div
@@ -538,16 +619,23 @@ function FunctionSignatureRender<
     </>
   );
 
-  return { signatureRender, childCallbacks, movementCallbacks };
+  return { signatureRender, childCallbacks, movementCallbacks, fieldDefinitions };
 }
 
 function FunctionDeclarationRender(
   props: XRenderProps<objects.FunctionDeclaration>
 ): React.ReactNode {
-  const { signatureRender, childCallbacks, movementCallbacks } = FunctionSignatureRender(props);
+  const { selectedKey } = useLineContext();
+  const { signatureRender, childCallbacks, movementCallbacks, fieldDefinitions } =
+    FunctionSignatureRender(props);
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
 
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
+    <Object
+      {...props}
+      callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks, ...fieldCallbacks }}
+    >
       {signatureRender}
     </Object>
   );
@@ -556,6 +644,7 @@ function FunctionDeclarationRender(
 function FunctionDefinitionRender(
   props: XRenderProps<objects.FunctionDefinition>
 ): React.ReactNode {
+  const { selectedKey } = useLineContext();
   const compoundStatementRef = React.useRef<HTMLElement>(null);
 
   const compoundStatementCallbacks = createParentNavigationCallbacks({
@@ -573,26 +662,39 @@ function FunctionDefinitionRender(
     />
   );
 
-  const { signatureRender, childCallbacks, movementCallbacks } = FunctionSignatureRender(
-    props,
-    compoundStatementRender
-  );
+  const { signatureRender, childCallbacks, movementCallbacks, fieldDefinitions } =
+    FunctionSignatureRender(props, compoundStatementRender);
+  fieldDefinitions.push({
+    key: "compoundStatement",
+    ref: compoundStatementRef as React.RefObject<HTMLElement>,
+  });
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
 
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks }}>
+    <Object
+      {...props}
+      callbacks={{ ...props.callbacks, ...childCallbacks, ...movementCallbacks, ...fieldCallbacks }}
+    >
       {signatureRender}
     </Object>
   );
 }
 
 function DeclarationRender(props: XRenderProps<objects.Declaration>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, selectedKey } = useLineContext();
 
   const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
-  const valueRef = React.useRef<HTMLElement>(null);
+  const valueRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
 
   nodeMap.set(props.node.id, props.node);
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "primitiveType", ref: returnTypeRef },
+    { key: "identifier", ref: identifierRef as React.RefObject<HTMLElement> },
+    // ...(props.node.value ? [{ key: "value", ref: valueRef }] : []), // TBD: Should newField go to value or wrap to type? Because once we are inside value, we need go use navigateToParent to go back to declaration
+  ];
 
   const childCallbacks = {
     ...createParentOptionalFieldCallbacks(
@@ -607,6 +709,7 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
       firstChild: props.node.value && (valueRef as React.RefObject<HTMLElement>),
       lastChild: props.node.value && (valueRef as React.RefObject<HTMLElement>),
     }),
+    ...createFieldNavigationCallbacks(fieldDefinitions, selectedKey),
   };
 
   return (
@@ -650,13 +753,21 @@ function DeclarationRender(props: XRenderProps<objects.Declaration>): React.Reac
 }
 
 function FunctionParameterRender(props: XRenderProps<objects.FunctionParameter>): React.ReactNode {
-  const { nodeMap } = useLineContext();
+  const { nodeMap, selectedKey } = useLineContext();
   nodeMap.set(props.node.id, props.node);
 
   const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "paramType", ref: returnTypeRef },
+    { key: "identifier", ref: identifierRef as React.RefObject<HTMLElement> },
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props} callbacks={{ ...props.callbacks }}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       {
         <>
           {TypeSelector({
@@ -1118,7 +1229,7 @@ function ReturnStatementRender(props: XRenderProps<objects.ReturnStatement>): Re
 }
 
 function CallExpressionRender(props: XRenderProps<objects.CallExpression>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, selectedKey } = useLineContext();
 
   const callbacks = createParentArrayFieldEditCallbacks(
     props.node,
@@ -1128,6 +1239,10 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
     onEdit,
     requestFocus
   );
+
+  const fieldDefinitions: FieldDefinition[] = [{ key: "functionName", ref: props.ref }];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
 
   const { listRender, childRefs } = ListFieldRender(
     props,
@@ -1142,7 +1257,10 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
   );
   const movementCallbacks = createChildNavigationCallbacks(childRefs);
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks, ...movementCallbacks }}>
+    <Object
+      {...props}
+      callbacks={{ ...props.callbacks, ...callbacks, ...movementCallbacks, ...fieldCallbacks }}
+    >
       <CallExpressionSelector
         node={props.node}
         ref={props.ref}
@@ -1158,8 +1276,14 @@ function CallExpressionRender(props: XRenderProps<objects.CallExpression>): Reac
 }
 
 function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNode {
+  const { selectedKey } = useLineContext();
+
+  const fieldDefinitions: FieldDefinition[] = [{ key: "name", ref: props.ref }];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       {
         <ReferenceSelector
           node={props.node}
@@ -1177,11 +1301,18 @@ function ReferenceRender(props: XRenderProps<objects.Reference>): React.ReactNod
 function AssignmentExpressionRender(
   props: XRenderProps<objects.AssignmentExpression>
 ): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
-  const valueRef = React.useRef<HTMLElement>(null);
+  const { nodeMap, onEdit, requestFocus, selectedKey } = useLineContext();
+  const valueRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "identifier", ref: props.ref },
+    { key: "value", ref: valueRef },
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
 
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       <span className="token-variable">
         {
           <AssignmentSelector
@@ -1206,8 +1337,14 @@ function AssignmentExpressionRender(
 }
 
 function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.ReactNode {
+  const { selectedKey } = useLineContext();
+
+  const fieldDefinitions: FieldDefinition[] = [{ key: "value", ref: props.ref }];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       {EditableField({
         node: props.node,
         key: "value",
@@ -1222,8 +1359,14 @@ function NumberLiteralRender(props: XRenderProps<objects.NumberLiteral>): React.
 }
 
 function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.ReactNode {
+  const { selectedKey } = useLineContext();
+
+  const fieldDefinitions: FieldDefinition[] = [{ key: "value", ref: props.ref }];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       <span className="token-string">{'"'}</span>
       {EditableField({
         node: props.node,
@@ -1240,13 +1383,21 @@ function StringLiteralRender(props: XRenderProps<objects.StringLiteral>): React.
 }
 
 function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): React.ReactNode {
-  const { nodeMap, onEdit, requestFocus } = useLineContext();
+  const { nodeMap, onEdit, requestFocus, selectedKey } = useLineContext();
 
-  const leftRef = React.useRef<HTMLElement>(null);
-  const rightRef = React.useRef<HTMLElement>(null);
+  const leftRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const rightRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "left", ref: leftRef },
+    { key: "operator", ref: props.ref },
+    { key: "right", ref: rightRef },
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
 
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       <NodeRender
         ref={leftRef as React.RefObject<HTMLSpanElement>}
         node={props.node.left}
@@ -1274,8 +1425,14 @@ function BinaryExpressionRender(props: XRenderProps<objects.BinaryExpression>): 
 }
 
 function CommentRender(props: XRenderProps<objects.Comment>): React.ReactNode {
+  const { selectedKey } = useLineContext();
+
+  const fieldDefinitions: FieldDefinition[] = [{ key: "content", ref: props.ref }];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
   return (
-    <Object {...props}>
+    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
       <span className="token-comment">{"//"}</span>{" "}
       {EditableField({
         node: props.node,
