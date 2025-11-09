@@ -486,11 +486,11 @@ function FunctionSignatureRender<
     props,
     "parameterList",
     { insertConstructor: createParameter },
-    ({ idx, nodeRender }) => (
-      <span>
-        {idx > 0 && ", "}
+    ({ nodeRender }) => (
+      <div>
         {nodeRender}
-      </span>
+        {", "}
+      </div>
     )
   );
 
@@ -513,9 +513,19 @@ function FunctionSignatureRender<
         parentInfo: props.parentInfo,
         className: "token-function",
         placeholder: "function_name",
-      })}
+      })}{" "}
       <span className="token-delimiter">{"("}</span>
-      {listRender}
+      {props.node.parameterList.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            paddingLeft: "20px",
+          }}
+        >
+          {listRender}
+        </div>
+      )}
       <span className="token-delimiter">{")"}</span>
       {additionalContent}
     </>
