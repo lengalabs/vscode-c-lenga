@@ -928,9 +928,34 @@ function leadingSemicolon(node: objects.LanguageObject): boolean {
 }
 
 function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.ReactNode {
-  const { onEdit, nodeMap, requestFocus } = useLineContext();
+  const {
+    onEdit,
+    nodeMap,
+    requestFocus,
+    selectedKey,
+    setSelectedKey,
+    setSelectedNodeId,
+    setParentNodeInfo,
+  } = useLineContext();
 
-  const callbacks = {
+  const ifKeywordRef = props.ref; // The "if" keyword gets the main ref
+  const conditionParenRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const conditionRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const bodyRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const elseRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+  const elseStatementRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+
+  // Field definitions for if statement: if keyword → condition parentheses → body
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "", ref: ifKeywordRef },
+    { key: "condition", ref: conditionParenRef },
+    { key: "body", ref: bodyRef },
+    ...(props.node.elseStatement?.type === "ifStatement" ? [{ key: "else", ref: elseRef }] : []),
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
+  const childCallbacks = {
     onInsertChildFirst: () => {
       if (!props.node.elseStatement) {
         console.log("IfStatementRender: Inserting else clause");
@@ -953,146 +978,129 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
     },
   };
 
-  const elseIfRef = React.useRef<HTMLElement>(null);
-  const conditionRef = React.useRef<HTMLElement>(null);
-  const bodyRef = React.useRef<HTMLElement>(null);
-  useFocusStructuralNode(props.node.id, props.ref);
-  const elseRef = React.useRef<HTMLElement>(null);
-
-  const ifCallbacks = createChildNavigationCallbacks({
-    firstChild: conditionRef as React.RefObject<HTMLElement>,
-    lastChild: elseRef as React.RefObject<HTMLElement>,
+  useFocusStructuralNode(props.node.id, ifKeywordRef as React.RefObject<HTMLElement>);
+  // Child navigation: else statement is the child
+  const navigationCallbacks = createChildNavigationCallbacks({
+    firstChild: props.node.elseStatement ? elseStatementRef : undefined,
+    lastChild: props.node.elseStatement ? elseStatementRef : undefined,
   });
 
   const conditionCallbacks = {
     ...createRequiredFieldCallbacks(props.node, "condition", nodeMap, onEdit, requestFocus),
     ...createParentNavigationCallbacks({
-      parent: props.ref as React.RefObject<HTMLElement>,
-      previousSibling: props.ref as React.RefObject<HTMLElement>,
-      nextSibling: bodyRef as React.RefObject<HTMLElement>,
+      parent: ifKeywordRef,
     }),
   };
 
   const bodyCallbacks = {
     ...createRequiredFieldCallbacks(props.node, "body", nodeMap, onEdit, requestFocus),
     ...createParentNavigationCallbacks({
-      parent: props.ref as React.RefObject<HTMLElement>,
-      previousSibling: conditionRef as React.RefObject<HTMLElement>,
-      nextSibling: elseRef as React.RefObject<HTMLElement>,
+      parent: ifKeywordRef,
     }),
   };
 
   const elseRender =
     props.node.elseStatement &&
-    (props.node.elseStatement.type === "elseClause"
-      ? (() => {
-          const elseCallbacks = createParentNavigationCallbacks({
-            parent: props.ref as React.RefObject<HTMLElement>,
-            previousSibling: conditionRef as React.RefObject<HTMLElement>,
-            nextSibling: undefined,
-          });
-          return (
-            <NodeRender
-              ref={elseRef as React.RefObject<HTMLSpanElement>}
-              node={props.node.elseStatement}
-              parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-              display="inline"
-              callbacks={{
-                ...createOptionalFieldCallbacks(
-                  props.node,
-                  "elseStatement",
-                  nodeMap,
-                  onEdit,
-                  requestFocus
-                ),
-                ...elseCallbacks,
-              }}
-            />
-          );
-        })()
-      : (() => {
-          const elseMovementCallbacks = createParentNavigationCallbacks({
-            parent: elseRef as React.RefObject<HTMLElement>,
-            previousSibling: elseRef as React.RefObject<HTMLElement>,
-            nextSibling: undefined,
-          });
-          const ifElseCallbacks = {
-            ...createParentNavigationCallbacks({
-              parent: props.ref as React.RefObject<HTMLElement>,
-              previousSibling: conditionRef as React.RefObject<HTMLElement>,
-              nextSibling: elseIfRef as React.RefObject<HTMLElement>,
-            }),
-            ...createChildNavigationCallbacks({
-              firstChild: elseIfRef as React.RefObject<HTMLElement>,
-              lastChild: elseIfRef as React.RefObject<HTMLElement>,
-            }),
-          };
-          const ifStatement = props.node.elseStatement;
-          const elseClauseCallbacks = {
+    (() => {
+      const elseClauseCallbacks = createOptionalFieldCallbacks(
+        props.node,
+        "elseStatement",
+        nodeMap,
+        onEdit,
+        requestFocus
+      );
+      const hasConditon = props.node.elseStatement.type === "ifStatement";
+
+      const elseStatementCallbacks = hasConditon
+        ? {
             onDelete: (node: objects.LanguageObject) => {
-              console.log("Converting if else to else: ", node.id);
-              // Replace the ifStatement with the elseStatement body
-              const newElseClause: objects.ElseClause = {
-                id: crypto.randomUUID(),
-                type: "elseClause",
-                body: ifStatement.body,
-              };
-              props.node.elseStatement = newElseClause;
-              nodeMap.set(newElseClause.id, newElseClause);
-              nodeMap.delete(ifStatement.id);
-              onEdit(props.node, "elseStatement");
+              if (props.node.elseStatement?.type === "ifStatement") {
+                console.log("Converting if else to else: ", node.id);
+                // Replace the ifStatement with the elseStatement body
+                const newElseClause: objects.ElseClause = {
+                  id: crypto.randomUUID(),
+                  type: "elseClause",
+                  body: props.node.elseStatement.body,
+                };
+                props.node.elseStatement = newElseClause;
+                nodeMap.set(newElseClause.id, newElseClause);
+                nodeMap.delete(props.node.elseStatement.id);
+                onEdit(props.node, "elseStatement");
+              }
             },
-          };
-          return (
-            <>
+          }
+        : elseClauseCallbacks;
+
+      return (
+        <>
+          {hasConditon && (
+            <Object {...props} callbacks={elseClauseCallbacks} display="inline">
               {" "}
-              <Object
-                display="inline"
-                node={ifStatement}
-                parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-                callbacks={{
-                  ...createOptionalFieldCallbacks(
-                    props.node,
-                    "elseStatement",
-                    nodeMap,
-                    onEdit,
-                    requestFocus
-                  ),
-                  ...ifElseCallbacks,
-                }}
-              >
-                <span
-                  className="token-keyword"
-                  tabIndex={0}
-                  ref={elseRef as React.RefObject<HTMLElement>}
-                >
-                  else
-                </span>
-              </Object>{" "}
-              <NodeRender
-                ref={elseIfRef as React.RefObject<HTMLSpanElement>}
-                node={ifStatement}
-                parentInfo={parentInfoFromChild(props.node, "elseStatement")}
-                display="inline"
-                callbacks={{ ...elseClauseCallbacks, ...elseMovementCallbacks }}
-              />
-            </>
-          );
-        })());
+              <span className="token-keyword" tabIndex={0} ref={elseRef}>
+                else
+              </span>{" "}
+            </Object>
+          )}
+          <NodeRender
+            ref={elseStatementRef as React.RefObject<HTMLSpanElement>}
+            node={props.node.elseStatement}
+            parentInfo={parentInfoFromChild(props.node, "elseStatement")}
+            display="inline"
+            callbacks={{
+              ...elseStatementCallbacks,
+              ...createParentNavigationCallbacks({
+                parent: ifKeywordRef,
+              }),
+            }}
+          />
+        </>
+      );
+    })();
 
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks, ...ifCallbacks }}>
-      <span ref={props.ref} tabIndex={0}>
-        <span className="token-keyword">if</span> <span className="token-keyword">{"("}</span>
-        <NodeRender
-          ref={conditionRef as React.RefObject<HTMLSpanElement>}
-          node={props.node.condition}
-          parentInfo={parentInfoFromChild(props.node, "condition")}
-          display="inline"
-          callbacks={conditionCallbacks}
-        />
-        <span className="token-keyword">{")"}</span>{" "}
+    <Object
+      {...props}
+      callbacks={{
+        ...props.callbacks,
+        ...fieldCallbacks,
+        ...childCallbacks,
+        ...navigationCallbacks,
+      }}
+    >
+      <span
+        ref={ifKeywordRef}
+        tabIndex={0}
+        onFocus={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedKey("");
+          setSelectedNodeId(props.node.id);
+          setParentNodeInfo(props.parentInfo);
+        }}
+      >
+        <span className="token-keyword">if</span>{" "}
       </span>
+      <Object {...props} display="inline" callbacks={conditionCallbacks}>
+        <span
+          ref={conditionParenRef}
+          tabIndex={0}
+          onFocus={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setSelectedKey("condition");
+          }}
+        >
+          <span className="token-keyword">{"("}</span>
+          <NodeRender
+            ref={conditionRef as React.RefObject<HTMLSpanElement>}
+            node={props.node.condition}
+            parentInfo={parentInfoFromChild(props.node, "condition")}
+            display="inline"
+            callbacks={conditionCallbacks}
+          />
+          <span className="token-keyword">{")"}</span>
+        </span>
+      </Object>{" "}
       <NodeRender
         ref={bodyRef as React.RefObject<HTMLSpanElement>}
         node={props.node.body}
@@ -1107,10 +1115,44 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
 
 function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactNode {
   // handle enter to convert to ifStatement
-  const { onEdit, nodeMap, parentNodeInfo, requestFocus } = useLineContext();
-  useFocusStructuralNode(props.node.id, props.ref);
+  const { onEdit, nodeMap, parentNodeInfo, requestFocus, selectedKey } = useLineContext();
 
-  const callbacks = {
+  const elseKeywordRef = props.ref; // The "else" keyword gets the main ref
+  const bodyRef = React.useRef<HTMLElement>(null) as React.RefObject<HTMLElement>;
+
+  // Field definitions for else clause: else keyword → body
+  const fieldDefinitions: FieldDefinition[] = [
+    { key: "else", ref: elseKeywordRef },
+    { key: "body", ref: bodyRef },
+  ];
+
+  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
+
+  // Delete callback for else clause: delete the entire else statement
+  const elseDeleteCallbacks = {
+    onDelete: (_node: objects.LanguageObject) => {
+      if (!parentNodeInfo) {
+        console.error("Parent node info is undefined for else clause:", props.node.id);
+        return;
+      }
+      // Only delete the entire else statement when we're on the "else" keyword field
+      if (selectedKey === "else") {
+        console.log("ElseClauseRender: Deleting entire else statement");
+        // Remove the else statement from the parent if statement
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (parentNodeInfo.parent as any)[parentNodeInfo.key] = undefined;
+        nodeMap.delete(props.node.id);
+        onEdit(parentNodeInfo.parent, parentNodeInfo.key);
+      } else {
+        // If not on the else keyword, let the default delete behavior handle it
+        if (props.callbacks?.onDelete) {
+          props.callbacks.onDelete(_node);
+        }
+      }
+    },
+  };
+
+  const childCallbacks = {
     onInsertChildFirst: () => {
       console.log("ElseClauseRender: Converting to ifStatement");
       // Convert to ifStatement
@@ -1153,14 +1195,23 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       nodeMap.set(emptyBody.id, emptyBody);
       onEdit(props.node, "body");
     },
+    ...createParentNavigationCallbacks({
+      parent: elseKeywordRef,
+    }),
   };
 
-  const bodyRef = React.useRef<HTMLElement>(null);
-
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...callbacks }}>
+    <Object
+      {...props}
+      callbacks={{
+        ...props.callbacks,
+        ...fieldCallbacks,
+        ...childCallbacks,
+        ...elseDeleteCallbacks,
+      }}
+    >
       <span
-        ref={props.ref as React.RefObject<HTMLSpanElement>}
+        ref={elseKeywordRef as React.RefObject<HTMLSpanElement>}
         className="token-keyword"
         tabIndex={0}
       >

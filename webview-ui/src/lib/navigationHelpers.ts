@@ -64,7 +64,8 @@ export function createFieldNavigationCallbacks(
   fields: FieldDefinition[],
   selectedKey: string | null
 ): NodeFieldNavigationCallbacks {
-  const currentIndex = selectedKey ? fields.findIndex((field) => field.key === selectedKey) : -1;
+  const currentIndex =
+    selectedKey !== null ? fields.findIndex((field) => field.key === selectedKey) : -1;
   console.log("createFieldNavigationCallbacks", { fields, selectedKey, currentIndex });
   return {
     onNavigateToPreviousField: () => {
