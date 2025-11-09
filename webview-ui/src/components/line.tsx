@@ -271,7 +271,8 @@ function ListFieldRender<
   callbacks: {
     insertConstructor: (requestFocus?: (props: FocusRequest) => void) => objects.LanguageObject;
   },
-  render: (props: ItemRenderProps<KT>) => React.ReactNode
+  render: (props: ItemRenderProps<KT>) => React.ReactNode,
+  parent_ref?: React.RefObject<HTMLElement>
 ): { listRender: React.ReactNode; childRefs: ChildRefs } {
   const list: KT[] = parent.node[key] as unknown as KT[];
 
@@ -310,7 +311,7 @@ function ListFieldRender<
             i < list.length - 1 ? itemRefs.current.get(list[i + 1].id) : undefined;
 
           return ListItem<T, K, KT>(parent, key, i, callbacks, item, render, currentRef, {
-            parent: parent.ref,
+            parent: parent_ref ?? parent.ref,
             previousSibling,
             nextSibling,
           });
@@ -481,6 +482,7 @@ function FunctionSignatureRender<
 
   const returnTypeRef = props.ref;
   const identifierRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  const listRef = React.useRef<HTMLElement>(null);
 
   const { listRender, childRefs } = ListFieldRender(
     props,
@@ -491,7 +493,8 @@ function FunctionSignatureRender<
         {nodeRender}
         {", "}
       </div>
-    )
+    ),
+    listRef as React.RefObject<HTMLElement>
   );
 
   const movementCallbacks = createChildNavigationCallbacks(childRefs);
@@ -514,19 +517,23 @@ function FunctionSignatureRender<
         className: "token-function",
         placeholder: "function_name",
       })}{" "}
-      <span className="token-delimiter">{"("}</span>
-      {props.node.parameterList.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            paddingLeft: "20px",
-          }}
-        >
-          {listRender}
-        </div>
-      )}
-      <span className="token-delimiter">{")"}</span>
+      <Object {...props} display="inline" callbacks={{ ...childCallbacks, ...movementCallbacks }}>
+        <span ref={listRef} tabIndex={0}>
+          <span className="token-delimiter">{"("}</span>
+          {props.node.parameterList.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                paddingLeft: "20px",
+              }}
+            >
+              {listRender}
+            </div>
+          )}
+          <span className="token-delimiter">{")"}</span>
+        </span>
+      </Object>
       {additionalContent}
     </>
   );
