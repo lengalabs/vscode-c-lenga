@@ -969,11 +969,7 @@ function IfStatementRender(props: XRenderProps<objects.IfStatement>): React.Reac
         const newElseClause: objects.ElseClause = {
           id: crypto.randomUUID(),
           type: "elseClause",
-          body: {
-            id: crypto.randomUUID(),
-            type: "compoundStatement",
-            codeBlock: [],
-          },
+          body: createUnknown(),
         };
         props.node.elseStatement = newElseClause;
         nodeMap.set(newElseClause.id, newElseClause);
@@ -1190,18 +1186,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
 
   // Special callback for body - replaces with empty compound statement instead of null
   const bodyCallbacks: NodeCallbacks = {
-    onDelete: (node: objects.LanguageObject) => {
-      console.log("Deleting else clause body:", node.id);
-      const emptyBody: objects.CompoundStatement = {
-        id: crypto.randomUUID(),
-        type: "compoundStatement",
-        codeBlock: [],
-      };
-      props.node.body = emptyBody;
-      nodeMap.delete(node.id);
-      nodeMap.set(emptyBody.id, emptyBody);
-      onEdit(props.node, "body");
-    },
+    ...createRequiredFieldCallbacks(props.node, "body", nodeMap, onEdit, requestFocus),
     ...createParentNavigationCallbacks({
       parent: elseKeywordRef,
     }),
