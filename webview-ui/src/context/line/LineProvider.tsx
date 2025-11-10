@@ -59,7 +59,7 @@ export default function LineProvider({
         return;
       }
 
-      if (event.key === "i" && mode === EditorMode.View) {
+      if (event.key === " " && mode === EditorMode.View) {
         event.preventDefault();
         setMode(EditorMode.Edit);
         if (selectedNodeId && selectedKey) {
@@ -68,7 +68,7 @@ export default function LineProvider({
         return;
       }
 
-      if (event.key === "Escape" && mode === EditorMode.Edit) {
+      if (event.key === "Escape" || (event.key === " " && mode === EditorMode.Edit)) {
         event.preventDefault();
         event.stopPropagation();
         setMode(EditorMode.View);
