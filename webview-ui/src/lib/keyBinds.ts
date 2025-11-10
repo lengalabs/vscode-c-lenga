@@ -57,46 +57,34 @@ export interface NodeFieldNavigationCallbacks {
  * This provides a higher-level interface for handling keyboard interactions in the editor.
  * Instead of dealing with raw key events, render functions specify named commands they support.
  *
- * Available commands:
- * - View mode:
- *   - insertSibling: Create a sibling node after (mapped to Enter key)
- *   - insertSiblingBefore: Create a sibling node before (mapped to Shift+Enter)
- *   - delete: Remove the current node (mapped to Delete key)
- *   - Navigation:
- *     - previousSibling: Navigate to previous sibling (mapped to ArrowUp)
- *     - nextSibling: Navigate to next sibling (mapped to ArrowDown)
- *     - parentNode: Navigate to parent node (mapped to ArrowLeft)
- *     - firstChild: Navigate to first child (mapped to ArrowRight)
- *     - lastChild: Navigate to last child (mapped to Shift+ArrowRight)
- *   - Field Navigation:
- *     - navigateToPreviousField: Navigate to previous field in same object (mapped to Shift+ArrowUp)
- *     - navigateToNextField: Navigate to next field in same object (mapped to Shift+ArrowDown)
- *   - Movement (for array elements):
- *     - moveNodeUp: Move current node up in array (mapped to Alt+ArrowUp)
- *     - moveNodeDown: Move current node down in array (mapped to Alt+ArrowDown)
- *     - moveNodeToParentPreviousSibling: Move node to become previous sibling of parent (mapped to Alt+ArrowLeft)
- *     - moveNodeToParentNextSibling: Move node to become next sibling of parent (mapped to Alt+Shift+ArrowLeft)
- *     - moveNodeIntoNextSiblingsFirstChild: Move node into next sibling's first position (mapped to Alt+ArrowRight)
- *     - moveNodeIntoPreviousSiblingsLastChild: Move node into previous sibling's last position (mapped to Alt+Shift+ArrowRight)
+ * The new system allows defining multiple key combinations for the same command through
+ * the COMMAND_DEFINITIONS object. This enables both traditional arrow keys and vim-like
+ * hjkl navigation, as well as alternative keys for the same actions.
  *
- * - Edit mode (for array fields):
- *   - insertChildFirst: Insert new element at beginning (mapped to Enter key)
- *   - insertChildLast: Insert new element at end (mapped to Shift+Enter key)
- *   - delete: Remove content (mapped to Delete key)
+ * Key Features:
+ * - Multiple key bindings per command (e.g., both "Delete" and "Backspace" for delete)
+ * - Vim-like navigation support (j/k/l/n alongside arrow keys)
+ * - Command descriptions for documentation/help systems
+ * - Optimized key mapping generation with caching
+ * - Backwards compatibility with existing KEY_MAPPINGS usage
  *
- * - Edit mode (for single fields):
- *   - insert: Replace/modify current field (mapped to Enter key)
- *   - delete: Clear field content (mapped to Delete key)
+ * Available commands are defined in COMMAND_DEFINITIONS with their key combinations
+ * and descriptions. The system automatically generates the optimized key mapping
+ * for runtime lookup.
  *
  * The abstraction automatically handles:
  * - Event propagation (stopPropagation)
  * - Default behavior prevention (preventDefault)
  * - Mode-specific command routing
+ * - Multiple key combinations per command
  *
  * Usage:
  *   const handleKeyDown = createKeyDownHandler(mode, {
  *     insertChildFirst: () => { ... }
  *   });
+ *
+ * Or to get available commands for a mode:
+ *   const commands = getAvailableCommands("view");
  */
 // Command types that render functions can use
 type Callback = () => void;
@@ -145,41 +133,193 @@ export interface NodeFieldNavigationCommandHandlers {
   navigateToNextField?: Callback;
 }
 
+// Command definition with multiple key combinations
+interface CommandDefinition {
+  keys: string[];
+  description?: string;
+}
+
 // Key combination to command name mapping
 type KeyMapping = {
   [key: string]: string;
 };
 
-export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
+// Command definitions organized by mode
+type CommandDefinitions = {
+  [mode in EditorModeType]: {
+    [commandName: string]: CommandDefinition;
+  };
+};
+
+// Define commands with their key combinations and descriptions
+export const COMMAND_DEFINITIONS: CommandDefinitions = {
   view: {
     // Insertion
-    Enter: "insertSibling",
-    "Shift+Enter": "insertSiblingBefore",
-    "Ctrl+Enter": "insertChildFirst",
-    "Ctrl+Shift+Enter": "insertChildLast",
+    insertSibling: {
+      keys: ["Enter"],
+      description: "Create a sibling node after",
+    },
+    insertSiblingBefore: {
+      keys: ["Shift+Enter"],
+      description: "Create a sibling node before",
+    },
+    insertChildFirst: {
+      keys: ["Ctrl+Enter"],
+      description: "Insert new element at beginning",
+    },
+    insertChildLast: {
+      keys: ["Ctrl+Shift+Enter"],
+      description: "Insert new element at end",
+    },
     // Deletion
-    Delete: "delete",
+    delete: {
+      keys: ["Delete", "Backspace"],
+      description: "Remove the current node",
+    },
     // Navigation
-    ArrowUp: "navigateToPreviousSibling",
-    ArrowDown: "navigateToNextSibling",
-    ArrowLeft: "navigateToParent",
-    ArrowRight: "navigateToFirstChild",
-    "Shift+ArrowUp": "navigateToPreviousField",
-    "Shift+ArrowDown": "navigateToNextField",
-    // Permutation
-    "Alt+ArrowUp": "moveNodeUp",
-    "Alt+ArrowDown": "moveNodeDown",
-    "Alt+ArrowLeft": "moveNodeToParentPreviousSibling", // Move to become previous sibling of parent
-    "Alt+Shift+ArrowLeft": "moveNodeToParentNextSibling", // Move to become next sibling of parent
-    "Alt+Shift+ArrowDown": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
-    "Alt+ArrowRight": "moveNodeIntoNextSiblingsFirstChild", // Move to the first child of the next sibling
-    "Alt+Shift+ArrowUp": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
-    "Alt+Shift+ArrowRight": "moveNodeIntoPreviousSiblingsLastChild", // Move to the last child of the previous sibling
+    navigateToPreviousSibling: {
+      keys: ["ArrowUp", "l"],
+      description: "Navigate to previous sibling",
+    },
+    navigateToNextSibling: {
+      keys: ["ArrowDown", "k"],
+      description: "Navigate to next sibling",
+    },
+    navigateToParent: {
+      keys: ["ArrowLeft", "j"],
+      description: "Navigate to parent node",
+    },
+    navigateToFirstChild: {
+      keys: ["ArrowRight", "n"],
+      description: "Navigate to first child",
+    },
+    navigateToLastChild: {
+      keys: ["Shift+ArrowRight", "Shift+n"],
+      description: "Navigate to last child",
+    },
+    navigateToPreviousField: {
+      keys: ["Shift+ArrowUp", "Shift+l", "o"],
+      description: "Navigate to previous field in same object",
+    },
+    navigateToNextField: {
+      keys: ["Shift+ArrowDown", "Shift+k", "i"],
+      description: "Navigate to next field in same object",
+    },
+    // Movement/Permutation
+    moveNodeUp: {
+      keys: ["Alt+ArrowUp", "Alt+l"],
+      description: "Move current node up in array",
+    },
+    moveNodeDown: {
+      keys: ["Alt+ArrowDown", "Alt+k"],
+      description: "Move current node down in array",
+    },
+    moveNodeToParentPreviousSibling: {
+      keys: ["Alt+ArrowLeft", "Alt+j"],
+      description: "Move node to become previous sibling of parent",
+    },
+    moveNodeToParentNextSibling: {
+      keys: ["Alt+Shift+ArrowLeft", "Alt+Shift+j"],
+      description: "Move node to become next sibling of parent",
+    },
+    moveNodeIntoNextSiblingsFirstChild: {
+      keys: ["Alt+ArrowRight", "Alt+n", "Alt+Shift+ArrowDown"],
+      description: "Move node into next sibling's first position",
+    },
+    moveNodeIntoPreviousSiblingsLastChild: {
+      keys: ["Alt+Shift+ArrowUp", "Alt+Shift+ArrowRight"],
+      description: "Move node into previous sibling's last position",
+    },
   },
   edit: {
-    Delete: "delete",
+    delete: {
+      keys: ["Delete", "Backspace"],
+      description: "Clear field content",
+    },
   },
 };
+
+// Function to generate optimized key mapping from command definitions
+export function createKeyMapping(mode: EditorModeType): KeyMapping {
+  const keyMapping: KeyMapping = {};
+  const commands = COMMAND_DEFINITIONS[mode];
+
+  for (const [commandName, definition] of Object.entries(commands)) {
+    for (const keyCombo of definition.keys) {
+      keyMapping[keyCombo] = commandName;
+    }
+  }
+
+  return keyMapping;
+}
+
+// Cached key mappings for performance
+const cachedKeyMappings: Partial<Record<EditorModeType, KeyMapping>> = {};
+
+export function getKeyMapping(mode: EditorModeType): KeyMapping {
+  if (!cachedKeyMappings[mode]) {
+    cachedKeyMappings[mode] = createKeyMapping(mode);
+  }
+  return cachedKeyMappings[mode]!;
+}
+
+// Legacy export for backwards compatibility
+export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
+  view: getKeyMapping("view"),
+  edit: getKeyMapping("edit"),
+};
+
+// Utility functions for introspection and help systems
+
+/**
+ * Get all available commands for a specific mode
+ */
+export function getAvailableCommands(mode: EditorModeType): string[] {
+  return Object.keys(COMMAND_DEFINITIONS[mode]);
+}
+
+/**
+ * Get all key combinations for a specific command in a mode
+ */
+export function getKeysForCommand(mode: EditorModeType, commandName: string): string[] {
+  const command = COMMAND_DEFINITIONS[mode]?.[commandName];
+  return command ? [...command.keys] : [];
+}
+
+/**
+ * Get command description
+ */
+export function getCommandDescription(
+  mode: EditorModeType,
+  commandName: string
+): string | undefined {
+  const command = COMMAND_DEFINITIONS[mode]?.[commandName];
+  return command?.description;
+}
+
+/**
+ * Get the command name for a key combination
+ */
+export function getCommandForKey(mode: EditorModeType, keyCombo: string): string | undefined {
+  const keyMapping = getKeyMapping(mode);
+  return keyMapping[keyCombo];
+}
+
+/**
+ * Get all commands with their key bindings and descriptions for a mode
+ */
+export function getAllCommandInfo(mode: EditorModeType): Array<{
+  command: string;
+  keys: string[];
+  description?: string;
+}> {
+  const commands = COMMAND_DEFINITIONS[mode];
+  return Object.entries(commands).map(([command, definition]) => ({
+    command,
+    keys: [...definition.keys],
+    description: definition.description,
+  }));
+}
 
 // Helper to serialize key event to string for lookup
 // Modifiers are always in alphabetical order: Alt+Ctrl+Shift+Key
