@@ -1,6 +1,6 @@
 import React from "react";
 import * as objects from "../../../src/language_objects/cNodes";
-import { EditorModeType } from "../context/line/lineContext";
+import { EditorMode, EditorModeType } from "../context/line/lineContext";
 
 export interface NodeCallbacks extends NodeEditCallbacks, NodeNavigationCallbacks {}
 
@@ -135,7 +135,7 @@ export interface NodeFieldNavigationCommandHandlers {
 
 // Command definition with multiple key combinations
 interface CommandDefinition {
-  keys: string[];
+  bind: { keys: string; mode?: EditorModeType }[];
   description?: string;
 }
 
@@ -146,107 +146,144 @@ type KeyMapping = {
 
 // Command definitions organized by mode
 type CommandDefinitions = {
-  [mode in EditorModeType]: {
-    [commandName: string]: CommandDefinition;
-  };
+  [commandName: string]: CommandDefinition;
 };
 
 // Define commands with their key combinations and descriptions
 export const COMMAND_DEFINITIONS: CommandDefinitions = {
-  view: {
-    // Insertion
-    insertSibling: {
-      keys: ["Enter"],
-      description: "Create a sibling node after",
-    },
-    insertSiblingBefore: {
-      keys: ["Shift+Enter"],
-      description: "Create a sibling node before",
-    },
-    insertChildFirst: {
-      keys: ["Ctrl+Enter"],
-      description: "Insert new element at beginning",
-    },
-    insertChildLast: {
-      keys: ["Ctrl+Shift+Enter"],
-      description: "Insert new element at end",
-    },
-    // Deletion
-    delete: {
-      keys: ["Delete", "Backspace"],
-      description: "Remove the current node",
-    },
-    // Navigation
-    navigateToPreviousSibling: {
-      keys: ["ArrowUp", "l"],
-      description: "Navigate to previous sibling",
-    },
-    navigateToNextSibling: {
-      keys: ["ArrowDown", "k"],
-      description: "Navigate to next sibling",
-    },
-    navigateToParent: {
-      keys: ["ArrowLeft", "j"],
-      description: "Navigate to parent node",
-    },
-    navigateToFirstChild: {
-      keys: ["ArrowRight", "n"],
-      description: "Navigate to first child",
-    },
-    navigateToLastChild: {
-      keys: ["Shift+ArrowRight", "Shift+n"],
-      description: "Navigate to last child",
-    },
-    navigateToPreviousField: {
-      keys: ["Shift+ArrowUp", "Shift+l", "o"],
-      description: "Navigate to previous field in same object",
-    },
-    navigateToNextField: {
-      keys: ["Shift+ArrowDown", "Shift+k", "i"],
-      description: "Navigate to next field in same object",
-    },
-    // Movement/Permutation
-    moveNodeUp: {
-      keys: ["Alt+ArrowUp", "Alt+l"],
-      description: "Move current node up in array",
-    },
-    moveNodeDown: {
-      keys: ["Alt+ArrowDown", "Alt+k"],
-      description: "Move current node down in array",
-    },
-    moveNodeToParentPreviousSibling: {
-      keys: ["Alt+ArrowLeft", "Alt+j"],
-      description: "Move node to become previous sibling of parent",
-    },
-    moveNodeToParentNextSibling: {
-      keys: ["Alt+Shift+ArrowLeft", "Alt+Shift+j"],
-      description: "Move node to become next sibling of parent",
-    },
-    moveNodeIntoNextSiblingsFirstChild: {
-      keys: ["Alt+ArrowRight", "Alt+n", "Alt+Shift+ArrowDown"],
-      description: "Move node into next sibling's first position",
-    },
-    moveNodeIntoPreviousSiblingsLastChild: {
-      keys: ["Alt+Shift+ArrowUp", "Alt+Shift+ArrowRight"],
-      description: "Move node into previous sibling's last position",
-    },
+  // Insertion
+  insertSibling: {
+    bind: [{ keys: "Enter", mode: EditorMode.View }],
+    description: "Create a sibling node after",
   },
-  edit: {
-    delete: {
-      keys: ["Delete", "Backspace"],
-      description: "Clear field content",
-    },
+  insertSiblingBefore: {
+    bind: [{ keys: "Shift+Enter", mode: EditorMode.View }],
+    description: "Create a sibling node before",
+  },
+  insertChildFirst: {
+    bind: [{ keys: "Ctrl+Enter", mode: EditorMode.View }],
+    description: "Insert new element at beginning",
+  },
+  insertChildLast: {
+    bind: [{ keys: "Ctrl+Shift+Enter", mode: EditorMode.View }],
+    description: "Insert new element at end",
+  },
+  // Deletion
+  delete: {
+    bind: [
+      { keys: "Delete", mode: EditorMode.View },
+      { keys: "Backspace", mode: EditorMode.View },
+    ],
+    description: "Remove the current node",
+  },
+  // Navigation
+  navigateToPreviousSibling: {
+    bind: [
+      { keys: "ArrowUp", mode: EditorMode.View },
+      { keys: "l", mode: EditorMode.View },
+    ],
+    description: "Navigate to previous sibling",
+  },
+  navigateToNextSibling: {
+    bind: [
+      { keys: "ArrowDown", mode: EditorMode.View },
+      { keys: "k", mode: EditorMode.View },
+    ],
+    description: "Navigate to next sibling",
+  },
+  navigateToParent: {
+    bind: [
+      { keys: "ArrowLeft", mode: EditorMode.View },
+      { keys: "j", mode: EditorMode.View },
+    ],
+    description: "Navigate to parent node",
+  },
+  navigateToFirstChild: {
+    bind: [
+      { keys: "ArrowRight", mode: EditorMode.View },
+      { keys: "n", mode: EditorMode.View },
+    ],
+    description: "Navigate to first child",
+  },
+  navigateToLastChild: {
+    bind: [
+      { keys: "Shift+ArrowRight", mode: EditorMode.View },
+      { keys: "Shift+n", mode: EditorMode.View },
+    ],
+    description: "Navigate to last child",
+  },
+  navigateToPreviousField: {
+    bind: [
+      { keys: "Shift+ArrowUp", mode: EditorMode.View },
+      { keys: "Shift+l", mode: EditorMode.View },
+      { keys: "o", mode: EditorMode.View },
+    ],
+    description: "Navigate to previous field in same object",
+  },
+  navigateToNextField: {
+    bind: [
+      { keys: "Shift+ArrowDown", mode: EditorMode.View },
+      { keys: "Shift+k", mode: EditorMode.View },
+      { keys: "i", mode: EditorMode.View },
+    ],
+    description: "Navigate to next field in same object",
+  },
+  // Movement/Permutation
+  moveNodeUp: {
+    bind: [
+      { keys: "Alt+ArrowUp", mode: EditorMode.View },
+      { keys: "Alt+l", mode: EditorMode.View },
+    ],
+    description: "Move current node up in array",
+  },
+  moveNodeDown: {
+    bind: [
+      { keys: "Alt+ArrowDown", mode: EditorMode.View },
+      { keys: "Alt+k", mode: EditorMode.View },
+    ],
+    description: "Move current node down in array",
+  },
+  moveNodeToParentPreviousSibling: {
+    bind: [
+      { keys: "Alt+ArrowLeft", mode: EditorMode.View },
+      { keys: "Alt+j", mode: EditorMode.View },
+    ],
+    description: "Move node to become previous sibling of parent",
+  },
+  moveNodeToParentNextSibling: {
+    bind: [
+      { keys: "Alt+Shift+ArrowLeft", mode: EditorMode.View },
+      { keys: "Alt+Shift+j", mode: EditorMode.View },
+    ],
+    description: "Move node to become next sibling of parent",
+  },
+  moveNodeIntoNextSiblingsFirstChild: {
+    bind: [
+      { keys: "Alt+ArrowRight", mode: EditorMode.View },
+      { keys: "Alt+n", mode: EditorMode.View },
+      { keys: "Alt+Shift+ArrowDown", mode: EditorMode.View },
+    ],
+    description: "Move node into next sibling's first position",
+  },
+  moveNodeIntoPreviousSiblingsLastChild: {
+    bind: [
+      { keys: "Alt+Shift+ArrowUp", mode: EditorMode.View },
+      { keys: "Alt+Shift+ArrowRight", mode: EditorMode.View },
+    ],
+    description: "Move node into previous sibling's last position",
   },
 };
 
 // Function to generate optimized key mapping from command definitions
 export function createKeyMapping(mode: EditorModeType): KeyMapping {
   const keyMapping: KeyMapping = {};
-  const commands = COMMAND_DEFINITIONS[mode];
 
-  for (const [commandName, definition] of Object.entries(commands)) {
-    for (const keyCombo of definition.keys) {
-      keyMapping[keyCombo] = commandName;
+  for (const [commandName, definition] of Object.entries(COMMAND_DEFINITIONS)) {
+    // Filter bindings for the specific mode (or no mode specified)
+    const bindings = definition.bind.filter((binding) => !binding.mode || binding.mode === mode);
+
+    for (const binding of bindings) {
+      keyMapping[binding.keys] = commandName;
     }
   }
 
@@ -275,25 +312,37 @@ export const KEY_MAPPINGS: Record<EditorModeType, KeyMapping> = {
  * Get all available commands for a specific mode
  */
 export function getAvailableCommands(mode: EditorModeType): string[] {
-  return Object.keys(COMMAND_DEFINITIONS[mode]);
+  const availableCommands: string[] = [];
+
+  for (const [commandName, definition] of Object.entries(COMMAND_DEFINITIONS)) {
+    // Check if command has bindings for this mode
+    const hasBindingForMode = definition.bind.some(
+      (binding) => !binding.mode || binding.mode === mode
+    );
+    if (hasBindingForMode) {
+      availableCommands.push(commandName);
+    }
+  }
+
+  return availableCommands;
 }
 
 /**
  * Get all key combinations for a specific command in a mode
  */
 export function getKeysForCommand(mode: EditorModeType, commandName: string): string[] {
-  const command = COMMAND_DEFINITIONS[mode]?.[commandName];
-  return command ? [...command.keys] : [];
+  const command = COMMAND_DEFINITIONS[commandName];
+  if (!command) return [];
+
+  const bindings = command.bind.filter((binding) => !binding.mode || binding.mode === mode);
+  return bindings.map((binding) => binding.keys);
 }
 
 /**
  * Get command description
  */
-export function getCommandDescription(
-  mode: EditorModeType,
-  commandName: string
-): string | undefined {
-  const command = COMMAND_DEFINITIONS[mode]?.[commandName];
+export function getCommandDescription(commandName: string): string | undefined {
+  const command = COMMAND_DEFINITIONS[commandName];
   return command?.description;
 }
 
@@ -313,12 +362,24 @@ export function getAllCommandInfo(mode: EditorModeType): Array<{
   keys: string[];
   description?: string;
 }> {
-  const commands = COMMAND_DEFINITIONS[mode];
-  return Object.entries(commands).map(([command, definition]) => ({
-    command,
-    keys: [...definition.keys],
-    description: definition.description,
-  }));
+  const commandInfo: Array<{
+    command: string;
+    keys: string[];
+    description?: string;
+  }> = [];
+
+  for (const [commandName, definition] of Object.entries(COMMAND_DEFINITIONS)) {
+    const keysForMode = getKeysForCommand(mode, commandName);
+    if (keysForMode.length > 0) {
+      commandInfo.push({
+        command: commandName,
+        keys: keysForMode,
+        description: definition.description,
+      });
+    }
+  }
+
+  return commandInfo;
 }
 
 // Helper to serialize key event to string for lookup
