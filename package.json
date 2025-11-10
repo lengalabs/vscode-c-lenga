@@ -3,7 +3,7 @@
   "publisher": "lengalabs",
   "displayName": "C-Lenga: C language support for the Lenga format",
   "description": "A Visual Studio Code extension for working with Lenga files written in C.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.101.0"
   },
@@ -154,12 +154,12 @@
     "grpc_tools_node_protoc_ts": "^5.3.3",
     "grpc-tools": "^1.13.0",
     "prettier": "^3.6.2",
+    "@vscode/vsce": "^3.7.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
-    "@vscode/vsce": "^3.6.2",
     "fuse.js": "^7.1.0",
     "google-protobuf": "^3.21.4",
     "lodash": "^4.17.21",
