@@ -37,6 +37,23 @@ export default function KeyboardVisualization({
     }
   };
 
+  const commonKeyStyles = (pressed: boolean) => ({
+    border: "1px solid var(--vscode-input-border)",
+    borderRadius: "3px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: pressed ? "var(--vscode-button-background)" : "var(--vscode-input-background)",
+    color: pressed ? "var(--vscode-button-foreground)" : "var(--vscode-input-foreground)",
+    fontSize: "8px",
+    lineHeight: "1",
+    transition: "all 0.08s ease",
+    cursor: "default",
+    boxShadow: pressed
+      ? "0 0 8px rgba(0, 122, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)"
+      : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+  });
+
   const renderKey = (
     key: string,
     arrow?: string,
@@ -52,27 +69,7 @@ export default function KeyboardVisualization({
         style={{
           width,
           height,
-          border: pressed
-            ? "2px solid var(--vscode-focusBorder)"
-            : "1px solid var(--vscode-input-border)",
-          borderRadius: "3px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: pressed
-            ? "var(--vscode-button-background)"
-            : "var(--vscode-input-background)",
-          color: pressed ? "var(--vscode-button-foreground)" : "var(--vscode-input-foreground)",
-          fontSize: "8px",
-          lineHeight: "1",
-          transition: "all 0.08s ease",
-          cursor: "default",
-          userSelect: "none",
-          transform: pressed ? "scale(1.1)" : "scale(1)",
-          boxShadow: pressed
-            ? "0 0 8px rgba(0, 122, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)"
-            : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          ...commonKeyStyles(pressed),
         }}
       >
         <div style={{ fontSize: "6px", opacity: 0.7 }}>{arrow}</div>
@@ -88,26 +85,7 @@ export default function KeyboardVisualization({
         style={{
           width,
           height: "20px",
-          border: isActive
-            ? "2px solid var(--vscode-focusBorder)"
-            : "1px solid var(--vscode-input-border)",
-          borderRadius: "3px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: isActive
-            ? "var(--vscode-button-background)"
-            : "var(--vscode-input-background)",
-          color: isActive ? "var(--vscode-button-foreground)" : "var(--vscode-input-foreground)",
-          fontSize: "7px",
-          fontWeight: "bold",
-          transition: "all 0.08s ease",
-          cursor: "default",
-          userSelect: "none",
-          transform: isActive ? "scale(1.05)" : "scale(1)",
-          boxShadow: isActive
-            ? "0 0 6px rgba(0, 122, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)"
-            : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          ...commonKeyStyles(isActive),
         }}
       >
         {name}
