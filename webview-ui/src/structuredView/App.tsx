@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { SourceFileRender } from "../components/line";
 import ModeIndicator from "../components/ModeIndicator";
+import KeyboardVisualization from "../components/KeyboardVisualization";
 
 import { vscode } from "../vscode";
 import * as objects from "../../../src/language_objects/cNodes";
@@ -117,6 +118,7 @@ export default function App() {
               firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
             />
             <ModeIndicator />
+            <KeyboardVisualization position="bottom-left" />
             <SourceFileRender
               node={sourceFile}
               firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}

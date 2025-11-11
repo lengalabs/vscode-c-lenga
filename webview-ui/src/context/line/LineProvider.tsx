@@ -45,6 +45,16 @@ export default function LineProvider({
   // Mode state - default to 'view' mode
   const [mode, setMode] = useState<EditorModeType>(EditorMode.View);
 
+  // Global keyboard state
+  const [keyboardState, setKeyboardState] = useState({
+    pressedKeys: new Set<string>(),
+    modifiers: {
+      ctrl: false,
+      alt: false,
+      shift: false,
+    },
+  });
+
   const requestFocus = useCallback((req: FocusRequest) => {
     setFocusRequest(req);
   }, []);
@@ -53,8 +63,22 @@ export default function LineProvider({
     setFocusRequest(null);
   }, []);
 
+  // Global keyboard event handlers
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+
+      // Update keyboard state
+      setKeyboardState((prev) => ({
+        pressedKeys: new Set([...prev.pressedKeys, key]),
+        modifiers: {
+          ctrl: event.ctrlKey,
+          alt: event.altKey,
+          shift: event.shiftKey,
+        },
+      }));
+
+      // Handle mode switching (avoid interfering with modifier keys)
       if (event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
@@ -75,9 +99,30 @@ export default function LineProvider({
       }
     };
 
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+
+      // Update keyboard state
+      setKeyboardState((prev) => {
+        const newPressedKeys = new Set(prev.pressedKeys);
+        newPressedKeys.delete(key);
+        return {
+          pressedKeys: newPressedKeys,
+          modifiers: {
+            ctrl: event.ctrlKey,
+            alt: event.altKey,
+            shift: event.shiftKey,
+          },
+        };
+      });
+    };
+
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, [mode, selectedKey, selectedNodeId, setMode]);
 
@@ -100,6 +145,7 @@ export default function LineProvider({
         clearFocusRequest,
         mode,
         setMode,
+        keyboardState,
       }}
     >
       {children}
