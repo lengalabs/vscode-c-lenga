@@ -41,6 +41,15 @@ export interface NodeEditCallbacks {
   onMoveIntoPreviousSiblingsLastChild?: (node: objects.LanguageObject) => void;
 }
 
+export interface KeyboardState {
+  pressedKeys: Set<string>;
+  modifiers: {
+    ctrl: boolean;
+    alt: boolean;
+    shift: boolean;
+  };
+}
+
 export interface LineContextType {
   onEdit: <T extends objects.LanguageObject, K extends string & keyof T>(
     node: T,
@@ -61,6 +70,7 @@ export interface LineContextType {
   clearFocusRequest: () => void;
   mode: EditorModeType;
   setMode: (mode: EditorModeType) => void;
+  keyboardState: KeyboardState;
 }
 
 export const LineContext = createContext<LineContextType | null>(null);
