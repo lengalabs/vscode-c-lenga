@@ -57,11 +57,13 @@ export default function KeyboardVisualization({
   const renderKey = (
     key: string,
     arrow?: string,
-    isPressed?: boolean,
+    equivalentKeys?: string[],
     width = "24px",
     height = "24px"
   ) => {
-    const pressed = isPressed || pressedKeys.has(key.toLowerCase());
+    // Check if any equivalent key is pressed
+    const keysToCheck = [key, ...(equivalentKeys || [])].map((k) => k.toLowerCase());
+    const pressed = keysToCheck.some((k) => pressedKeys.has(k));
 
     return (
       <div
@@ -108,8 +110,8 @@ export default function KeyboardVisualization({
           justifyContent: "center",
         }}
       >
-        {renderKey("o", "↑", undefined, "20px", "20px")}
-        {renderKey("i", "↓", undefined, "20px", "20px")}
+        {renderKey("i", "↓", [], "20px", "20px")}
+        {renderKey("o", "↑", [], "20px", "20px")}
       </div>
 
       {/* Main navigation row: j, k, l, ñ */}
@@ -120,10 +122,10 @@ export default function KeyboardVisualization({
           marginBottom: "4px",
         }}
       >
-        {renderKey("j", "←")}
-        {renderKey("k", "↓")}
-        {renderKey("l", "↑")}
-        {renderKey("ñ", "→")}
+        {renderKey("j", "←", ["arrowleft"])}
+        {renderKey("k", "↓", ["arrowdown"])}
+        {renderKey("l", "↑", ["arrowup"])}
+        {renderKey("ñ", "→", ["arrowright", "n"])}
       </div>
 
       {/* Modifier keys row */}
