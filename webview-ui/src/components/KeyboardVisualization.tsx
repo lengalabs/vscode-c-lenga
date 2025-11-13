@@ -1,41 +1,68 @@
 import { useLineContext } from "../context/line/lineContext";
 
-interface KeyboardVisualizationProps {
-  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-}
-
-export default function KeyboardVisualization({
-  position = "top-left",
-}: KeyboardVisualizationProps) {
+export default function KeyboardVisualization() {
   const { mode, keyboardState } = useLineContext();
   const { pressedKeys, modifiers } = keyboardState;
 
-  const getPositionStyles = () => {
-    const baseStyles = {
-      position: "fixed" as const,
-      zIndex: 999,
-      padding: "0.8rem",
-      backgroundColor: "var(--vscode-editorWidget-background)",
-      border: "1px solid var(--vscode-editorWidget-border)",
-      borderRadius: "0.4rem",
-      fontSize: "1rem",
-      fontFamily: "monospace",
-      boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
-    };
-
-    switch (position) {
-      case "top-left":
-        return { ...baseStyles, top: "1rem", left: "1rem" };
-      case "top-right":
-        return { ...baseStyles, top: "1rem", right: "1rem" };
-      case "bottom-left":
-        return { ...baseStyles, bottom: "1rem", left: "1rem" };
-      case "bottom-right":
-        return { ...baseStyles, bottom: "1rem", right: "1rem" };
-      default:
-        return { ...baseStyles, top: "1rem", left: "1rem" };
-    }
-  };
+  // Fixed table structure with all key combinations
+  const keyBindingsTable = [
+    {
+      key: "J/←",
+      base: "Move to Parent",
+      shift: null,
+      alt: "Move to Parent's Prev Sibling",
+      altShift: "Move to Parent's Next Sibling",
+    },
+    {
+      key: "L/↑",
+      base: "Move to Prev Sibling",
+      shift: "Previous Field",
+      alt: "Move Node Up",
+      altShift: "Move Into Prev Sibling",
+    },
+    {
+      key: "K/↓",
+      base: "Move to Next Sibling",
+      shift: "Next Field",
+      alt: "Move Node Down",
+      altShift: "Move Into Next Sibling",
+    },
+    {
+      key: "Ñ/→",
+      base: "Move to First Child",
+      shift: "Move to Last Child",
+      alt: "Move Into Next Sibling",
+      altShift: "Move Into Prev Sibling",
+    },
+    {
+      key: "I",
+      base: "Next Field",
+      shift: null,
+      alt: null,
+      altShift: null,
+    },
+    {
+      key: "O",
+      base: "Previous Field",
+      shift: null,
+      alt: null,
+      altShift: null,
+    },
+    {
+      key: "Enter",
+      base: "Insert Sibling After",
+      shift: "Insert Sibling Before",
+      alt: null,
+      altShift: null,
+    },
+    {
+      key: "Del",
+      base: "Delete Node",
+      shift: null,
+      alt: null,
+      altShift: null,
+    },
+  ];
 
   const commonKeyStyles = (pressed: boolean) => ({
     border: pressed ? "1px solid rgba(255, 140, 50, 0.4)" : "1px solid var(--vscode-input-border)",
@@ -100,46 +127,195 @@ export default function KeyboardVisualization({
     return null; // Only show in view mode where navigation keys are active
   }
 
+  // Helper to get the active column based on modifiers
+  const getActiveColumn = () => {
+    const { shift, alt } = modifiers;
+    if (alt && shift) return "altShift";
+    if (alt) return "alt";
+    if (shift) return "shift";
+    return "base";
+  };
+
+  const activeColumn = getActiveColumn();
+
   return (
-    <div style={getPositionStyles()}>
-      {/* Field navigation row: i, o */}
+    <div
+      style={{
+        position: "fixed",
+        bottom: "1rem",
+        left: "1rem",
+        zIndex: 999,
+        display: "flex",
+        gap: "1rem",
+        alignItems: "flex-end",
+      }}
+    >
+      {/* Keyboard visualization */}
       <div
         style={{
-          display: "flex",
-          gap: "0.3rem",
-          marginBottom: "0.4rem",
-          justifyContent: "center",
+          padding: "0.8rem",
+          backgroundColor: "var(--vscode-editorWidget-background)",
+          border: "1px solid var(--vscode-editorWidget-border)",
+          borderRadius: "0.4rem",
+          fontSize: "1rem",
+          fontFamily: "monospace",
+          boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
         }}
       >
-        {renderKey("i", "↓", [], "2.4rem", "2.4rem")}
-        {renderKey("o", "↑", [], "2.4rem", "2.4rem")}
+        {/* Field navigation row: i, o */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.3rem",
+            marginBottom: "0.4rem",
+            justifyContent: "center",
+          }}
+        >
+          {renderKey("i", "↓", [], "2.4rem", "2.4rem")}
+          {renderKey("o", "↑", [], "2.4rem", "2.4rem")}
+        </div>
+
+        {/* Main navigation row: j, k, l, ñ */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.3rem",
+            marginBottom: "0.4rem",
+          }}
+        >
+          {renderKey("j", "←", ["arrowleft"])}
+          {renderKey("k", "↓", ["arrowdown"])}
+          {renderKey("l", "↑", ["arrowup"])}
+          {renderKey("ñ", "→", ["arrowright", "n"])}
+        </div>
+
+        {/* Modifier keys row */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.3rem",
+            justifyContent: "space-between",
+          }}
+        >
+          {renderModifierKey("CTRL", modifiers.ctrl)}
+          {renderModifierKey("ALT", modifiers.alt)}
+          {renderModifierKey("SHIFT", modifiers.shift, "3.6rem")}
+        </div>
       </div>
 
-      {/* Main navigation row: j, k, l, ñ */}
+      {/* Key descriptions table */}
       <div
         style={{
-          display: "flex",
-          gap: "0.3rem",
-          marginBottom: "0.4rem",
+          padding: "0.6rem",
+          backgroundColor: "var(--vscode-editorWidget-background)",
+          border: "1px solid var(--vscode-editorWidget-border)",
+          borderRadius: "0.4rem",
+          boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
+          fontSize: "0.75rem",
+          fontFamily: "monospace",
         }}
       >
-        {renderKey("j", "←", ["arrowleft"])}
-        {renderKey("k", "↓", ["arrowdown"])}
-        {renderKey("l", "↑", ["arrowup"])}
-        {renderKey("ñ", "→", ["arrowright", "n"])}
-      </div>
+        {/* Table header */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
+            gap: "0.5rem",
+            paddingBottom: "0.4rem",
+            borderBottom: "1px solid var(--vscode-editorWidget-border)",
+            marginBottom: "0.4rem",
+          }}
+        >
+          <div style={{ fontWeight: "bold", opacity: 0.8 }}>Key</div>
+          <div
+            style={{
+              fontWeight: "bold",
+              opacity: activeColumn === "base" ? 1 : 0.5,
+              color:
+                activeColumn === "base"
+                  ? "var(--vscode-textLink-foreground)"
+                  : "var(--vscode-editorWidget-foreground)",
+            }}
+          >
+            Base
+          </div>
+          <div
+            style={{
+              fontWeight: "bold",
+              opacity: activeColumn === "shift" ? 1 : 0.5,
+              color:
+                activeColumn === "shift"
+                  ? "var(--vscode-textLink-foreground)"
+                  : "var(--vscode-editorWidget-foreground)",
+            }}
+          >
+            Shift
+          </div>
+          <div
+            style={{
+              fontWeight: "bold",
+              opacity: activeColumn === "alt" || activeColumn === "altShift" ? 1 : 0.5,
+              color:
+                activeColumn === "alt" || activeColumn === "altShift"
+                  ? "var(--vscode-textLink-foreground)"
+                  : "var(--vscode-editorWidget-foreground)",
+            }}
+          >
+            Alt{activeColumn === "altShift" && "+Shift"}
+          </div>
+        </div>
 
-      {/* Modifier keys row */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.3rem",
-          justifyContent: "space-between",
-        }}
-      >
-        {renderModifierKey("CTRL", modifiers.ctrl)}
-        {renderModifierKey("ALT", modifiers.alt)}
-        {renderModifierKey("SHIFT", modifiers.shift, "3.6rem")}
+        {/* Table rows */}
+        {keyBindingsTable.map((row, index) => (
+          <div
+            key={index}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
+              gap: "0.5rem",
+              padding: "0.3rem 0",
+              borderBottom:
+                index < keyBindingsTable.length - 1
+                  ? "1px solid var(--vscode-editorWidget-border)"
+                  : "none",
+            }}
+          >
+            <div style={{ fontWeight: "bold", opacity: 0.9 }}>{row.key}</div>
+            <div
+              style={{
+                opacity: activeColumn === "base" ? 0.9 : 0.4,
+                color:
+                  activeColumn === "base"
+                    ? "var(--vscode-editorWidget-foreground)"
+                    : "var(--vscode-descriptionForeground)",
+              }}
+            >
+              {row.base || "—"}
+            </div>
+            <div
+              style={{
+                opacity: activeColumn === "shift" ? 0.9 : 0.4,
+                color:
+                  activeColumn === "shift"
+                    ? "var(--vscode-editorWidget-foreground)"
+                    : "var(--vscode-descriptionForeground)",
+              }}
+            >
+              {row.shift || "—"}
+            </div>
+            <div
+              style={{
+                opacity: activeColumn === "alt" || activeColumn === "altShift" ? 0.9 : 0.4,
+                color:
+                  activeColumn === "alt" || activeColumn === "altShift"
+                    ? "var(--vscode-editorWidget-foreground)"
+                    : "var(--vscode-descriptionForeground)",
+              }}
+            >
+              {(activeColumn === "altShift" ? row.altShift : row.alt) || "—"}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
