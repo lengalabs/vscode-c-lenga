@@ -118,7 +118,7 @@ export default function App() {
               firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
             />
             <ModeIndicator />
-            <KeyboardVisualization position="bottom-left" />
+            <KeyboardVisualization />
             <SourceFileRender
               node={sourceFile}
               firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
