@@ -38,7 +38,7 @@ export default function KeyboardVisualization({
   };
 
   const commonKeyStyles = (pressed: boolean) => ({
-    border: "1px solid var(--vscode-input-border)",
+    border: pressed ? "1px solid rgba(255, 140, 50, 0.4)" : "1px solid var(--vscode-input-border)",
     borderRadius: "0.3rem",
     display: "flex",
     alignItems: "center",
@@ -47,11 +47,12 @@ export default function KeyboardVisualization({
     color: pressed ? "var(--vscode-button-foreground)" : "var(--vscode-input-foreground)",
     fontSize: "0.9rem",
     lineHeight: "1",
-    transition: "all 0.08s ease",
+    transition: "all 0.03s ease",
     cursor: "default",
+    transform: pressed ? "translateY(0.15rem) scale(0.98)" : "translateY(0)",
     boxShadow: pressed
-      ? "0 0 0.8rem rgba(0, 122, 255, 0.5), inset 0 0.1rem 0 rgba(255, 255, 255, 0.2)"
-      : "inset 0 0.1rem 0 rgba(255, 255, 255, 0.1)",
+      ? "0 0.05rem 0.2rem rgba(255, 140, 50, 0.15), inset 0 0.15rem 0.25rem rgba(0, 0, 0, 0.2)"
+      : "0 0.2rem 0.4rem rgba(0, 0, 0, 0.1), inset 0 0.1rem 0 rgba(255, 255, 255, 0.15), inset 0 -0.1rem 0.15rem rgba(0, 0, 0, 0.1)",
   });
 
   const renderKey = (
