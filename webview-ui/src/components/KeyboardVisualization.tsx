@@ -112,7 +112,7 @@ export default function KeyboardVisualization({
         {renderKey("i", "↓", undefined, "20px", "20px")}
       </div>
 
-      {/* Main navigation row: j, k, l, n */}
+      {/* Main navigation row: j, k, l, ñ */}
       <div
         style={{
           display: "flex",
@@ -121,9 +121,9 @@ export default function KeyboardVisualization({
         }}
       >
         {renderKey("j", "←")}
-        {renderKey("l", "↑")}
         {renderKey("k", "↓")}
-        {renderKey("n", "→")}
+        {renderKey("l", "↑")}
+        {renderKey("ñ", "→")}
       </div>
 
       {/* Modifier keys row */}
