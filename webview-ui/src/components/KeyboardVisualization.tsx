@@ -138,6 +138,24 @@ export default function KeyboardVisualization() {
 
   const activeColumn = getActiveColumn();
 
+  // Check if a row's key is currently pressed
+  const isRowKeyPressed = (keyLabel: string) => {
+    // Extract the keys from the label (e.g., "J/←" -> ["j", "arrowleft"])
+    const keys = keyLabel
+      .toLowerCase()
+      .split("/")
+      .map((k) => {
+        if (k === "←") return "arrowleft";
+        if (k === "↑") return "arrowup";
+        if (k === "↓") return "arrowdown";
+        if (k === "→") return "arrowright";
+        if (k === "del") return "delete";
+        return k;
+      });
+
+    return keys.some((key) => pressedKeys.has(key));
+  };
+
   return (
     <div
       style={{
@@ -266,56 +284,100 @@ export default function KeyboardVisualization() {
         </div>
 
         {/* Table rows */}
-        {keyBindingsTable.map((row, index) => (
-          <div
-            key={index}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
-              gap: "0.5rem",
-              padding: "0.3rem 0",
-              borderBottom:
-                index < keyBindingsTable.length - 1
-                  ? "1px solid var(--vscode-editorWidget-border)"
-                  : "none",
-            }}
-          >
-            <div style={{ fontWeight: "bold", opacity: 0.9 }}>{row.key}</div>
+        {keyBindingsTable.map((row, index) => {
+          const isPressed = isRowKeyPressed(row.key);
+          return (
             <div
+              key={index}
               style={{
-                opacity: activeColumn === "base" ? 0.9 : 0.4,
-                color:
-                  activeColumn === "base"
-                    ? "var(--vscode-editorWidget-foreground)"
-                    : "var(--vscode-descriptionForeground)",
+                display: "grid",
+                gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
+                gap: "0.5rem",
+                padding: "0.3rem",
+                margin: "0 -0.3rem",
+                paddingLeft: "0.3rem",
+                paddingRight: "0.3rem",
+                borderBottom:
+                  index < keyBindingsTable.length - 1
+                    ? "1px solid var(--vscode-editorWidget-border)"
+                    : "none",
+                backgroundColor: isPressed ? "rgba(255, 140, 50, 0.1)" : "transparent",
+                borderRadius: "0.2rem",
+                transition: "all 0.03s ease",
               }}
             >
-              {row.base || "—"}
+              <div
+                style={{
+                  fontWeight: "bold",
+                  opacity: isPressed ? 1 : 0.9,
+                  color: isPressed
+                    ? "rgba(255, 140, 50, 1)"
+                    : "var(--vscode-editorWidget-foreground)",
+                  transition: "all 0.03s ease",
+                }}
+              >
+                {row.key}
+              </div>
+              <div
+                style={{
+                  opacity: activeColumn === "base" ? 0.9 : 0.4,
+                  color:
+                    activeColumn === "base"
+                      ? "var(--vscode-editorWidget-foreground)"
+                      : "var(--vscode-descriptionForeground)",
+                  backgroundColor:
+                    isPressed && activeColumn === "base"
+                      ? "rgba(255, 140, 50, 0.2)"
+                      : "transparent",
+                  padding: "0.2rem 0.3rem",
+                  margin: "-0.2rem -0.3rem",
+                  borderRadius: "0.2rem",
+                  transition: "all 0.03s ease",
+                }}
+              >
+                {row.base || "—"}
+              </div>
+              <div
+                style={{
+                  opacity: activeColumn === "shift" ? 0.9 : 0.4,
+                  color:
+                    activeColumn === "shift"
+                      ? "var(--vscode-editorWidget-foreground)"
+                      : "var(--vscode-descriptionForeground)",
+                  backgroundColor:
+                    isPressed && activeColumn === "shift"
+                      ? "rgba(255, 140, 50, 0.2)"
+                      : "transparent",
+                  padding: "0.2rem 0.3rem",
+                  margin: "-0.2rem -0.3rem",
+                  borderRadius: "0.2rem",
+                  transition: "all 0.03s ease",
+                }}
+              >
+                {row.shift || "—"}
+              </div>
+              <div
+                style={{
+                  opacity: activeColumn === "alt" || activeColumn === "altShift" ? 0.9 : 0.4,
+                  color:
+                    activeColumn === "alt" || activeColumn === "altShift"
+                      ? "var(--vscode-editorWidget-foreground)"
+                      : "var(--vscode-descriptionForeground)",
+                  backgroundColor:
+                    isPressed && (activeColumn === "alt" || activeColumn === "altShift")
+                      ? "rgba(255, 140, 50, 0.2)"
+                      : "transparent",
+                  padding: "0.2rem 0.3rem",
+                  margin: "-0.2rem -0.3rem",
+                  borderRadius: "0.2rem",
+                  transition: "all 0.03s ease",
+                }}
+              >
+                {(activeColumn === "altShift" ? row.altShift : row.alt) || "—"}
+              </div>
             </div>
-            <div
-              style={{
-                opacity: activeColumn === "shift" ? 0.9 : 0.4,
-                color:
-                  activeColumn === "shift"
-                    ? "var(--vscode-editorWidget-foreground)"
-                    : "var(--vscode-descriptionForeground)",
-              }}
-            >
-              {row.shift || "—"}
-            </div>
-            <div
-              style={{
-                opacity: activeColumn === "alt" || activeColumn === "altShift" ? 0.9 : 0.4,
-                color:
-                  activeColumn === "alt" || activeColumn === "altShift"
-                    ? "var(--vscode-editorWidget-foreground)"
-                    : "var(--vscode-descriptionForeground)",
-              }}
-            >
-              {(activeColumn === "altShift" ? row.altShift : row.alt) || "—"}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
