@@ -14,52 +14,52 @@ export default function KeyboardVisualization({
     const baseStyles = {
       position: "fixed" as const,
       zIndex: 999,
-      padding: "8px",
+      padding: "0.8rem",
       backgroundColor: "var(--vscode-editorWidget-background)",
       border: "1px solid var(--vscode-editorWidget-border)",
-      borderRadius: "4px",
-      fontSize: "10px",
+      borderRadius: "0.4rem",
+      fontSize: "1rem",
       fontFamily: "monospace",
-      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+      boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
     };
 
     switch (position) {
       case "top-left":
-        return { ...baseStyles, top: "10px", left: "10px" };
+        return { ...baseStyles, top: "1rem", left: "1rem" };
       case "top-right":
-        return { ...baseStyles, top: "10px", right: "10px" };
+        return { ...baseStyles, top: "1rem", right: "1rem" };
       case "bottom-left":
-        return { ...baseStyles, bottom: "10px", left: "10px" };
+        return { ...baseStyles, bottom: "1rem", left: "1rem" };
       case "bottom-right":
-        return { ...baseStyles, bottom: "10px", right: "10px" };
+        return { ...baseStyles, bottom: "1rem", right: "1rem" };
       default:
-        return { ...baseStyles, top: "10px", left: "10px" };
+        return { ...baseStyles, top: "1rem", left: "1rem" };
     }
   };
 
   const commonKeyStyles = (pressed: boolean) => ({
     border: "1px solid var(--vscode-input-border)",
-    borderRadius: "3px",
+    borderRadius: "0.3rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: pressed ? "var(--vscode-button-background)" : "var(--vscode-input-background)",
     color: pressed ? "var(--vscode-button-foreground)" : "var(--vscode-input-foreground)",
-    fontSize: "8px",
+    fontSize: "0.9rem",
     lineHeight: "1",
     transition: "all 0.08s ease",
     cursor: "default",
     boxShadow: pressed
-      ? "0 0 8px rgba(0, 122, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)"
-      : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+      ? "0 0 0.8rem rgba(0, 122, 255, 0.5), inset 0 0.1rem 0 rgba(255, 255, 255, 0.2)"
+      : "inset 0 0.1rem 0 rgba(255, 255, 255, 0.1)",
   });
 
   const renderKey = (
     key: string,
     arrow?: string,
     equivalentKeys?: string[],
-    width = "24px",
-    height = "24px"
+    width = "2.8rem",
+    height = "2.8rem"
   ) => {
     // Check if any equivalent key is pressed
     const keysToCheck = [key, ...(equivalentKeys || [])].map((k) => k.toLowerCase());
@@ -74,19 +74,19 @@ export default function KeyboardVisualization({
           ...commonKeyStyles(pressed),
         }}
       >
-        <div style={{ fontSize: "6px", opacity: 0.7 }}>{arrow}</div>
+        <div style={{ fontSize: "0.6rem", opacity: 0.7 }}>{arrow}</div>
         <div style={{ fontWeight: "bold" }}>{key.toUpperCase()}</div>
       </div>
     );
   };
 
-  const renderModifierKey = (name: string, isActive: boolean, width = "32px") => {
+  const renderModifierKey = (name: string, isActive: boolean, width = "3.2rem") => {
     return (
       <div
         key={name}
         style={{
           width,
-          height: "20px",
+          height: "2rem",
           ...commonKeyStyles(isActive),
         }}
       >
@@ -105,21 +105,21 @@ export default function KeyboardVisualization({
       <div
         style={{
           display: "flex",
-          gap: "2px",
-          marginBottom: "4px",
+          gap: "0.3rem",
+          marginBottom: "0.4rem",
           justifyContent: "center",
         }}
       >
-        {renderKey("i", "↓", [], "20px", "20px")}
-        {renderKey("o", "↑", [], "20px", "20px")}
+        {renderKey("i", "↓", [], "2.4rem", "2.4rem")}
+        {renderKey("o", "↑", [], "2.4rem", "2.4rem")}
       </div>
 
       {/* Main navigation row: j, k, l, ñ */}
       <div
         style={{
           display: "flex",
-          gap: "2px",
-          marginBottom: "4px",
+          gap: "0.3rem",
+          marginBottom: "0.4rem",
         }}
       >
         {renderKey("j", "←", ["arrowleft"])}
@@ -132,13 +132,13 @@ export default function KeyboardVisualization({
       <div
         style={{
           display: "flex",
-          gap: "2px",
+          gap: "0.3rem",
           justifyContent: "space-between",
         }}
       >
         {renderModifierKey("CTRL", modifiers.ctrl)}
         {renderModifierKey("ALT", modifiers.alt)}
-        {renderModifierKey("SHIFT", modifiers.shift, "36px")}
+        {renderModifierKey("SHIFT", modifiers.shift, "3.6rem")}
       </div>
     </div>
   );
