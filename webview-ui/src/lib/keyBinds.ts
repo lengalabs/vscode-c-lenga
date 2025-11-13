@@ -202,6 +202,7 @@ export const COMMAND_DEFINITIONS: CommandDefinitions = {
     bind: [
       { keys: "ArrowRight", mode: EditorMode.View },
       { keys: "ñ", mode: EditorMode.View },
+      { keys: "n", mode: EditorMode.View },
     ],
     description: "Navigate to first child",
   },
@@ -209,6 +210,7 @@ export const COMMAND_DEFINITIONS: CommandDefinitions = {
     bind: [
       { keys: "Shift+ArrowRight", mode: EditorMode.View },
       { keys: "Shift+ñ", mode: EditorMode.View },
+      { keys: "Shift+n", mode: EditorMode.View },
     ],
     description: "Navigate to last child",
   },
@@ -261,6 +263,7 @@ export const COMMAND_DEFINITIONS: CommandDefinitions = {
     bind: [
       { keys: "Alt+ArrowRight", mode: EditorMode.View },
       { keys: "Alt+ñ", mode: EditorMode.View },
+      { keys: "Alt+n", mode: EditorMode.View },
       { keys: "Alt+Shift+ArrowDown", mode: EditorMode.View },
     ],
     description: "Move node into next sibling's first position",
@@ -269,6 +272,7 @@ export const COMMAND_DEFINITIONS: CommandDefinitions = {
     bind: [
       { keys: "Alt+Shift+ArrowUp", mode: EditorMode.View },
       { keys: "Alt+Shift+ñ", mode: EditorMode.View },
+      { keys: "Alt+Shift+n", mode: EditorMode.View },
       { keys: "Alt+Shift+ArrowRight", mode: EditorMode.View },
     ],
     description: "Move node into previous sibling's last position",
