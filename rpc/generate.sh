@@ -8,7 +8,7 @@ set -euo pipefail
 GITHUB_USER="lengalabs"                     # GitHub username or org
 GITHUB_REPO="lenga"                         # Repository name
 BRANCH_OR_COMMIT="main"                     # Can be branch or pinned commit hash
-REMOTE_DIRECTORY="lenga-server/proto"       # Directory in the repo you want
+REMOTE_DIRECTORY="lenga-server/rpc/protos"       # Directory in the repo you want
 PROTOS_DIR="rpc/protos"                     # Relative to git repository root
 GENERATED_DIR="rpc/generated"               # Relative to git repository root
 TS_PROTO_VERSION="2.7.7"
