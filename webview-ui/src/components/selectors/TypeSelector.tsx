@@ -94,6 +94,7 @@ export default function TypeSelector<T extends objects.LanguageObject, K extends
       onFocus={handleFocus}
       nodeId={node.id}
       fieldKey={key}
+      parentInfo={parentInfo}
       className={className}
     />
   );

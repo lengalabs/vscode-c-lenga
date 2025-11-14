@@ -1,20 +1,25 @@
 /* Support VS Code dark/light mode automatically */
 :root {
   color-scheme: var(--vscode-color-scheme);
-  
+  height: 100%;
   --syntax-keyword: #c586c0;
   --syntax-function: #dcdcaa;
-  --syntax-type: #569CD6;
+  --syntax-type: #569cd6;
   --syntax-variable: #9cdcfe;
   --syntax-string: #ce9178;
   --syntax-number: #b5cea8;
   --syntax-comment: #6a9955;
   --syntax-constant: #4fc1ff;
-  --syntax-delimiter: #F8CC10;
+  --syntax-delimiter: #f8cc10;
+}
+
+div#root {
+  height: 100%;
 }
 
 /* Body base styles */
 body {
+  height: 100%;
   background-color: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family, monospace);
@@ -23,8 +28,8 @@ body {
 
 /* Inline editor input */
 .inline-editor {
-  all: unset;                     /* remove browser defaults */
-  display: inline;                /* inline avoids inline-block spacing issues */
+  all: unset; /* remove browser defaults */
+  display: inline; /* inline avoids inline-block spacing issues */
   font-family: var(--vscode-editor-font-family, monospace);
   font-size: var(--vscode-editor-font-size, 14px);
   line-height: var(--vscode-editor-line-height, 1.2);
@@ -32,14 +37,14 @@ body {
   background: transparent;
   padding: 0;
   margin: 0;
-  width: auto;                     
+  width: auto;
   min-width: 1ch;
   vertical-align: baseline;
   caret-color: var(--vscode-editorCursor-foreground, #aeafad);
 
-  box-sizing: content-box;         
-  overflow: hidden;                
-  white-space: pre;                
+  box-sizing: content-box;
+  overflow: hidden;
+  white-space: pre;
 }
 
 /* Focused input */
@@ -74,15 +79,33 @@ body {
   background-color: var(--vscode-editor-wordHighlightBackground);
 }
 
-.token-keyword    { color: var(--syntax-keyword); }
-.token-function   { color: var(--syntax-function); }
-.token-type       { color: var(--syntax-type); }
-.token-variable   { color: var(--syntax-variable); }
-.token-string     { color: var(--syntax-string); }
-.token-number     { color: var(--syntax-number); }
-.token-comment    { color: var(--syntax-comment); }
-.token-constant   { color: var(--syntax-constant); }
-.token-delimiter  { color: var(--syntax-delimiter); }
+.token-keyword {
+  color: var(--syntax-keyword);
+}
+.token-function {
+  color: var(--syntax-function);
+}
+.token-type {
+  color: var(--syntax-type);
+}
+.token-variable {
+  color: var(--syntax-variable);
+}
+.token-string {
+  color: var(--syntax-string);
+}
+.token-number {
+  color: var(--syntax-number);
+}
+.token-comment {
+  color: var(--syntax-comment);
+}
+.token-constant {
+  color: var(--syntax-constant);
+}
+.token-delimiter {
+  color: var(--syntax-delimiter);
+}
 
 .object-container-block {
   display: block;

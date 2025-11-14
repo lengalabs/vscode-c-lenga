@@ -16,8 +16,8 @@ export default function ModeIndicator() {
   const keyHintId = "mode-indicator-keybind";
   const keyHint =
     mode === EditorMode.View
-      ? "Press I to switch to edit mode"
-      : "Press Esc to return to view mode";
+      ? "Press the SpaceBar to switch to edit mode"
+      : "Press Esc or Spacebar to return to view mode";
 
   return (
     <div

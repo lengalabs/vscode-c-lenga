@@ -1,6 +1,6 @@
 import React from "react";
 import Fuse from "fuse.js";
-import { EditorMode, useLineContext } from "../../context/line/lineContext";
+import { EditorMode, ParentInfo, useLineContext } from "../../context/line/lineContext";
 
 export interface Option<T> {
   value: T;
@@ -31,6 +31,7 @@ interface Props<T> {
   // Focus management
   nodeId: string;
   fieldKey: string;
+  parentInfo: ParentInfo;
 
   ref: React.RefObject<HTMLInputElement>;
 
@@ -46,12 +47,20 @@ export function Field<T>({
   onFocus,
   onNoMatch,
   nodeId,
+  parentInfo,
   fieldKey,
   ref,
   firstField = false,
   className,
 }: Props<T>) {
-  const { mode, focusRequest, clearFocusRequest } = useLineContext();
+  const {
+    mode,
+    focusRequest,
+    clearFocusRequest,
+    setSelectedKey,
+    setSelectedNodeId,
+    setParentNodeInfo,
+  } = useLineContext();
   const readOnly = mode === EditorMode.View;
 
   const [inputValue, setInputValue] = React.useState(currentValue);
@@ -152,7 +161,12 @@ export function Field<T>({
     }
   };
 
-  const handleFocus = () => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setSelectedKey(fieldKey);
+    setSelectedNodeId(nodeId);
+    setParentNodeInfo(parentInfo);
+    e.preventDefault();
+    e.stopPropagation();
     if (onFocus) {
       onFocus();
     }

@@ -102,6 +102,7 @@ export default function ReferenceSelector({
       onFocus={handleFocus}
       nodeId={node.id}
       fieldKey="declarationId"
+      parentInfo={parentInfo}
       className={className}
     />
   );

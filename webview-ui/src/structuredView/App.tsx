@@ -10,18 +10,29 @@ import DebugProvider from "../context/debug/DebugProvider";
 import LineProvider from "../context/line/LineProvider";
 
 // Component that handles initial focus request
-function InitialFocusHandler({ sourceFile }: { sourceFile: objects.SourceFile }) {
+function InitialFocusHandler({
+  sourceFile,
+  firstElementCreatorRef: emptyFileRef,
+}: {
+  sourceFile: objects.SourceFile;
+  firstElementCreatorRef: React.RefObject<HTMLElement>;
+}) {
   const { requestFocus } = useLineContext();
   const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasRequestedRef.current && sourceFile.code.length > 0) {
-      const firstNode = sourceFile.code[0];
-      console.log("Requesting initial focus on first node:", firstNode.id);
-      requestFocus({ nodeId: firstNode.id });
-      hasRequestedRef.current = true;
-    }
-  }, [sourceFile, requestFocus]);
+    if (!hasRequestedRef.current)
+      if (sourceFile.code.length === 0) {
+        console.log("Requesting initial focus on empty file creator");
+        emptyFileRef.current?.focus();
+        hasRequestedRef.current = true;
+      } else {
+        const firstNode = sourceFile.code[0];
+        console.log("Requesting initial focus on first node:", firstNode.id);
+        requestFocus({ nodeId: firstNode.id });
+        hasRequestedRef.current = true;
+      }
+  }, [sourceFile, requestFocus, emptyFileRef]);
 
   return null;
 }
@@ -59,6 +70,10 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    console.log("SelectedKey updated:", selectedKey);
+  }, [selectedKey]);
+
   const onEdit = <T extends objects.LanguageObject, K extends string & keyof T>(
     node: T,
     key: K | null
@@ -76,8 +91,10 @@ export default function App() {
     vscode.postMessage(message);
   };
 
+  const firstElementCreatorRef = useRef<HTMLElement>(null);
+
   return (
-    <>
+    <div style={{ height: "100%" }}>
       <DebugProvider debug={debug}>
         {sourceFile ? (
           <LineProvider
@@ -89,18 +106,27 @@ export default function App() {
             selectedKey={selectedKey}
             parentNodeInfo={parentNodeInfo}
             setSelectedNodeId={setSelectedNodeId}
-            setSelectedKey={setSelectedKey}
+            setSelectedKey={(key) => {
+              console.log("setSelectedKey called with key:", key);
+              setSelectedKey(key);
+            }}
             setParentNodeInfo={setParentNodeInfo}
           >
-            <InitialFocusHandler sourceFile={sourceFile} />
+            <InitialFocusHandler
+              sourceFile={sourceFile}
+              firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
+            />
             <ModeIndicator />
-            <SourceFileRender node={sourceFile} />
+            <SourceFileRender
+              node={sourceFile}
+              firstElementCreatorRef={firstElementCreatorRef as React.RefObject<HTMLElement>}
+            />
             <DebugMenu />
           </LineProvider>
         ) : (
           <p>loading...</p>
         )}
       </DebugProvider>
-    </>
+    </div>
   );
 }

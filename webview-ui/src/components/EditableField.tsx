@@ -87,10 +87,13 @@ export default function EditableField<
       value={inputValue}
       placeholder={placeholder}
       onChange={(e) => setInputValue(e.target.value)}
-      onFocus={() => {
+      onFocus={(e) => {
+        console.log("EditableField focused:", { nodeId: node.id, key });
         setSelectedKey(key);
         setSelectedNodeId(node.id);
         setParentNodeInfo(parentInfo);
+        e.stopPropagation();
+        e.preventDefault();
       }}
       onBlur={() => {
         if (initialValue !== inputValue) {
