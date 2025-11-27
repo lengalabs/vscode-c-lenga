@@ -24,7 +24,7 @@ function InitialFocusHandler({
   const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasRequestedRef.current)
+    if (!hasRequestedRef.current) {
       if (sourceFile.code.length === 0) {
         console.log("Requesting initial focus on empty file creator");
         emptyFileRef.current?.focus();
@@ -35,6 +35,7 @@ function InitialFocusHandler({
         requestFocus({ nodeId: firstNode.id });
         hasRequestedRef.current = true;
       }
+    }
   }, [sourceFile, requestFocus, emptyFileRef]);
 
   return null;

@@ -337,7 +337,9 @@ export function getAvailableCommands(mode: EditorModeType): string[] {
  */
 export function getKeysForCommand(mode: EditorModeType, commandName: string): string[] {
   const command = COMMAND_DEFINITIONS[commandName];
-  if (!command) return [];
+  if (!command) {
+    return [];
+  }
 
   const bindings = command.bind.filter((binding) => !binding.mode || binding.mode === mode);
   return bindings.map((binding) => binding.keys);

@@ -130,9 +130,15 @@ export default function KeyboardVisualization() {
   // Helper to get the active column based on modifiers
   const getActiveColumn = () => {
     const { shift, alt } = modifiers;
-    if (alt && shift) return "altShift";
-    if (alt) return "alt";
-    if (shift) return "shift";
+    if (alt && shift) {
+      return "altShift";
+    }
+    if (alt) {
+      return "alt";
+    }
+    if (shift) {
+      return "shift";
+    }
     return "base";
   };
 
@@ -145,11 +151,21 @@ export default function KeyboardVisualization() {
       .toLowerCase()
       .split("/")
       .map((k) => {
-        if (k === "←") return "arrowleft";
-        if (k === "↑") return "arrowup";
-        if (k === "↓") return "arrowdown";
-        if (k === "→") return "arrowright";
-        if (k === "del") return "delete";
+        if (k === "←") {
+          return "arrowleft";
+        }
+        if (k === "↑") {
+          return "arrowup";
+        }
+        if (k === "↓") {
+          return "arrowdown";
+        }
+        if (k === "→") {
+          return "arrowright";
+        }
+        if (k === "del") {
+          return "delete";
+        }
         return k;
       });
 
