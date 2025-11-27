@@ -73,8 +73,8 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      vimLabel: "Enter",
-      arrowLabel: "Enter",
+      vimLabel: "↵",
+      arrowLabel: "↵",
       equivalents: [],
       columns: {
         base: "Insert Sibling After",
@@ -86,8 +86,8 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      vimLabel: "Del/Backspace",
-      arrowLabel: "Del/Backspace",
+      vimLabel: "⌫",
+      arrowLabel: "⌫",
       equivalents: ["delete", "backspace"],
       columns: {
         base: "Delete Node",
