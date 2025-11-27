@@ -1,11 +1,23 @@
+import { useEffect, useState } from "react";
 import { useLineContext } from "../context/line/lineContext";
+
+type ColumnKey = "base" | "shift" | "ctrl" | "ctrlShift" | "alt" | "altShift";
+type ActiveTab = "navigate" | "move";
+
+type KeyBindingRow = {
+  key: string;
+  equivalents: string[];
+  columns: Record<ColumnKey, string | null>;
+};
 
 export default function KeyboardVisualization() {
   const { mode, keyboardState } = useLineContext();
   const { pressedKeys, modifiers } = keyboardState;
+  const { shift, alt, ctrl } = modifiers;
+  const [previousAlt, setPreviousAlt] = useState(alt);
 
   // Fixed table structure with all key combinations
-  const keyBindingsTable = [
+  const keyBindingsTable: KeyBindingRow[] = [
     {
       key: "J/←",
       equivalents: ["arrowleft"],
@@ -80,6 +92,43 @@ export default function KeyboardVisualization() {
     },
   ];
 
+  const [tab, setTab] = useState<ActiveTab>("navigate");
+  const tabDefinitions: Array<{ key: ActiveTab; label: string }> = [
+    { key: "navigate", label: "Navigate" },
+    { key: "move", label: "Move (Alt)" },
+  ];
+
+  const columnsByTab: Record<ActiveTab, Array<{ key: ColumnKey; label: string }>> = {
+    navigate: [
+      { key: "base", label: "Base" },
+      { key: "shift", label: "Shift" },
+      { key: "ctrl", label: "Ctrl" },
+      { key: "ctrlShift", label: "Ctrl+Shift" },
+    ],
+    move: [
+      { key: "alt", label: "Alt" },
+      { key: "altShift", label: "Alt+Shift" },
+    ],
+  };
+
+  useEffect(() => {
+    if (alt === previousAlt) {
+      return;
+    }
+    setPreviousAlt(alt);
+    const newMode: ActiveTab = alt ? "move" : "navigate";
+    if (tab !== newMode) {
+      setTab(newMode);
+    }
+    return;
+  }, [alt, tab, previousAlt, setPreviousAlt]);
+
+  const handleTabSelect = (nextTab: ActiveTab) => {
+    setTab(nextTab);
+  };
+
+  const tableColumns = columnsByTab[tab];
+
   const commonKeyStyles = (pressed: boolean) => ({
     border: pressed ? "1px solid rgba(255, 140, 50, 0.4)" : "1px solid var(--vscode-input-border)",
     borderRadius: "0.3rem",
@@ -144,8 +193,6 @@ export default function KeyboardVisualization() {
 
   // Helper to get the active column based on modifiers
   const getActiveColumn = () => {
-    const { shift, alt, ctrl } = modifiers;
-
     if (alt && shift && !ctrl) {
       return "altShift";
     }
@@ -171,7 +218,7 @@ export default function KeyboardVisualization() {
   const activeColumn = getActiveColumn();
 
   // Check if a row's key is currently pressed
-  const isRowKeyPressed = (row: (typeof keyBindingsTable)[number]) => {
+  const isRowKeyPressed = (row: KeyBindingRow) => {
     const labelKeys = row.key
       .toLowerCase()
       .split("/")
@@ -190,16 +237,7 @@ export default function KeyboardVisualization() {
     return [...allKeys].some((key) => pressedKeys.has(key));
   };
 
-  type ColumnKey = keyof (typeof keyBindingsTable)[number]["columns"];
-
-  const tableColumns: Array<{ key: ColumnKey; label: string }> = [
-    { key: "base", label: "Base" },
-    { key: "shift", label: "Shift" },
-    { key: "ctrl", label: "Ctrl" },
-    { key: "ctrlShift", label: "Ctrl+Shift" },
-    { key: "alt", label: "Alt" },
-    { key: "altShift", label: "Alt+Shift" },
-  ];
+  const columnTemplate = `3.8rem repeat(${tableColumns.length}, 1fr)`;
 
   return (
     <div
@@ -247,9 +285,9 @@ export default function KeyboardVisualization() {
             justifyContent: "space-between",
           }}
         >
-          {renderModifierKey("CTRL", modifiers.ctrl)}
-          {renderModifierKey("ALT", modifiers.alt)}
-          {renderModifierKey("SHIFT", modifiers.shift, "3.6rem")}
+          {renderModifierKey("CTRL", ctrl)}
+          {renderModifierKey("ALT", alt)}
+          {renderModifierKey("SHIFT", shift, "3.6rem")}
         </div>
       </div>
 
@@ -267,8 +305,43 @@ export default function KeyboardVisualization() {
       >
         <div
           style={{
+            display: "flex",
+            gap: "0.4rem",
+            marginBottom: "0.5rem",
+          }}
+        >
+          {tabDefinitions.map((tabDefinition) => {
+            const isActiveTab = tab === tabDefinition.key;
+            return (
+              <button
+                key={tabDefinition.key}
+                type="button"
+                onClick={() => handleTabSelect(tabDefinition.key)}
+                style={{
+                  border: `1px solid var(--vscode-input-border)`,
+                  borderRadius: "0.3rem",
+                  padding: "0.25rem 0.6rem",
+                  backgroundColor: isActiveTab
+                    ? "var(--vscode-button-background)"
+                    : "var(--vscode-editorWidget-background)",
+                  color: isActiveTab
+                    ? "var(--vscode-button-foreground)"
+                    : "var(--vscode-editorWidget-foreground)",
+                  cursor: "pointer",
+                  transition: "all 0.1s ease",
+                  fontSize: "0.75rem",
+                  fontFamily: "monospace",
+                }}
+              >
+                {tabDefinition.label}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          style={{
             display: "grid",
-            gridTemplateColumns: "3.8rem repeat(6, 1fr)",
+            gridTemplateColumns: columnTemplate,
             gap: "0.5rem",
             paddingBottom: "0.4rem",
             borderBottom: "1px solid var(--vscode-editorWidget-border)",
@@ -302,7 +375,7 @@ export default function KeyboardVisualization() {
               key={index}
               style={{
                 display: "grid",
-                gridTemplateColumns: "3.8rem repeat(6, 1fr)",
+                gridTemplateColumns: columnTemplate,
                 gap: "0.5rem",
                 padding: "0.3rem",
                 margin: "0 -0.3rem",
