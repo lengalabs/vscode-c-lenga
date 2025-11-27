@@ -35,20 +35,6 @@ export default function KeyboardVisualization() {
       altShift: "Move Into Prev Sibling",
     },
     {
-      key: "I",
-      base: "Next Field",
-      shift: null,
-      alt: null,
-      altShift: null,
-    },
-    {
-      key: "O",
-      base: "Previous Field",
-      shift: null,
-      alt: null,
-      altShift: null,
-    },
-    {
       key: "Enter",
       base: "Insert Sibling After",
       shift: "Insert Sibling Before",
@@ -180,19 +166,6 @@ export default function KeyboardVisualization() {
           boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
         }}
       >
-        {/* Field navigation row: i, o */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.3rem",
-            marginBottom: "0.4rem",
-            justifyContent: "center",
-          }}
-        >
-          {renderKey("i", "↓", [], "2.4rem", "2.4rem")}
-          {renderKey("o", "↑", [], "2.4rem", "2.4rem")}
-        </div>
-
         {/* Main navigation row: j, k, l, ñ */}
         <div
           style={{

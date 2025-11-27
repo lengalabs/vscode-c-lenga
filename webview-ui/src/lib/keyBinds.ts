@@ -193,40 +193,39 @@ export const COMMAND_DEFINITIONS: CommandDefinitions = {
   },
   navigateToParent: {
     bind: [
-      { keys: "ArrowLeft", mode: EditorMode.View },
-      { keys: "j", mode: EditorMode.View },
+      { keys: "Ctrl+ArrowLeft", mode: EditorMode.View },
+      { keys: "Ctrl+j", mode: EditorMode.View },
     ],
     description: "Navigate to parent node",
   },
   navigateToFirstChild: {
     bind: [
-      { keys: "ArrowRight", mode: EditorMode.View },
-      { keys: "ñ", mode: EditorMode.View },
-      { keys: "n", mode: EditorMode.View },
+      { keys: "Ctrl+ArrowRight", mode: EditorMode.View },
+      { keys: "Ctrl+ñ", mode: EditorMode.View },
+      { keys: "Ctrl+n", mode: EditorMode.View },
     ],
     description: "Navigate to first child",
   },
   navigateToLastChild: {
     bind: [
-      { keys: "Shift+ArrowRight", mode: EditorMode.View },
-      { keys: "Shift+ñ", mode: EditorMode.View },
-      { keys: "Shift+n", mode: EditorMode.View },
+      { keys: "Shift+Ctrl+ArrowRight", mode: EditorMode.View },
+      { keys: "Shift+Ctrl+ñ", mode: EditorMode.View },
+      { keys: "Shift+Ctrl+n", mode: EditorMode.View },
     ],
     description: "Navigate to last child",
   },
   navigateToPreviousField: {
     bind: [
-      { keys: "Shift+ArrowUp", mode: EditorMode.View },
-      { keys: "Shift+l", mode: EditorMode.View },
-      { keys: "o", mode: EditorMode.View },
+      { keys: "ArrowLeft", mode: EditorMode.View },
+      { keys: "j", mode: EditorMode.View },
     ],
     description: "Navigate to previous field in same object",
   },
   navigateToNextField: {
     bind: [
-      { keys: "Shift+ArrowDown", mode: EditorMode.View },
-      { keys: "Shift+k", mode: EditorMode.View },
-      { keys: "i", mode: EditorMode.View },
+      { keys: "ArrowRight", mode: EditorMode.View },
+      { keys: "n", mode: EditorMode.View },
+      { keys: "ñ", mode: EditorMode.View },
     ],
     description: "Navigate to next field in same object",
   },
