@@ -109,14 +109,9 @@ export default function KeyboardVisualization() {
   const columnsByTab: Record<ActiveTab, Array<{ key: ColumnKey; label: string }>> = {
     navigate: [
       { key: "base", label: "Base" },
-      { key: "shift", label: "Shift" },
       { key: "ctrl", label: "Ctrl" },
-      { key: "ctrlShift", label: "Ctrl+Shift" },
     ],
-    move: [
-      { key: "alt", label: "Alt" },
-      { key: "altShift", label: "Alt+Shift" },
-    ],
+    move: [{ key: "alt", label: "Alt" }],
   };
 
   useEffect(() => {
@@ -136,6 +131,11 @@ export default function KeyboardVisualization() {
   };
 
   const tableColumns = columnsByTab[tab];
+  const shiftVariantByColumn: Partial<Record<ColumnKey, ColumnKey>> = {
+    base: "shift",
+    ctrl: "ctrlShift",
+    alt: "altShift",
+  };
 
   const commonKeyStyles = (pressed: boolean) => ({
     border: pressed ? "1px solid rgba(255, 140, 50, 0.4)" : "1px solid var(--vscode-input-border)",
@@ -224,6 +224,21 @@ export default function KeyboardVisualization() {
   };
 
   const activeColumn = getActiveColumn();
+  const effectiveActiveColumn: ColumnKey | null = (() => {
+    if (!activeColumn) {
+      return null;
+    }
+    if (activeColumn === "shift") {
+      return "base";
+    }
+    if (activeColumn === "ctrlShift") {
+      return "ctrl";
+    }
+    if (activeColumn === "altShift") {
+      return "alt";
+    }
+    return activeColumn;
+  })();
 
   // Check if a row's key is currently pressed
   const isRowKeyPressed = (row: KeyBindingRow) => {
@@ -382,7 +397,7 @@ export default function KeyboardVisualization() {
         >
           <div style={{ fontWeight: "bold", opacity: 0.8 }}>Key</div>
           {tableColumns.map((column) => {
-            const isActive = activeColumn === column.key;
+            const isActive = effectiveActiveColumn === column.key;
             return (
               <div
                 key={column.key}
@@ -410,13 +425,11 @@ export default function KeyboardVisualization() {
                 display: "grid",
                 gridTemplateColumns: columnTemplate,
                 gap: "0.5rem",
-                padding: "0.3rem",
-                margin: "0 -0.3rem",
-                paddingLeft: "0.3rem",
-                paddingRight: "0.3rem",
+                padding: "0.55rem 0.5rem 0.55rem 0.4rem",
+                margin: "0 -0.4rem",
                 borderBottom:
                   index < keyBindingsTable.length - 1
-                    ? "1px solid var(--vscode-editorWidget-border)"
+                    ? "1px solid rgba(255, 255, 255, 0.05)"
                     : "none",
                 backgroundColor: isPressed ? "rgba(255, 140, 50, 0.1)" : "transparent",
                 borderRadius: "0.2rem",
@@ -436,25 +449,62 @@ export default function KeyboardVisualization() {
                 {keyDisplay}
               </div>
               {tableColumns.map((column) => {
-                const isActive = activeColumn === column.key;
+                const shiftKey = shiftVariantByColumn[column.key];
+                const isShiftActive = shiftKey ? activeColumn === shiftKey : false;
+                const isActive = effectiveActiveColumn === column.key;
                 const description = row.columns[column.key] || "—";
-                const highlight = isPressed && isActive && description !== "—";
+                const shiftDescription = shiftKey ? row.columns[shiftKey] : null;
+                const shouldHighlight =
+                  isPressed &&
+                  (isActive || isShiftActive) &&
+                  (description !== "—" || shiftDescription);
                 return (
                   <div
                     key={column.key}
                     style={{
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "flex-end",
+                      alignItems: "flex-start",
                       opacity: isActive ? 0.9 : 0.4,
                       color: isActive
                         ? "var(--vscode-editorWidget-foreground)"
                         : "var(--vscode-descriptionForeground)",
-                      backgroundColor: highlight ? "rgba(255, 140, 50, 0.2)" : "transparent",
-                      padding: "0.2rem 0.3rem",
-                      margin: "-0.2rem -0.3rem",
+                      backgroundColor: shouldHighlight ? "rgba(255, 140, 50, 0.2)" : "transparent",
+                      padding: "0.55rem 0.5rem 0.45rem 0.4rem",
+                      margin: "-0.35rem -0.4rem",
                       borderRadius: "0.2rem",
                       transition: "all 0.03s ease",
                     }}
                   >
-                    {description}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "0.2rem",
+                        right: "0.3rem",
+                        fontSize: "0.68rem",
+                        opacity: shiftDescription ? 0.75 : 0,
+                        color: isShiftActive
+                          ? "var(--vscode-textLink-foreground)"
+                          : isActive
+                            ? "var(--vscode-editorWidget-foreground)"
+                            : "var(--vscode-descriptionForeground)",
+                        transition: "all 0.03s ease",
+                      }}
+                    >
+                      {shiftDescription || "\u00A0"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        lineHeight: 1.3,
+                        paddingTop: shiftDescription ? "0.6rem" : "0.3rem",
+                        paddingBottom: shiftDescription ? "0" : "0.3rem",
+                      }}
+                    >
+                      {description}
+                    </div>
                   </div>
                 );
               })}
