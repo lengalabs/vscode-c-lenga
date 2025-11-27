@@ -8,45 +8,75 @@ export default function KeyboardVisualization() {
   const keyBindingsTable = [
     {
       key: "J/←",
-      base: "Move to Parent",
-      shift: null,
-      alt: "Move to Parent's Prev Sibling",
-      altShift: "Move to Parent's Next Sibling",
+      equivalents: ["arrowleft"],
+      columns: {
+        base: "Previous Field",
+        shift: null,
+        ctrl: "Navigate to Parent",
+        ctrlShift: null,
+        alt: "Move Node to Parent's Prev Sibling",
+        altShift: "Move Node to Parent's Next Sibling",
+      },
     },
     {
       key: "L/↑",
-      base: "Move to Prev Sibling",
-      shift: "Previous Field",
-      alt: "Move Node Up",
-      altShift: "Move Into Prev Sibling",
+      equivalents: ["arrowup"],
+      columns: {
+        base: "Previous Sibling",
+        shift: null,
+        ctrl: null,
+        ctrlShift: null,
+        alt: "Move Node Up",
+        altShift: "Move Node Into Prev Sibling",
+      },
     },
     {
       key: "K/↓",
-      base: "Move to Next Sibling",
-      shift: "Next Field",
-      alt: "Move Node Down",
-      altShift: "Move Into Next Sibling",
+      equivalents: ["arrowdown"],
+      columns: {
+        base: "Next Sibling",
+        shift: null,
+        ctrl: null,
+        ctrlShift: null,
+        alt: "Move Node Down",
+        altShift: "Move Node Into Next Sibling",
+      },
     },
     {
       key: "Ñ/→",
-      base: "Move to First Child",
-      shift: "Move to Last Child",
-      alt: "Move Into Next Sibling",
-      altShift: "Move Into Prev Sibling",
+      equivalents: ["arrowright", "n"],
+      columns: {
+        base: "Next Field",
+        shift: null,
+        ctrl: "Navigate to First Child",
+        ctrlShift: "Navigate to Last Child",
+        alt: "Move Node Into Next Sibling",
+        altShift: "Move Node Into Prev Sibling",
+      },
     },
     {
       key: "Enter",
-      base: "Insert Sibling After",
-      shift: "Insert Sibling Before",
-      alt: null,
-      altShift: null,
+      equivalents: [],
+      columns: {
+        base: "Insert Sibling After",
+        shift: "Insert Sibling Before",
+        ctrl: "Insert Child at Start",
+        ctrlShift: "Insert Child at End",
+        alt: null,
+        altShift: null,
+      },
     },
     {
-      key: "Del",
-      base: "Delete Node",
-      shift: null,
-      alt: null,
-      altShift: null,
+      key: "Del/Backspace",
+      equivalents: ["delete", "backspace"],
+      columns: {
+        base: "Delete Node",
+        shift: null,
+        ctrl: null,
+        ctrlShift: null,
+        alt: null,
+        altShift: null,
+      },
     },
   ];
 
@@ -75,7 +105,6 @@ export default function KeyboardVisualization() {
     width = "2.8rem",
     height = "2.8rem"
   ) => {
-    // Check if any equivalent key is pressed
     const keysToCheck = [key, ...(equivalentKeys || [])].map((k) => k.toLowerCase());
     const pressed = keysToCheck.some((k) => pressedKeys.has(k));
 
@@ -115,19 +144,35 @@ export default function KeyboardVisualization() {
 
   // Helper to get the active column based on modifiers
   const getActiveColumn = () => {
-    const { shift, alt } = modifiers;
-    if (alt && shift) return "altShift";
-    if (alt) return "alt";
-    if (shift) return "shift";
-    return "base";
+    const { shift, alt, ctrl } = modifiers;
+
+    if (alt && shift && !ctrl) {
+      return "altShift";
+    }
+    if (alt && !shift && !ctrl) {
+      return "alt";
+    }
+    if (ctrl && shift && !alt) {
+      return "ctrlShift";
+    }
+    if (ctrl && !shift && !alt) {
+      return "ctrl";
+    }
+    if (shift && !alt && !ctrl) {
+      return "shift";
+    }
+    if (!alt && !shift && !ctrl) {
+      return "base";
+    }
+
+    return null;
   };
 
   const activeColumn = getActiveColumn();
 
   // Check if a row's key is currently pressed
-  const isRowKeyPressed = (keyLabel: string) => {
-    // Extract the keys from the label (e.g., "J/←" -> ["j", "arrowleft"])
-    const keys = keyLabel
+  const isRowKeyPressed = (row: (typeof keyBindingsTable)[number]) => {
+    const labelKeys = row.key
       .toLowerCase()
       .split("/")
       .map((k) => {
@@ -139,8 +184,22 @@ export default function KeyboardVisualization() {
         return k;
       });
 
-    return keys.some((key) => pressedKeys.has(key));
+    const allKeys = new Set(
+      [...labelKeys, ...(row.equivalents || [])].map((key) => key.toLowerCase())
+    );
+    return [...allKeys].some((key) => pressedKeys.has(key));
   };
+
+  type ColumnKey = keyof (typeof keyBindingsTable)[number]["columns"];
+
+  const tableColumns: Array<{ key: ColumnKey; label: string }> = [
+    { key: "base", label: "Base" },
+    { key: "shift", label: "Shift" },
+    { key: "ctrl", label: "Ctrl" },
+    { key: "ctrlShift", label: "Ctrl+Shift" },
+    { key: "alt", label: "Alt" },
+    { key: "altShift", label: "Alt+Shift" },
+  ];
 
   return (
     <div
@@ -206,11 +265,10 @@ export default function KeyboardVisualization() {
           fontFamily: "monospace",
         }}
       >
-        {/* Table header */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
+            gridTemplateColumns: "3.8rem repeat(6, 1fr)",
             gap: "0.5rem",
             paddingBottom: "0.4rem",
             borderBottom: "1px solid var(--vscode-editorWidget-border)",
@@ -218,53 +276,33 @@ export default function KeyboardVisualization() {
           }}
         >
           <div style={{ fontWeight: "bold", opacity: 0.8 }}>Key</div>
-          <div
-            style={{
-              fontWeight: "bold",
-              opacity: activeColumn === "base" ? 1 : 0.5,
-              color:
-                activeColumn === "base"
-                  ? "var(--vscode-textLink-foreground)"
-                  : "var(--vscode-editorWidget-foreground)",
-            }}
-          >
-            Base
-          </div>
-          <div
-            style={{
-              fontWeight: "bold",
-              opacity: activeColumn === "shift" ? 1 : 0.5,
-              color:
-                activeColumn === "shift"
-                  ? "var(--vscode-textLink-foreground)"
-                  : "var(--vscode-editorWidget-foreground)",
-            }}
-          >
-            Shift
-          </div>
-          <div
-            style={{
-              fontWeight: "bold",
-              opacity: activeColumn === "alt" || activeColumn === "altShift" ? 1 : 0.5,
-              color:
-                activeColumn === "alt" || activeColumn === "altShift"
-                  ? "var(--vscode-textLink-foreground)"
-                  : "var(--vscode-editorWidget-foreground)",
-            }}
-          >
-            Alt{activeColumn === "altShift" && "+Shift"}
-          </div>
+          {tableColumns.map((column) => {
+            const isActive = activeColumn === column.key;
+            return (
+              <div
+                key={column.key}
+                style={{
+                  fontWeight: "bold",
+                  opacity: isActive ? 1 : 0.5,
+                  color: isActive
+                    ? "var(--vscode-textLink-foreground)"
+                    : "var(--vscode-editorWidget-foreground)",
+                }}
+              >
+                {column.label}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Table rows */}
         {keyBindingsTable.map((row, index) => {
-          const isPressed = isRowKeyPressed(row.key);
+          const isPressed = isRowKeyPressed(row);
           return (
             <div
               key={index}
               style={{
                 display: "grid",
-                gridTemplateColumns: "3.5rem 1fr 1fr 1fr",
+                gridTemplateColumns: "3.8rem repeat(6, 1fr)",
                 gap: "0.5rem",
                 padding: "0.3rem",
                 margin: "0 -0.3rem",
@@ -291,63 +329,29 @@ export default function KeyboardVisualization() {
               >
                 {row.key}
               </div>
-              <div
-                style={{
-                  opacity: activeColumn === "base" ? 0.9 : 0.4,
-                  color:
-                    activeColumn === "base"
-                      ? "var(--vscode-editorWidget-foreground)"
-                      : "var(--vscode-descriptionForeground)",
-                  backgroundColor:
-                    isPressed && activeColumn === "base"
-                      ? "rgba(255, 140, 50, 0.2)"
-                      : "transparent",
-                  padding: "0.2rem 0.3rem",
-                  margin: "-0.2rem -0.3rem",
-                  borderRadius: "0.2rem",
-                  transition: "all 0.03s ease",
-                }}
-              >
-                {row.base || "—"}
-              </div>
-              <div
-                style={{
-                  opacity: activeColumn === "shift" ? 0.9 : 0.4,
-                  color:
-                    activeColumn === "shift"
-                      ? "var(--vscode-editorWidget-foreground)"
-                      : "var(--vscode-descriptionForeground)",
-                  backgroundColor:
-                    isPressed && activeColumn === "shift"
-                      ? "rgba(255, 140, 50, 0.2)"
-                      : "transparent",
-                  padding: "0.2rem 0.3rem",
-                  margin: "-0.2rem -0.3rem",
-                  borderRadius: "0.2rem",
-                  transition: "all 0.03s ease",
-                }}
-              >
-                {row.shift || "—"}
-              </div>
-              <div
-                style={{
-                  opacity: activeColumn === "alt" || activeColumn === "altShift" ? 0.9 : 0.4,
-                  color:
-                    activeColumn === "alt" || activeColumn === "altShift"
-                      ? "var(--vscode-editorWidget-foreground)"
-                      : "var(--vscode-descriptionForeground)",
-                  backgroundColor:
-                    isPressed && (activeColumn === "alt" || activeColumn === "altShift")
-                      ? "rgba(255, 140, 50, 0.2)"
-                      : "transparent",
-                  padding: "0.2rem 0.3rem",
-                  margin: "-0.2rem -0.3rem",
-                  borderRadius: "0.2rem",
-                  transition: "all 0.03s ease",
-                }}
-              >
-                {(activeColumn === "altShift" ? row.altShift : row.alt) || "—"}
-              </div>
+              {tableColumns.map((column) => {
+                const isActive = activeColumn === column.key;
+                const description = row.columns[column.key] || "—";
+                const highlight = isPressed && isActive && description !== "—";
+                return (
+                  <div
+                    key={column.key}
+                    style={{
+                      opacity: isActive ? 0.9 : 0.4,
+                      color: isActive
+                        ? "var(--vscode-editorWidget-foreground)"
+                        : "var(--vscode-descriptionForeground)",
+                      backgroundColor: highlight ? "rgba(255, 140, 50, 0.2)" : "transparent",
+                      padding: "0.2rem 0.3rem",
+                      margin: "-0.2rem -0.3rem",
+                      borderRadius: "0.2rem",
+                      transition: "all 0.03s ease",
+                    }}
+                  >
+                    {description}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
