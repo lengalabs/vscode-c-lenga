@@ -5,7 +5,8 @@ type ColumnKey = "base" | "shift" | "ctrl" | "ctrlShift" | "alt" | "altShift";
 type ActiveTab = "navigate" | "move";
 
 type KeyBindingRow = {
-  key: string;
+  vimLabel: string;
+  arrowLabel: string;
   equivalents: string[];
   columns: Record<ColumnKey, string | null>;
 };
@@ -15,11 +16,13 @@ export default function KeyboardVisualization() {
   const { pressedKeys, modifiers } = keyboardState;
   const { shift, alt, ctrl } = modifiers;
   const [previousAlt, setPreviousAlt] = useState(alt);
+  const [isVimMode, setIsVimMode] = useState(true);
 
   // Fixed table structure with all key combinations
   const keyBindingsTable: KeyBindingRow[] = [
     {
-      key: "J/←",
+      vimLabel: "J",
+      arrowLabel: "←",
       equivalents: ["arrowleft"],
       columns: {
         base: "Previous Field",
@@ -31,19 +34,8 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      key: "L/↑",
-      equivalents: ["arrowup"],
-      columns: {
-        base: "Previous Sibling",
-        shift: null,
-        ctrl: null,
-        ctrlShift: null,
-        alt: "Move Node Up",
-        altShift: "Move Node Into Prev Sibling",
-      },
-    },
-    {
-      key: "K/↓",
+      vimLabel: "K",
+      arrowLabel: "↓",
       equivalents: ["arrowdown"],
       columns: {
         base: "Next Sibling",
@@ -55,7 +47,21 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      key: "Ñ/→",
+      vimLabel: "L",
+      arrowLabel: "↑",
+      equivalents: ["arrowup"],
+      columns: {
+        base: "Previous Sibling",
+        shift: null,
+        ctrl: null,
+        ctrlShift: null,
+        alt: "Move Node Up",
+        altShift: "Move Node Into Prev Sibling",
+      },
+    },
+    {
+      vimLabel: "Ñ",
+      arrowLabel: "→",
       equivalents: ["arrowright", "n"],
       columns: {
         base: "Next Field",
@@ -67,7 +73,8 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      key: "Enter",
+      vimLabel: "Enter",
+      arrowLabel: "Enter",
       equivalents: [],
       columns: {
         base: "Insert Sibling After",
@@ -79,7 +86,8 @@ export default function KeyboardVisualization() {
       },
     },
     {
-      key: "Del/Backspace",
+      vimLabel: "Del/Backspace",
+      arrowLabel: "Del/Backspace",
       equivalents: ["delete", "backspace"],
       columns: {
         base: "Delete Node",
@@ -148,26 +156,26 @@ export default function KeyboardVisualization() {
   });
 
   const renderKey = (
-    key: string,
-    arrow?: string,
-    equivalentKeys?: string[],
+    labels: { vim: string; arrow: string },
+    equivalentKeys: string[] = [],
     width = "2.8rem",
     height = "2.8rem"
   ) => {
-    const keysToCheck = [key, ...(equivalentKeys || [])].map((k) => k.toLowerCase());
+    const keysToCheck = [labels.vim, ...equivalentKeys].map((k) => k.toLowerCase());
     const pressed = keysToCheck.some((k) => pressedKeys.has(k));
+
+    const displayLabel = isVimMode ? labels.vim : labels.arrow;
 
     return (
       <div
-        key={key}
+        key={`${labels.vim}-${labels.arrow}`}
         style={{
           width,
           height,
           ...commonKeyStyles(pressed),
         }}
       >
-        <div style={{ fontSize: "0.6rem", opacity: 0.7 }}>{arrow}</div>
-        <div style={{ fontWeight: "bold" }}>{key.toUpperCase()}</div>
+        <div style={{ fontWeight: "bold" }}>{displayLabel}</div>
       </div>
     );
   };
@@ -219,21 +227,13 @@ export default function KeyboardVisualization() {
 
   // Check if a row's key is currently pressed
   const isRowKeyPressed = (row: KeyBindingRow) => {
-    const labelKeys = row.key
-      .toLowerCase()
-      .split("/")
-      .map((k) => {
-        if (k === "←") return "arrowleft";
-        if (k === "↑") return "arrowup";
-        if (k === "↓") return "arrowdown";
-        if (k === "→") return "arrowright";
-        if (k === "del") return "delete";
-        return k;
-      });
-
-    const allKeys = new Set(
-      [...labelKeys, ...(row.equivalents || [])].map((key) => key.toLowerCase())
-    );
+    const baseLabels = [row.vimLabel, row.arrowLabel]
+      .filter(Boolean)
+      .map((label) => label.toLowerCase());
+    const allKeys = new Set([
+      ...baseLabels,
+      ...(row.equivalents || []).map((key) => key.toLowerCase()),
+    ]);
     return [...allKeys].some((key) => pressedKeys.has(key));
   };
 
@@ -271,10 +271,10 @@ export default function KeyboardVisualization() {
             marginBottom: "0.4rem",
           }}
         >
-          {renderKey("j", "←", ["arrowleft"])}
-          {renderKey("k", "↓", ["arrowdown"])}
-          {renderKey("l", "↑", ["arrowup"])}
-          {renderKey("ñ", "→", ["arrowright", "n"])}
+          {renderKey({ vim: "J", arrow: "←" }, ["arrowleft"])}
+          {renderKey({ vim: "K", arrow: "↓" }, ["arrowdown"])}
+          {renderKey({ vim: "L", arrow: "↑" }, ["arrowup"])}
+          {renderKey({ vim: "Ñ", arrow: "→" }, ["arrowright", "n"])}
         </div>
 
         {/* Modifier keys row */}
@@ -306,37 +306,69 @@ export default function KeyboardVisualization() {
         <div
           style={{
             display: "flex",
-            gap: "0.4rem",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.75rem",
             marginBottom: "0.5rem",
           }}
         >
-          {tabDefinitions.map((tabDefinition) => {
-            const isActiveTab = tab === tabDefinition.key;
-            return (
-              <button
-                key={tabDefinition.key}
-                type="button"
-                onClick={() => handleTabSelect(tabDefinition.key)}
-                style={{
-                  border: `1px solid var(--vscode-input-border)`,
-                  borderRadius: "0.3rem",
-                  padding: "0.25rem 0.6rem",
-                  backgroundColor: isActiveTab
-                    ? "var(--vscode-button-background)"
-                    : "var(--vscode-editorWidget-background)",
-                  color: isActiveTab
-                    ? "var(--vscode-button-foreground)"
-                    : "var(--vscode-editorWidget-foreground)",
-                  cursor: "pointer",
-                  transition: "all 0.1s ease",
-                  fontSize: "0.75rem",
-                  fontFamily: "monospace",
-                }}
-              >
-                {tabDefinition.label}
-              </button>
-            );
-          })}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.4rem",
+            }}
+          >
+            {tabDefinitions.map((tabDefinition) => {
+              const isActiveTab = tab === tabDefinition.key;
+              return (
+                <button
+                  key={tabDefinition.key}
+                  type="button"
+                  onClick={() => handleTabSelect(tabDefinition.key)}
+                  style={{
+                    border: `1px solid var(--vscode-input-border)`,
+                    borderRadius: "0.3rem",
+                    padding: "0.25rem 0.6rem",
+                    backgroundColor: isActiveTab
+                      ? "var(--vscode-button-background)"
+                      : "var(--vscode-editorWidget-background)",
+                    color: isActiveTab
+                      ? "var(--vscode-button-foreground)"
+                      : "var(--vscode-editorWidget-foreground)",
+                    cursor: "pointer",
+                    transition: "all 0.1s ease",
+                    fontSize: "0.75rem",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {tabDefinition.label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsVimMode((value) => !value)}
+            aria-pressed={isVimMode}
+            style={{
+              border: `1px solid var(--vscode-input-border)`,
+              borderRadius: "0.3rem",
+              padding: "0.25rem 0.6rem",
+              backgroundColor: isVimMode
+                ? "var(--vscode-button-background)"
+                : "var(--vscode-editorWidget-background)",
+              color: isVimMode
+                ? "var(--vscode-button-foreground)"
+                : "var(--vscode-editorWidget-foreground)",
+              cursor: "pointer",
+              transition: "all 0.1s ease",
+              fontSize: "0.75rem",
+              fontFamily: "monospace",
+              whiteSpace: "nowrap",
+            }}
+          >
+            vim mode: {isVimMode ? "On" : "Off"}
+          </button>
         </div>
         <div
           style={{
@@ -370,6 +402,7 @@ export default function KeyboardVisualization() {
 
         {keyBindingsTable.map((row, index) => {
           const isPressed = isRowKeyPressed(row);
+          const keyDisplay = (isVimMode ? row.vimLabel : row.arrowLabel) || row.vimLabel;
           return (
             <div
               key={index}
@@ -400,7 +433,7 @@ export default function KeyboardVisualization() {
                   transition: "all 0.03s ease",
                 }}
               >
-                {row.key}
+                {keyDisplay}
               </div>
               {tableColumns.map((column) => {
                 const isActive = activeColumn === column.key;
