@@ -68,6 +68,7 @@ export default function KeyboardVisualization() {
   const { shift, alt, ctrl } = modifiers;
   const [previousAlt, setPreviousAlt] = useState(alt);
   const [isVimMode, setIsVimMode] = useState(true);
+  const [isTableCollapsed, setIsTableCollapsed] = useState(false);
 
   // Fixed table structure with all key combinations
   const keyBindingsTable: KeyBindingRow[] = [
@@ -340,8 +341,32 @@ export default function KeyboardVisualization() {
         flexDirection: "column",
       }}
     >
+      {/* Toggle button */}
+      <button
+        type="button"
+        onClick={() => setIsTableCollapsed((value) => !value)}
+        aria-controls="keyboard-visualization-table"
+        aria-expanded={!isTableCollapsed}
+        style={{
+          border: `1px solid var(--vscode-input-border)`,
+          borderRadius: "0.3rem",
+          padding: "0.25rem 0.6rem",
+          backgroundColor: "var(--vscode-editorWidget-background)",
+          color: "var(--vscode-editorWidget-foreground)",
+          cursor: "pointer",
+          transition: "all 0.1s ease",
+          fontSize: "0.75rem",
+          fontFamily: "monospace",
+          alignSelf: "flex-end",
+        }}
+      >
+        {isTableCollapsed ? "Show keybinds" : "Hide keybinds"}
+      </button>
+
       {/* Key descriptions table */}
       <div
+        id="keyboard-visualization-table"
+        hidden={isTableCollapsed}
         style={{
           padding: "0.6rem",
           backgroundColor: "var(--vscode-editorWidget-background)",
@@ -556,6 +581,7 @@ export default function KeyboardVisualization() {
 
       {/* Keyboard visualization */}
       <div
+        hidden={isTableCollapsed}
         style={{
           padding: "0.8rem",
           backgroundColor: "var(--vscode-editorWidget-background)",
