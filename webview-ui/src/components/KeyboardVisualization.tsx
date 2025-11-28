@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLineContext } from "../context/line/lineContext";
 
-type ColumnKey = "base" | "shift" | "ctrl" | "ctrlShift" | "alt" | "altShift";
+type ColumnKey = "base" | "shift" | "ctrl" | "ctrlShift" | "alt" | "altShift" | "altCtrl";
 type ActiveTab = "navigate" | "move";
 
 type KeyBindingRow = {
@@ -27,10 +27,11 @@ export default function KeyboardVisualization() {
       columns: {
         base: "Previous Field",
         shift: null,
-        ctrl: "Navigate to Parent",
+        ctrl: "To Parent",
         ctrlShift: null,
-        alt: "Move Node to Parent's Prev Sibling",
-        altShift: "Move Node to Parent's Next Sibling",
+        alt: "To Parent's Prev Sibling",
+        altShift: "To Parent's Next Sibling",
+        altCtrl: null,
       },
     },
     {
@@ -42,8 +43,9 @@ export default function KeyboardVisualization() {
         shift: null,
         ctrl: null,
         ctrlShift: null,
-        alt: "Move Node Down",
-        altShift: "Move Node Into Next Sibling",
+        alt: "Down",
+        altCtrl: null,
+        altShift: "Into Next Sibling",
       },
     },
     {
@@ -55,8 +57,9 @@ export default function KeyboardVisualization() {
         shift: null,
         ctrl: null,
         ctrlShift: null,
-        alt: "Move Node Up",
-        altShift: "Move Node Into Prev Sibling",
+        alt: "Up",
+        altCtrl: null,
+        altShift: "Into Prev Sibling",
       },
     },
     {
@@ -66,10 +69,11 @@ export default function KeyboardVisualization() {
       columns: {
         base: "Next Field",
         shift: null,
-        ctrl: "Navigate to First Child",
-        ctrlShift: "Navigate to Last Child",
-        alt: "Move Node Into Next Sibling",
-        altShift: "Move Node Into Prev Sibling",
+        ctrl: "To First Child",
+        ctrlShift: "To Last Child",
+        alt: "Into Next Sibling",
+        altCtrl: null,
+        altShift: "Into Prev Sibling",
       },
     },
     {
@@ -82,6 +86,7 @@ export default function KeyboardVisualization() {
         ctrl: "Insert Child at Start",
         ctrlShift: "Insert Child at End",
         alt: null,
+        altCtrl: null,
         altShift: null,
       },
     },
@@ -95,6 +100,7 @@ export default function KeyboardVisualization() {
         ctrl: null,
         ctrlShift: null,
         alt: null,
+        altCtrl: null,
         altShift: null,
       },
     },
@@ -111,7 +117,10 @@ export default function KeyboardVisualization() {
       { key: "base", label: "Base" },
       { key: "ctrl", label: "Ctrl" },
     ],
-    move: [{ key: "alt", label: "Alt" }],
+    move: [
+      { key: "alt", label: "Alt" },
+      { key: "altCtrl", label: "Alt + Ctrl" },
+    ],
   };
 
   useEffect(() => {
@@ -259,53 +268,14 @@ export default function KeyboardVisualization() {
       style={{
         position: "fixed",
         bottom: "1rem",
-        left: "1rem",
+        right: "1rem",
         zIndex: 999,
         display: "flex",
         gap: "1rem",
         alignItems: "flex-end",
+        flexDirection: "column",
       }}
     >
-      {/* Keyboard visualization */}
-      <div
-        style={{
-          padding: "0.8rem",
-          backgroundColor: "var(--vscode-editorWidget-background)",
-          border: "1px solid var(--vscode-editorWidget-border)",
-          borderRadius: "0.4rem",
-          fontSize: "1rem",
-          fontFamily: "monospace",
-          boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
-        }}
-      >
-        {/* Main navigation row: j, k, l, ñ */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.3rem",
-            marginBottom: "0.4rem",
-          }}
-        >
-          {renderKey({ vim: "J", arrow: "←" }, ["arrowleft"])}
-          {renderKey({ vim: "K", arrow: "↓" }, ["arrowdown"])}
-          {renderKey({ vim: "L", arrow: "↑" }, ["arrowup"])}
-          {renderKey({ vim: "Ñ", arrow: "→" }, ["arrowright", "n"])}
-        </div>
-
-        {/* Modifier keys row */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.3rem",
-            justifyContent: "space-between",
-          }}
-        >
-          {renderModifierKey("CTRL", ctrl)}
-          {renderModifierKey("ALT", alt)}
-          {renderModifierKey("SHIFT", shift, "3.6rem")}
-        </div>
-      </div>
-
       {/* Key descriptions table */}
       <div
         style={{
@@ -316,6 +286,7 @@ export default function KeyboardVisualization() {
           boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
           fontSize: "0.75rem",
           fontFamily: "monospace",
+          minWidth: "30rem",
         }}
       >
         <div
@@ -511,6 +482,46 @@ export default function KeyboardVisualization() {
             </div>
           );
         })}
+      </div>
+
+      {/* Keyboard visualization */}
+      <div
+        style={{
+          padding: "0.8rem",
+          backgroundColor: "var(--vscode-editorWidget-background)",
+          border: "1px solid var(--vscode-editorWidget-border)",
+          borderRadius: "0.4rem",
+          fontSize: "1rem",
+          fontFamily: "monospace",
+          boxShadow: "0 0.2rem 0.8rem rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        {/* Main navigation row: j, k, l, ñ */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.3rem",
+            marginBottom: "0.4rem",
+          }}
+        >
+          {renderKey({ vim: "J", arrow: "←" }, ["arrowleft"])}
+          {renderKey({ vim: "K", arrow: "↓" }, ["arrowdown"])}
+          {renderKey({ vim: "L", arrow: "↑" }, ["arrowup"])}
+          {renderKey({ vim: "Ñ", arrow: "→" }, ["arrowright", "n"])}
+        </div>
+
+        {/* Modifier keys row */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.3rem",
+            justifyContent: "space-between",
+          }}
+        >
+          {renderModifierKey("CTRL", ctrl)}
+          {renderModifierKey("ALT", alt)}
+          {renderModifierKey("SHIFT", shift, "3.6rem")}
+        </div>
       </div>
     </div>
   );
