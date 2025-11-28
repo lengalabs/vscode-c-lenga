@@ -1,8 +1,59 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useLineContext } from "../context/line/lineContext";
 
 type ColumnKey = "base" | "shift" | "ctrl" | "ctrlShift" | "alt" | "altShift" | "altCtrl";
 type ActiveTab = "navigate" | "move";
+type ArrowDirection = "left" | "right" | "up" | "down";
+
+const arrowDirectionByLabel: Record<string, ArrowDirection> = {
+  "←": "left",
+  "→": "right",
+  "↑": "up",
+  "↓": "down",
+};
+
+const ArrowIcon = ({ direction }: { direction: ArrowDirection }) => {
+  const rotation = {
+    right: 0,
+    down: 90,
+    left: 180,
+    up: -90,
+  }[direction];
+
+  return (
+    <svg
+      role="img"
+      aria-hidden="true"
+      focusable="false"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      style={{ transform: `rotate(${rotation}deg)`, transformOrigin: "50% 50%" }}
+    >
+      <path
+        d="M5 12h14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <path
+        d="M13 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+};
+
+const getArrowIcon = (label: string): ReactNode | null => {
+  const direction = arrowDirectionByLabel[label];
+  return direction ? <ArrowIcon direction={direction} /> : null;
+};
 
 type KeyBindingRow = {
   vimLabel: string;
@@ -173,7 +224,10 @@ export default function KeyboardVisualization() {
     const keysToCheck = [labels.vim, ...equivalentKeys].map((k) => k.toLowerCase());
     const pressed = keysToCheck.some((k) => pressedKeys.has(k));
 
-    const displayLabel = isVimMode ? labels.vim : labels.arrow;
+    const arrowFallback = labels.arrow || labels.vim;
+    const displayLabel: ReactNode = isVimMode
+      ? labels.vim
+      : (getArrowIcon(labels.arrow) ?? arrowFallback);
 
     return (
       <div
@@ -184,7 +238,17 @@ export default function KeyboardVisualization() {
           ...commonKeyStyles(pressed),
         }}
       >
-        <div style={{ fontWeight: "bold" }}>{displayLabel}</div>
+        <div
+          style={{
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.15rem",
+          }}
+        >
+          {displayLabel}
+        </div>
       </div>
     );
   };
@@ -388,7 +452,10 @@ export default function KeyboardVisualization() {
 
         {keyBindingsTable.map((row, index) => {
           const isPressed = isRowKeyPressed(row);
-          const keyDisplay = (isVimMode ? row.vimLabel : row.arrowLabel) || row.vimLabel;
+          const arrowFallback = row.arrowLabel || row.vimLabel;
+          const keyDisplay: ReactNode = isVimMode
+            ? row.vimLabel
+            : (getArrowIcon(row.arrowLabel) ?? arrowFallback);
           return (
             <div
               key={index}
@@ -415,6 +482,9 @@ export default function KeyboardVisualization() {
                     ? "rgba(255, 140, 50, 1)"
                     : "var(--vscode-editorWidget-foreground)",
                   transition: "all 0.03s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.2rem",
                 }}
               >
                 {keyDisplay}
