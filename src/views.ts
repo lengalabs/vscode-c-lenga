@@ -74,6 +74,18 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     return this.currentView;
   }
 
+  private getThemeKind(): "dark" | "light" {
+    switch (vscode.window.activeColorTheme.kind) {
+      case vscode.ColorThemeKind.Light:
+      case vscode.ColorThemeKind.HighContrastLight:
+        return "light";
+      case vscode.ColorThemeKind.Dark:
+      case vscode.ColorThemeKind.HighContrast:
+      default:
+        return "dark";
+    }
+  }
+
   async openCustomDocument(
     uri: vscode.Uri,
     openContext: { backupId?: string },
@@ -108,10 +120,11 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
     );
 
     listeners.push(
-      document.onDidChangeContent((e) => {
-        // Update all webviews when the document changes
+      vscode.window.onDidChangeActiveColorTheme(() => {
+        const theme = this.getThemeKind();
+
         for (const webviewPanel of this.webviews.get(document.uri)) {
-          this.postMessage(webviewPanel, "update", e.content);
+          this.postMessage(webviewPanel, "theme", theme);
         }
       })
     );
@@ -159,6 +172,7 @@ export class ClengaEditorProvider implements vscode.CustomEditorProvider<CLengaD
       switch (e.type) {
         case "ready":
           this.postMessage(webviewPanel, "update", document.documentData);
+          this.postMessage(webviewPanel, "theme", this.getThemeKind());
           break;
         case "nodeEdit":
           const old_node: nodes.Unknown = {

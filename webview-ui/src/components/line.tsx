@@ -1133,7 +1133,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
       if (selectedKey === "else") {
         console.log("ElseClauseRender: Deleting entire else statement");
         // Remove the else statement from the parent if statement
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (parentNodeInfo.parent as any)[parentNodeInfo.key] = undefined;
         nodeMap.delete(props.node.id);
         onEdit(parentNodeInfo.parent, parentNodeInfo.key);
@@ -1167,7 +1167,7 @@ function ElseClauseRender(props: XRenderProps<objects.ElseClause>): React.ReactN
         console.error("Parent node info is undefined for else clause:", props.node.id);
         return;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (parentNodeInfo.parent as any)[parentNodeInfo.key] = newIfStatement;
       onEdit(parentNodeInfo.parent, parentNodeInfo.key);
       // Focus the condition (unknown node)

@@ -74,7 +74,9 @@ export function createFieldNavigationCallbacks(
         currentIndex,
         selectedKey,
       });
-      if (fields.length === 0) return;
+      if (fields.length === 0) {
+        return;
+      }
 
       let targetIndex: number;
       if (currentIndex > 0) {
@@ -99,7 +101,9 @@ export function createFieldNavigationCallbacks(
         currentIndex,
         selectedKey,
       });
-      if (fields.length === 0) return;
+      if (fields.length === 0) {
+        return;
+      }
 
       let targetIndex: number;
       if (currentIndex >= 0 && currentIndex < fields.length - 1) {

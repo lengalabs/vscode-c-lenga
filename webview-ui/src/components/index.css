@@ -1,6 +1,6 @@
 /* Support VS Code dark/light mode automatically */
-:root {
-  color-scheme: var(--vscode-color-scheme);
+:root[data-theme="dark"] {
+  color-scheme: dark;
   height: 100%;
   --syntax-keyword: #c586c0;
   --syntax-function: #dcdcaa;
@@ -11,6 +11,20 @@
   --syntax-comment: #6a9955;
   --syntax-constant: #4fc1ff;
   --syntax-delimiter: #f8cc10;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --syntax-keyword:   #AF00DB;
+  --syntax-function:  #795E26;
+  --syntax-type:      #0000FF;
+  --syntax-variable:  #001080;
+  --syntax-string:    #A31515;
+  --syntax-number:    #098658;
+  --syntax-comment:   #008000;
+  --syntax-constant:  #0000FF;
+  --syntax-delimiter: #3B3B3B;
 }
 
 div#root {

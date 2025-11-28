@@ -10,6 +10,8 @@ import DebugMenu from "../components/DebugMenu";
 import DebugProvider from "../context/debug/DebugProvider";
 import LineProvider from "../context/line/LineProvider";
 
+const default_theme = "dark";
+
 // Component that handles initial focus request
 function InitialFocusHandler({
   sourceFile,
@@ -22,7 +24,7 @@ function InitialFocusHandler({
   const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasRequestedRef.current)
+    if (!hasRequestedRef.current) {
       if (sourceFile.code.length === 0) {
         console.log("Requesting initial focus on empty file creator");
         emptyFileRef.current?.focus();
@@ -33,9 +35,14 @@ function InitialFocusHandler({
         requestFocus({ nodeId: firstNode.id });
         hasRequestedRef.current = true;
       }
+    }
   }, [sourceFile, requestFocus, emptyFileRef]);
 
   return null;
+}
+
+function normalizeTheme(theme: string): "dark" | "light" {
+  return theme === "light" ? "light" : "dark";
 }
 
 export default function App() {
@@ -59,10 +66,14 @@ export default function App() {
       } else if (message.type === "toggleDebug") {
         console.log("Toggling debug mode");
         setDebug((prev) => !prev);
+      } else if (message.type === "theme") {
+        document.documentElement.dataset.theme = normalizeTheme(message.contents);
       }
     };
 
     window.addEventListener("message", handleMessage);
+
+    document.documentElement.dataset.theme = default_theme;
 
     vscode.postMessage({ type: "ready" });
 
