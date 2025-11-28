@@ -326,17 +326,17 @@ export default function KeyboardVisualization() {
     return [...allKeys].some((key) => pressedKeys.has(key));
   };
 
-  const columnTemplate = `3.8rem repeat(${tableColumns.length}, 1fr)`;
+  const columnTemplate = `2rem repeat(${tableColumns.length}, 1fr)`;
 
   return (
     <div
       style={{
         position: "fixed",
-        bottom: "1rem",
-        right: "1rem",
+        bottom: "0.5rem",
+        right: "0.5rem",
         zIndex: 999,
         display: "flex",
-        gap: "1rem",
+        gap: "0.5rem",
         alignItems: "flex-end",
         flexDirection: "column",
       }}
@@ -450,9 +450,9 @@ export default function KeyboardVisualization() {
             display: "grid",
             gridTemplateColumns: columnTemplate,
             gap: "0.5rem",
-            paddingBottom: "0.4rem",
+            paddingBottom: "0.2rem",
             borderBottom: "1px solid var(--vscode-editorWidget-border)",
-            marginBottom: "0.4rem",
+            marginBottom: "0.2rem",
           }}
         >
           <div style={{ fontWeight: "bold", opacity: 0.8 }}>Key</div>
@@ -509,7 +509,9 @@ export default function KeyboardVisualization() {
                   transition: "all 0.03s ease",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "0.2rem",
+                  textAlign: "center",
                 }}
               >
                 {keyDisplay}
@@ -527,7 +529,7 @@ export default function KeyboardVisualization() {
                 const isShiftVariantAvailable = Boolean(shiftDescription);
                 const shiftLabelStyle = {
                   position: "absolute" as const,
-                  top: "0.2rem",
+                  top: "0.1rem",
                   right: "0.3rem",
                   fontSize: "0.68rem",
                   opacity: shiftDescription ? 0.8 : 0,
@@ -543,8 +545,8 @@ export default function KeyboardVisualization() {
                 const mainDescriptionStyle = {
                   fontSize: "0.85rem",
                   lineHeight: 1.3,
-                  paddingTop: shiftDescription ? "0.6rem" : "0.3rem",
-                  paddingBottom: shiftDescription ? "0" : "0.3rem",
+                  paddingTop: shiftDescription ? "1rem" : "0.5rem",
+                  paddingBottom: shiftDescription ? "0" : "0.5rem",
                   color:
                     isShiftVariantAvailable && isShiftActive
                       ? "var(--vscode-descriptionForeground)"
@@ -568,7 +570,7 @@ export default function KeyboardVisualization() {
                         ? "var(--vscode-editorWidget-foreground)"
                         : "var(--vscode-descriptionForeground)",
                       backgroundColor: shouldHighlight ? "rgba(255, 140, 50, 0.2)" : "transparent",
-                      padding: "0.55rem 0.5rem 0.45rem 0.4rem",
+                      padding: "0rem 0.5rem 0rem 0.4rem",
                       margin: "-0.35rem -0.4rem",
                       borderRadius: "0.2rem",
                       transition: "all 0.03s ease",
