@@ -524,6 +524,36 @@ export default function KeyboardVisualization() {
                   isPressed &&
                   (isActive || isShiftActive) &&
                   (description !== "—" || shiftDescription);
+                const isShiftVariantAvailable = Boolean(shiftDescription);
+                const shiftLabelStyle = {
+                  position: "absolute" as const,
+                  top: "0.2rem",
+                  right: "0.3rem",
+                  fontSize: "0.68rem",
+                  opacity: shiftDescription ? 0.8 : 0,
+                  color: isShiftActive
+                    ? "var(--vscode-textLink-foreground)"
+                    : isActive
+                      ? "var(--vscode-editorWidget-foreground)"
+                      : "var(--vscode-descriptionForeground)",
+                  transform: isShiftVariantAvailable && isShiftActive ? "scale(1.12)" : "scale(1)",
+                  transformOrigin: "top right",
+                  transition: "color 0.15s ease, transform 0.15s ease, opacity 0.15s ease",
+                };
+                const mainDescriptionStyle = {
+                  fontSize: "0.85rem",
+                  lineHeight: 1.3,
+                  paddingTop: shiftDescription ? "0.6rem" : "0.3rem",
+                  paddingBottom: shiftDescription ? "0" : "0.3rem",
+                  color:
+                    isShiftVariantAvailable && isShiftActive
+                      ? "var(--vscode-descriptionForeground)"
+                      : undefined,
+                  transform: isShiftVariantAvailable && isShiftActive ? "scale(0.96)" : "scale(1)",
+                  transformOrigin: "left bottom",
+                  transition: "color 0.15s ease, transform 0.15s ease, opacity 0.15s ease",
+                  opacity: isShiftVariantAvailable && isShiftActive ? 0.7 : 1,
+                };
                 return (
                   <div
                     key={column.key}
@@ -544,33 +574,8 @@ export default function KeyboardVisualization() {
                       transition: "all 0.03s ease",
                     }}
                   >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "0.2rem",
-                        right: "0.3rem",
-                        fontSize: "0.68rem",
-                        opacity: shiftDescription ? 0.75 : 0,
-                        color: isShiftActive
-                          ? "var(--vscode-textLink-foreground)"
-                          : isActive
-                            ? "var(--vscode-editorWidget-foreground)"
-                            : "var(--vscode-descriptionForeground)",
-                        transition: "all 0.03s ease",
-                      }}
-                    >
-                      {shiftDescription || "\u00A0"}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.85rem",
-                        lineHeight: 1.3,
-                        paddingTop: shiftDescription ? "0.6rem" : "0.3rem",
-                        paddingBottom: shiftDescription ? "0" : "0.3rem",
-                      }}
-                    >
-                      {description}
-                    </div>
+                    <div style={shiftLabelStyle}>{shiftDescription || "\u00A0"}</div>
+                    <div style={mainDescriptionStyle}>{description}</div>
                   </div>
                 );
               })}
