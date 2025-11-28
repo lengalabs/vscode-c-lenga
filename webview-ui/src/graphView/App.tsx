@@ -20,6 +20,11 @@ import { ParentInfo, parentInfoFromChild } from "../context/line/lineContext";
 import "@xyflow/react/dist/style.css";
 
 const nodeTypes = { function: FunctionNode };
+const default_theme = "dark";
+
+function normalizeTheme(theme: string): "dark" | "light" {
+  return theme === "light" ? "light" : "dark";
+}
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState<FunctionFlowNode>([]);
@@ -44,6 +49,8 @@ export default function App() {
         setAvailableInserts(message.contents);
       } else if (message.type === "toggleDebug") {
         console.log("Operation unsupported for now");
+      } else if (message.type === "theme") {
+        document.documentElement.dataset.theme = normalizeTheme(message.contents);
       } else if (message.type === "update") {
         const newSourceFile = message.contents as objects.SourceFile;
 
@@ -139,6 +146,7 @@ export default function App() {
     };
 
     window.addEventListener("message", handleMessage);
+    document.documentElement.dataset.theme = default_theme;
     vscode.postMessage({ type: "ready" });
 
     return () => window.removeEventListener("message", handleMessage);
