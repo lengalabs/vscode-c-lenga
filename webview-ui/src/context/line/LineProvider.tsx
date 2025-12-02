@@ -92,7 +92,7 @@ export default function LineProvider({
         return;
       }
 
-      if (event.key === "Escape" || (event.key === " " && mode === EditorMode.Edit)) {
+      if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
         setMode(EditorMode.View);
