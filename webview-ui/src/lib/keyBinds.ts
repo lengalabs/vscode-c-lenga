@@ -144,10 +144,60 @@ type KeyMapping = {
   [key: string]: string;
 };
 
+const MODIFIER_ORDER = ["Alt", "Ctrl", "Shift"] as const;
+const MODIFIER_LOOKUP: Record<string, (typeof MODIFIER_ORDER)[number]> = {
+  alt: "Alt",
+  ctrl: "Ctrl",
+  control: "Ctrl",
+  shift: "Shift",
+};
+
 // Command definitions organized by mode
 type CommandDefinitions = {
   [commandName: string]: CommandDefinition;
 };
+
+// Ensures key combinations share a canonical modifier order and key casing.
+function normalizeKeyComboString(combo: string): string {
+  const parts = combo
+    .split("+")
+    .map((part) => part.trim())
+    .filter((part): part is string => part.length > 0);
+
+  const modifiers: string[] = [];
+  let key: string | undefined;
+
+  for (const part of parts) {
+    const canonicalSegment = part.length > 1 ? part.charAt(0).toUpperCase() + part.slice(1) : part;
+    const modifier = MODIFIER_LOOKUP[part.toLowerCase()];
+
+    if (modifier) {
+      if (!modifiers.includes(modifier)) {
+        modifiers.push(modifier);
+      }
+      continue;
+    }
+
+    // Only keep the first non-modifier segment as the key
+    if (!key) {
+      key = canonicalSegment;
+    }
+  }
+
+  if (!key) {
+    return modifiers.join("+");
+  }
+
+  let normalizedKey = key;
+  if (normalizedKey.length === 1) {
+    normalizedKey = modifiers.includes("Shift")
+      ? normalizedKey.toUpperCase()
+      : normalizedKey.toLowerCase();
+  }
+
+  const orderedModifiers = MODIFIER_ORDER.filter((modifier) => modifiers.includes(modifier));
+  return [...orderedModifiers, normalizedKey].join("+");
+}
 
 // Define commands with their key combinations and descriptions
 export const COMMAND_DEFINITIONS: CommandDefinitions = {
@@ -287,7 +337,8 @@ export function createKeyMapping(mode: EditorModeType): KeyMapping {
     const bindings = definition.bind.filter((binding) => !binding.mode || binding.mode === mode);
 
     for (const binding of bindings) {
-      keyMapping[binding.keys] = commandName;
+      const normalizedKeys = normalizeKeyComboString(binding.keys);
+      keyMapping[normalizedKeys] = commandName;
     }
   }
 
@@ -341,7 +392,7 @@ export function getKeysForCommand(mode: EditorModeType, commandName: string): st
   }
 
   const bindings = command.bind.filter((binding) => !binding.mode || binding.mode === mode);
-  return bindings.map((binding) => binding.keys);
+  return bindings.map((binding) => normalizeKeyComboString(binding.keys));
 }
 
 /**
@@ -401,6 +452,7 @@ export function getKeyComboString(e: React.KeyboardEvent): string {
   if (e.shiftKey) {
     parts.push("Shift");
   }
-  parts.push(e.key);
-  return parts.join("+");
+  const keyPart = e.key.length === 1 ? e.key : e.key.charAt(0).toUpperCase() + e.key.slice(1);
+  parts.push(keyPart);
+  return normalizeKeyComboString(parts.join("+"));
 }
