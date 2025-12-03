@@ -492,17 +492,8 @@ function UnknownRender(props: XRenderProps<objects.Unknown>): React.ReactNode {
 }
 
 function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): React.ReactNode {
-  const { selectedKey } = useLineContext();
-  const contentRef = React.useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
-
-  const fieldDefinitions: FieldDefinition[] = [
-    { key: "content", ref: contentRef as React.RefObject<HTMLElement> },
-  ];
-
-  const fieldCallbacks = createFieldNavigationCallbacks(fieldDefinitions, selectedKey);
-
   return (
-    <Object {...props} callbacks={{ ...props.callbacks, ...fieldCallbacks }}>
+    <Object {...props} callbacks={props.callbacks}>
       {
         <>
           <span className="token-keyword">#include</span>{" "}
@@ -513,7 +504,7 @@ function PreprocIncludeRender(props: XRenderProps<objects.PreprocInclude>): Reac
             firstField: true,
             className: "token-string",
             placeholder: "file.h",
-            ref: contentRef,
+            ref: props.ref as React.RefObject<HTMLInputElement>,
           })}
         </>
       }
